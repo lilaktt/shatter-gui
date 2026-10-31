@@ -1,0 +1,30 @@
+{
+  "schema": 2,
+  "id": "sand",
+  "name": "Sand",
+  "description": "Crumbles into grains that the wind blows away to the side.",
+  "open": true,
+  "duration": 44,
+  "fracture": { "mode": "pixels", "size": 5 },
+  "trigger": { "type": "wave", "direction": [1, 0], "spread": 0.7, "noise": 0.35 },
+  "layers": [
+    { "name": "Hold", "module": "stay", "to": 0.1 },
+    { "name": "Wind", "module": "force", "from": 0.1,
+      "params": { "x": { "random": [0.004, 0.009] }, "y": { "random": [0.0005, 0.002] } } },
+    { "name": "Gusts", "module": "drift", "from": 0.1, "params": { "amount": 0.004, "frequency": 0.3 } },
+    { "name": "Settle", "module": "gravity", "from": 0.55, "params": { "strength": 0.004 } },
+    { "name": "Roll", "module": "spin", "from": 0.1, "params": { "speed": { "random": [-0.15, 0.15] } } },
+    { "name": "Shrink", "module": "scale", "params": { "value": { "keys": [[0, 1], [1, 0.6]] } } }
+  ],
+  "appearance": {
+    "color": [ { "t": 0, "color": "#ffffff" }, { "t": 0.25, "color": "#ecd9a0" }, { "t": 1, "color": "#c9a86a" } ],
+    "alpha": { "keys": [[0, 1], [0.6, 0.9], [1, 0]] }
+  },
+  "emitters": [
+    { "name": "Dust", "particle": "minecraft:white_ash", "zone": "front", "rate": 2, "velocity": [0.02, 0.004, 0] }
+  ],
+  "sounds": [
+    { "name": "Crumble", "sound": "minecraft:block.sand.break", "volume": 0.5, "pitch": 0.9 },
+    { "name": "Pour", "sound": "minecraft:block.sand.fall", "volume": 0.4, "pitch": 1.1, "at": 0.4 }
+  ]
+}

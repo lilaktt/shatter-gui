@@ -1,0 +1,26 @@
+{
+  "schema": 2,
+  "id": "runes",
+  "name": "Runes",
+  "description": "Breaks into glowing squares like enchanting glyphs that rise and fade.",
+  "open": true,
+  "duration": 46,
+  "fracture": { "mode": "pixels", "size": 7 },
+  "trigger": { "type": "noise", "scale": 4, "spread": 0.6 },
+  "layers": [
+    { "name": "Glow", "module": "stay", "to": 0.35 },
+    { "name": "Float", "module": "drift", "from": 0.3, "params": { "amount": 0.005, "frequency": 0.15 } },
+    { "name": "Rise", "module": "gravity", "from": 0.35, "params": { "strength": -0.005, "world": false } },
+    { "name": "Shrink", "module": "scale", "params": { "value": { "keys": [[0, 1], [0.35, 1.1], [1, 0.4]] } } }
+  ],
+  "appearance": {
+    "color": [ { "t": 0, "color": "#ffffff" }, { "t": 0.3, "color": "#e7d6ff" }, { "t": 1, "color": "#8f7bff" } ],
+    "alpha": { "keys": [[0, 1], [0.7, 0.9], [1, 0]] },
+    "emissive": { "keys": [[0, 0], [0.25, 0.9], [0.6, 0.6], [1, 0]] },
+    "emissiveColor": "#a98bff"
+  },
+  "emitters": [
+    { "name": "Glyphs", "particle": "minecraft:enchant", "zone": "surface", "rate": 4, "velocity": [0, 0.02, 0.02], "spread": 0.02, "life": 30 }
+  ],
+  "sounds": [ { "name": "Enchant", "sound": "minecraft:block.enchantment_table.use", "volume": 0.6 } ]
+}

@@ -1,0 +1,26 @@
+{
+  "schema": 2,
+  "id": "burn_fx",
+  "name": "Burn",
+  "description": "Burns away in patches: pieces glow, darken to ash and drift up.",
+  "duration": 60,
+  "fracture": { "mode": "pixels", "size": 6 },
+  "trigger": { "type": "noise", "scale": 3, "spread": 0.8, "noise": 0.2 },
+  "layers": [
+    { "name": "Hold", "module": "stay", "to": 0.5 },
+    { "name": "Rise", "module": "drift", "from": 0.4, "params": { "amount": 0.01, "frequency": 0.2 } },
+    { "name": "Ash", "module": "gravity", "from": 0.5, "params": { "strength": -0.004 } },
+    { "name": "Shrink", "module": "scale", "params": { "value": { "keys": [[0, 1], [0.5, 1], [1, 0.3]] } } }
+  ],
+  "appearance": {
+    "color": [ { "t": 0, "color": "#ffffff" }, { "t": 0.35, "color": "#ffb347" }, { "t": 0.6, "color": "#a03a10" }, { "t": 1, "color": "#1a1210" } ],
+    "alpha": { "keys": [[0, 1], [0.8, 1], [1, 0]] },
+    "emissive": { "keys": [[0, 0], [0.35, 0.8], [0.7, 0]] },
+    "emissiveColor": "#ff8a2a"
+  },
+  "emitters": [
+    { "name": "Flames", "particle": "minecraft:small_flame", "zone": "front", "rate": 2, "velocity": [0, 0.01, 0.01] },
+    { "name": "Smoke", "particle": "minecraft:smoke", "zone": "surface", "rate": 0.6, "from": 0.4 }
+  ],
+  "sounds": [ { "name": "Ignite", "sound": "minecraft:item.firecharge.use", "volume": 0.5, "pitch": 1.1 } ]
+}

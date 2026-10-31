@@ -1,0 +1,38 @@
+{
+  "schema": 2,
+  "id": "layer_combo",
+  "name": "Layer combo",
+  "description": "Several layers on different groups: a burst from the centre, edges pulled to the player, a few pieces on a path; then off to the right.",
+  "duration": 56,
+  "fracture": { "mode": "radial", "count": 14, "rings": 4, "jitter": 0.5, "region": [0.1, 0.1, 0.9, 0.9] },
+  "trigger": { "type": "radial", "from": "center", "spread": 0.5, "curve": "easeOut" },
+  "layers": [
+    { "target": "outside", "module": "stay" },
+    { "target": "region", "module": "launch",
+      "params": { "from": "center", "speed": { "bezier": [0.2, 0.8, 0.4, 1], "from": 0.02, "to": 0.05 }, "spread": 0.6, "out": 0.03 } },
+    { "target": { "group": "edge", "width": 0.2 }, "module": "attract", "from": 0.3,
+      "params": { "to": "player", "strength": 0.012, "swirl": -1.5, "absorb": 0.15 } },
+    { "target": { "group": "random", "chance": 0.3, "seed": 7 }, "module": "follow-path", "from": 0.1, "to": 0.9,
+      "params": { "points": [[0.1, -0.2], [0.25, -0.1], [0.3, 0.2, 0.1]], "progress": { "curve": "easeInOut", "from": 0, "to": 1 } } },
+    { "target": { "group": "wave", "from": 0, "to": 0.5 }, "module": "drift", "params": { "amount": 0.006, "frequency": 0.15 } },
+    { "module": "drag", "params": { "amount": 0.06 } },
+    { "module": "spin", "params": { "speed": { "keys": [[0, 0], [0.3, 0.25], [1, 0.05]] }, "tumble": { "random": [-0.15, 0.15] } } },
+    { "module": "scale", "params": { "value": { "keys": [[0, 1], [0.2, 1.1], [1, 0.4]], "ease": "smooth" } } }
+  ],
+  "appearance": {
+    "color": [ { "t": 0, "color": "#ffffff" }, { "t": 0.5, "color": "#ffe1a8" }, { "t": 1, "color": "#ff8fd8" } ],
+    "alpha": { "keys": [[0, 1], [0.85, 1], [1, 0]] },
+    "emissive": { "curve": "pulse", "from": 0, "to": 0.6 },
+    "emissiveColor": ["#ffcf6b", "#ff6bd6"]
+  },
+  "emitters": [
+    { "particle": "minecraft:end_rod", "zone": "point", "at": "center", "burst": 20, "rate": 0, "to": 0.1,
+      "velocity": [0, 0, 0.02], "spread": 0.03 },
+    { "particle": "minecraft:electric_spark", "zone": "front", "rate": 2 }
+  ],
+  "sounds": [
+    { "sound": "minecraft:entity.illusioner.cast_spell", "volume": 0.5, "pitch": 1.4 },
+    { "sound": "minecraft:block.respawn_anchor.deplete", "volume": 0.3, "pitch": 1.8, "at": "end" }
+  ],
+  "modifiers": { "edge": { "direction": "right", "exit": true, "exitStart": 0.7, "distance": 1.0, "curve": "easeInBack" } }
+}

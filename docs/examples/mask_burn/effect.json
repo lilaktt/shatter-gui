@@ -1,0 +1,33 @@
+{
+  "schema": 2,
+  "id": "mask_burn",
+  "name": "Burn by mask",
+  "description": "Small squares catch fire in the order of a painted mask, glow, char and drift up with flames and smoke.",
+  "duration": 60,
+  "fracture": { "mode": "pixels", "size": 6 },
+  "trigger": { "type": "mask", "texture": "burn_mask", "spread": 0.75, "noise": 0.08 },
+  "layers": [
+    { "module": "stay", "to": 0.15 },
+    { "module": "drift", "from": 0.15, "params": { "amount": 0.004, "frequency": 0.2, "out": 0.002 } },
+    { "module": "gravity", "from": 0.15, "params": { "strength": -0.0015 } },
+    { "module": "scale", "params": { "value": { "keys": [[0, 1], [0.3, 1], [1, 0.1]], "ease": "smooth" } } }
+  ],
+  "appearance": {
+    "color": [
+      { "t": 0, "color": "#ffffff" }, { "t": 0.08, "color": "#ffe0a0" }, { "t": 0.18, "color": "#ff8a2a" },
+      { "t": 0.4, "color": "#3a2216" }, { "t": 1, "color": "#2a2420" }
+    ],
+    "alpha": { "keys": [[0, 1], [0.5, 1], [1, 0]] },
+    "emissive": { "keys": [[0, 0], [0.05, 1], [0.25, 0.3], [0.4, 0]] },
+    "emissiveColor": ["#ffd36a", "#ff5a10"]
+  },
+  "emitters": [
+    { "particle": "minecraft:small_flame", "zone": "front", "rate": 4, "velocity": [0, 0.01, 0], "spread": 0.005, "size": 0.05 },
+    { "particle": "minecraft:smoke", "zone": "surface", "from": 0.3, "rate": { "curve": "easeOut", "from": 2, "to": 0 },
+      "velocity": [0, 0.01, 0] }
+  ],
+  "sounds": [
+    { "sound": "minecraft:item.firecharge.use", "volume": 0.5, "pitch": 1.1 },
+    { "sound": "minecraft:block.fire.extinguish", "volume": 0.4, "at": "end" }
+  ]
+}

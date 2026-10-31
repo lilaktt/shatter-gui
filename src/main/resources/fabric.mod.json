@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "shatter_gui",
+  "version": "${version}",
+  "name": "Shatter GUI",
+  "description": "Interfaces break into shards, burn, freeze, explode or fly back into their block when you close them, and can gather from their pieces when you open them. 32 effects, a visual effect editor, a thematic mode and 12 languages. Client-side only; works with Spatial GUI and Iris shader packs.",
+  "authors": ["${author}"],
+  "contributors": [
+    {
+      "name": "tastytrash — Spatial GUI, the idea that inspired this mod (MIT)",
+      "contact": { "homepage": "https://github.com/tastytrash/Spatial-GUI" }
+    }
+  ],
+  "contact": {
+    "homepage": "${modrinth}",
+    "sources": "${sources}",
+    "issues": "${issues}",
+    "modrinth": "${modrinth}",
+    "curseforge": "${curseforge}"
+  },
+  "license": "${license}",
+  "icon": "assets/shatter_gui/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["net.shattergui.ShatterGuiClient"],
+    "modmenu": ["net.shattergui.compat.modmenu.ShatterModMenu"]
+  },
+  "mixins": ["shatter_gui.mixins.json", "shatter_gui.spatial.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "fabric-api": "*",
+    "minecraft": "~26.1.2",
+    "java": ">=25"
+  },
+  "suggests": {
+    "modmenu": "*",
+    "spatial-gui": "*"
+  },
+  "custom": {
+    "modmenu": {
+      "links": {
+        "modmenu.modrinth": "${modrinth}",
+        "modmenu.curseforge": "${curseforge}"
+      }
+    }
+  }
+}

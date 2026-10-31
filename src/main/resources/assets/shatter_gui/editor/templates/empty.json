@@ -1,0 +1,10 @@
+{
+  "schema": 2,
+  "id": "new_effect",
+  "name": "New effect",
+  "description": "",
+  "duration": 40,
+  "fracture": { "mode": "grid", "count": 60, "jitter": 0.35 },
+  "trigger": { "type": "wave", "direction": [0, -1], "spread": 0.5 },
+  "layers": []
+}

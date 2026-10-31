@@ -1,0 +1,17 @@
+Shatter GUI
+Copyright 2026 lilaktt
+
+This product is licensed under the Apache License, Version 2.0 (see the LICENSE file).
+
+Acknowledgements
+
+Spatial GUI by tastytrash (https://github.com/tastytrash/Spatial-GUI), MIT License.
+The idea of interfaces that live in the world inspired this mod. When Spatial GUI is installed, Shatter GUI calls
+its public methods and sets two of its private fields, so the shards appear where Spatial GUI's screen was.
+No code from Spatial GUI is included in Shatter GUI or in its jar.
+
+Iris (https://github.com/IrisShaders/Iris), LGPL-3.0: Shatter GUI calls only Iris's public API when Iris is
+installed. No code from Iris is included.
+
+Minecraft is a trademark of Mojang Synergies AB. Shatter GUI is not an official Minecraft product and is not
+approved by or associated with Mojang or Microsoft.

@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.shattergui.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "AbstractContainerScreenAccessor",
+    "GameRendererMixin",
+    "GuiGraphicsExtractorAccessor",
+    "GuiRenderStateMixin",
+    "MinecraftMixin",
+    "RenderPipelinesAccessor",
+    "RenderTypeAccessor",
+    "ScreenAccessor",
+    "ScreenMixin",
+    "SingleQuadParticleAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

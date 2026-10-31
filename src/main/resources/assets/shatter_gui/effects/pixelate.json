@@ -1,0 +1,26 @@
+{
+  "schema": 2,
+  "id": "pixelate",
+  "name": "Pixelate",
+  "description": "The picture coarsens into big pixels, which then crumble away from the top.",
+  "open": true,
+  "duration": 40,
+  "fracture": { "mode": "pixels", "size": 10 },
+  "trigger": { "type": "wave", "direction": [0, 1], "spread": 0.3, "noise": 0.35 },
+  "layers": [
+    { "name": "Hold", "module": "stay", "to": 0.45 },
+    { "name": "Loosen", "module": "launch", "from": 0.45,
+      "params": { "from": "center", "speed": 0.006, "spread": 3.14, "out": 0.01 } },
+    { "name": "Fall", "module": "gravity", "from": 0.45, "params": { "strength": 0.03 } },
+    { "name": "Tumble", "module": "spin", "from": 0.45, "params": { "speed": { "random": [-0.12, 0.12] } } }
+  ],
+  "appearance": {
+    "mosaic": { "keys": [[0, 0], [0.3, 1], [1, 1]], "ease": "smooth" },
+    "color": ["#ffffff", "#d0d0d0"],
+    "alpha": { "keys": [[0, 1], [0.8, 1], [1, 0]] }
+  },
+  "sounds": [
+    { "name": "Bit", "sound": "minecraft:block.note_block.bit", "volume": 0.35, "pitch": 1.2 },
+    { "name": "Crumble", "sound": "minecraft:block.stone.break", "volume": 0.3, "pitch": 1.3, "at": 0.45 }
+  ]
+}

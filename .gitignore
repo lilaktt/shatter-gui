@@ -1,0 +1,33 @@
+# Gradle and Loom
+build/
+.gradle/
+out/
+run/
+# Third-party jars for development come from the Modrinth Maven (see build.gradle)
+libs/
+
+# Logs and crashes
+*.log
+hs_err*
+crash-reports/
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+bin/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local screenshots (only docs/screenshots is part of the repository)
+/screenshots/
+/*.png
+/*.jpg

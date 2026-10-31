@@ -1,0 +1,109 @@
+{
+  "schema": 2,
+  "id": "tear",
+  "name": "Tear",
+  "description": "Rips in half like paper; the halves fly apart.",
+  "open": true,
+  "duration": 13,
+  "fracture": {
+    "mode": "strips",
+    "count": 2,
+    "direction": "vertical",
+    "segments": 1,
+    "jitter": 0.35
+  },
+  "trigger": {
+    "type": "none",
+    "spread": 0
+  },
+  "layers": [
+    {
+      "name": "Rip apart",
+      "module": "launch",
+      "params": {
+        "from": "center",
+        "speed": 0.045,
+        "spread": 0.15,
+        "out": 0.01
+      }
+    },
+    {
+      "name": "Tilt left",
+      "module": "spin",
+      "target": {
+        "group": "alternate"
+      },
+      "params": {
+        "speed": 0.06
+      }
+    },
+    {
+      "name": "Tilt right",
+      "module": "spin",
+      "target": {
+        "group": "alternate",
+        "invert": true
+      },
+      "params": {
+        "speed": -0.06
+      }
+    },
+    {
+      "name": "Fall",
+      "module": "gravity",
+      "params": {
+        "strength": 0.012
+      }
+    }
+  ],
+  "appearance": {
+    "alpha": {
+      "keys": [
+        [
+          0,
+          1
+        ],
+        [
+          0.55,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ]
+    }
+  },
+  "emitters": [
+    {
+      "name": "Scraps",
+      "particle": "minecraft:white_ash",
+      "zone": "line",
+      "lineFrom": [
+        0.5,
+        0
+      ],
+      "lineTo": [
+        0.5,
+        1
+      ],
+      "rate": 0,
+      "burst": 10,
+      "velocity": [
+        0,
+        0,
+        0.01
+      ],
+      "spread": 0.02,
+      "life": 10
+    }
+  ],
+  "sounds": [
+    {
+      "name": "Rip",
+      "sound": "minecraft:entity.sheep.shear",
+      "volume": 0.4,
+      "pitch": 1.2
+    }
+  ]
+}

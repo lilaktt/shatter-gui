@@ -1,0 +1,35 @@
+{
+  "schema": 2,
+  "id": "lightning",
+  "name": "Lightning",
+  "description": "Sparks run along the edges, then the pieces break off with a single sharp flash each.",
+  "open": true,
+  "duration": 34,
+  "fracture": { "mode": "voronoi", "count": 70, "jitter": 0.9 },
+  "trigger": { "type": "radial", "from": "center", "invert": true, "spread": 0.35, "noise": 0.3 },
+  "layers": [
+    { "name": "Charge", "module": "stay", "to": 0.45 },
+    { "name": "Discharge", "module": "launch", "from": 0.45,
+      "params": { "from": "center", "speed": { "random": [0.04, 0.08] }, "spread": 0.8, "out": 0.03 } },
+    { "name": "Drag", "module": "drag", "from": 0.45, "params": { "amount": 0.06 } },
+    { "name": "Tumble", "module": "spin", "from": 0.45,
+      "params": { "speed": { "random": [-0.4, 0.4] }, "tumble": { "random": [-0.3, 0.3] } } }
+  ],
+  "appearance": {
+    "color": [ { "t": 0, "color": "#ffffff" }, { "t": 0.4, "color": "#dbe9ff" }, { "t": 1, "color": "#9fb8ff" } ],
+    "alpha": { "keys": [[0, 1], [0.75, 1], [1, 0]] },
+    "emissive": { "keys": [[0, 0.1], [0.4, 0.15], [0.46, 1], [0.56, 0.1], [1, 0]] },
+    "emissiveColor": "#d6e6ff"
+  },
+  "emitters": [
+    { "name": "Edge sparks", "particle": "minecraft:electric_spark", "zone": "edge", "rate": 3, "to": 0.5, "velocity": [0, 0, 0.01], "spread": 0.03 },
+    { "name": "Arcs", "particle": "minecraft:electric_spark", "zone": "front", "rate": 2, "from": 0.3, "velocity": [0, 0, 0.02], "spread": 0.04 }
+  ],
+  "sounds": [
+    { "name": "Charge", "sound": "minecraft:block.respawn_anchor.charge", "volume": 0.3, "pitch": 1.6 },
+    { "name": "Crack", "sound": "minecraft:item.trident.thunder", "volume": 0.18, "pitch": 1.5, "at": 0.45 }
+  ],
+  "reduced": {
+    "appearance": { "emissive": { "keys": [[0, 0.1], [0.45, 0.45], [0.7, 0]] } }
+  }
+}

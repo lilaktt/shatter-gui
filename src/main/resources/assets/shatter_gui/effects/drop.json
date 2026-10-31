@@ -1,0 +1,109 @@
+{
+  "schema": 2,
+  "id": "drop",
+  "name": "Drop",
+  "description": "Falls in one piece, hits the ground and breaks into four.",
+  "open": true,
+  "duration": 18,
+  "fracture": {
+    "mode": "grid",
+    "cols": 2,
+    "rows": 2,
+    "jitter": 0
+  },
+  "trigger": {
+    "type": "none",
+    "spread": 0
+  },
+  "layers": [
+    {
+      "name": "Fall",
+      "module": "gravity",
+      "params": {
+        "strength": 0.03
+      }
+    },
+    {
+      "name": "Break",
+      "module": "launch",
+      "from": 0.45,
+      "params": {
+        "from": "center",
+        "speed": 0.05,
+        "spread": 0.3,
+        "out": 0.02
+      }
+    },
+    {
+      "name": "Tumble",
+      "module": "spin",
+      "from": 0.45,
+      "params": {
+        "speed": {
+          "random": [
+            -0.2,
+            0.2
+          ]
+        },
+        "tumble": {
+          "random": [
+            -0.15,
+            0.15
+          ]
+        }
+      }
+    },
+    {
+      "name": "Land",
+      "module": "collide",
+      "params": {
+        "bounce": 0.25,
+        "friction": 0.5
+      }
+    }
+  ],
+  "appearance": {
+    "alpha": {
+      "keys": [
+        [
+          0,
+          1
+        ],
+        [
+          0.75,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ]
+    }
+  },
+  "emitters": [
+    {
+      "name": "Crack",
+      "particle": "minecraft:crit",
+      "zone": "surface",
+      "rate": 0,
+      "burst": 8,
+      "from": 0.45,
+      "velocity": [
+        0,
+        0.02,
+        0
+      ],
+      "spread": 0.03,
+      "life": 8
+    }
+  ],
+  "sounds": [
+    {
+      "name": "Crack",
+      "sound": "minecraft:block.wood.break",
+      "volume": 0.35,
+      "pitch": 1.3,
+      "at": 0.45
+    }
+  ]
+}

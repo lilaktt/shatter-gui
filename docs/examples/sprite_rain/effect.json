@@ -1,0 +1,36 @@
+{
+  "schema": 2,
+  "id": "sprite_rain",
+  "name": "Rain",
+  "description": "Own raindrop particles pour over the interface; its strips come loose from the top and fall, streaked with rain.",
+  "duration": 70,
+  "fracture": { "mode": "strips", "direction": "vertical", "count": 18, "segments": 5, "jitter": 0.5 },
+  "trigger": { "type": "wave", "direction": [0, 1], "spread": 0.55, "noise": 0.15 },
+  "layers": [
+    { "module": "launch", "params": { "from": [0.5, -0.5], "speed": { "random": [0.005, 0.02] }, "spread": 0.3, "out": 0.01 } },
+    { "module": "gravity", "params": { "strength": 0.012 } },
+    { "module": "spin", "params": { "speed": { "random": [-0.08, 0.08] }, "tumble": { "random": [-0.1, 0.1] } } },
+    { "module": "drag", "params": { "amount": 0.02 } }
+  ],
+  "appearance": {
+    "color": ["#ffffff", "#cfe6ff"],
+    "alpha": { "keys": [[0, 1], [0.7, 0.9], [1, 0]] },
+    "overlays": [
+      { "texture": "raindrop", "blend": "multiply", "opacity": { "curve": "easeOut", "from": 0, "to": 0.6 },
+        "color": "#8fb7ff", "repeat": [6, 3], "scroll": [0, -1.5] }
+    ]
+  },
+  "emitters": [
+    { "sprite": "raindrop", "zone": "line", "lineFrom": [-0.1, -0.15], "lineTo": [1.1, -0.15],
+      "rate": { "keys": [[0, 2], [0.2, 8], [1, 4]] }, "velocity": [-0.004, -0.09, 0], "spread": 0.004,
+      "life": { "random": [18, 26] }, "gravity": 0.003, "drag": 0, "size": 0.07,
+      "color": ["#e8f2ff", "#9cc4ff"], "alpha": { "keys": [[0, 0], [0.1, 0.9], [0.8, 0.8], [1, 0]] },
+      "emissive": false, "max": 300 },
+    { "particle": "minecraft:splash", "zone": "surface", "rate": 1.5, "from": 0.2 }
+  ],
+  "sounds": [
+    { "sound": "minecraft:weather.rain", "volume": 0.4, "pitch": 1.2 },
+    { "sound": "minecraft:entity.generic.splash", "volume": 0.25, "pitch": 1.4, "at": 0.5 }
+  ],
+  "modifiers": { "edge": { "direction": "bottom", "exit": true, "exitStart": 0.65, "distance": 0.8 } }
+}

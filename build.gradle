@@ -1,0 +1,146 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+
+base {
+    archivesName = project.archives_base_name
+    version = project.mod_version
+    group = project.maven_group
+}
+
+// Development-only mods (compile against their APIs, dev runs with them) come from the Modrinth Maven; never bundled.
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
+        }
+    }
+}
+
+// Versions on Modrinth (byte for byte the jars the integrations were written and tested against).
+def spatialGuiVersion = { String v -> "maven.modrinth:spatial-gui:${v}-fabric+26.1.x" }
+def irisVersion = "maven.modrinth:iris:1.11.4+26.1-fabric"
+def sodiumVersion = "maven.modrinth:sodium:mc26.1.2-0.9.2-fabric"
+def modMenuVersion = "maven.modrinth:modmenu:18.0.2"
+// YACL 3.9.6, not 3.9.7: 3.9.7 writes @Redirect(at = [...]) as an array, which crashes MixinExtras 0.5.4 (Loader 0.19.3).
+def yaclVersion = "maven.modrinth:yacl:3.9.6+26.1-fabric"
+
+// Client game tests in src/gametest (not part of the mod jar). Run with ./gradlew runClientGameTest
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "shatter_gui_test"
+        enableGameTests = false
+        eula = true
+    }
+}
+
+// The game test run directory is wiped before each run, so the test installs the shader pack itself:
+// ./gradlew runClientGameTest -Pshaders -PshaderPack=C:/path/to/Pack.zip
+loom {
+    runs.configureEach {
+        if (name == "clientGameTest" && project.hasProperty("shaderPack")) {
+            vmArg "-Dshatter.test.shaderPack=${project.property('shaderPack')}"
+        }
+        // Only some scenarios (e.g. -PtestOnly=crawler,shots): the full run takes minutes.
+        if (name == "clientGameTest" && project.hasProperty("testOnly")) {
+            vmArg "-Dshatter.test.only=${project.property('testOnly')}"
+        }
+        // A label for the screenshots of the "shots" scenario (before/after).
+        if (name == "clientGameTest" && project.hasProperty("shotsLabel")) {
+            vmArg "-Dshatter.test.shotsLabel=${project.property('shotsLabel')}"
+        }
+        // Only these effects in the "duplicates" scenario (e.g. -PdupOnly=door,glass), for a quick check.
+        if (name == "clientGameTest" && project.hasProperty("dupOnly")) {
+            vmArg "-Dshatter.test.dupOnly=${project.property('dupOnly')}"
+        }
+        // Only one Spatial GUI camera mode in the "duplicates" and "thematic" scenarios: -PspatialMode=first|third.
+        if (name == "clientGameTest" && project.hasProperty("spatialMode")) {
+            vmArg "-Dshatter.test.spatialMode=${project.property('spatialMode')}"
+        }
+        // Languages of the "lang" scenario (e.g. -Plang=ja_jp), one per run keeps the memory low.
+        if (name == "clientGameTest" && project.hasProperty("lang")) {
+            vmArg "-Dshatter.test.lang=${project.property('lang')}"
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+    // Unit tests of the pure parts (effect format parser, curves, fracture): ./gradlew test (also part of build).
+    testImplementation platform("org.junit:junit-bom:5.13.4")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    // Optional Spatial GUI integration: compiled against 1.8, never bundled.
+    compileOnly(spatialGuiVersion("1.8")) { transitive = false }
+    gametestCompileOnly(spatialGuiVersion("1.8")) { transitive = false }
+
+    // Optional Iris (shaders) support: only its public API, never bundled.
+    // Mod Menu (optional): only its API interface, for the config button; loaded by Mod Menu only when installed.
+    compileOnly(modMenuVersion) { transitive = false }
+    gametestCompileOnly(modMenuVersion) { transitive = false }
+    compileOnly(irisVersion) { transitive = false }
+    gametestCompileOnly(irisVersion) { transitive = false }
+
+    // Dev runs with shaders: -Pshaders adds Iris + Sodium (the game test installs the pack, see -PshaderPack).
+    if (project.hasProperty("shaders")) {
+        runtimeOnly(irisVersion) { transitive = false }
+        runtimeOnly(sodiumVersion) { transitive = false }
+    }
+
+    // Dev runs with Mod Menu: -PmodMenu (checks the config button and that the mod starts with it).
+    if (project.hasProperty("modMenu")) {
+        runtimeOnly(modMenuVersion) { transitive = false }
+    }
+
+    // Dev runs with Spatial GUI: ./gradlew runClient -PspatialGui=1.8 (or 1.9). Without the property it is absent.
+    if (project.hasProperty("spatialGui")) {
+        runtimeOnly(spatialGuiVersion(project.property('spatialGui').toString())) { transitive = false }
+        runtimeOnly(yaclVersion) { transitive = false }
+    }
+}
+
+processResources {
+    def props = [version: project.version, sources: project.mod_sources, issues: project.mod_issues,
+                 modrinth: project.mod_modrinth, curseforge: project.mod_curseforge,
+                 author: project.mod_author, license: project.mod_license]
+    inputs.properties props
+    filteringCharset "UTF-8"
+
+    filesMatching("fabric.mod.json") {
+        expand props
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 25
+    it.options.encoding = "UTF-8"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+jar {
+    // Apache 2.0 §4: the license and the NOTICE travel with the jar.
+    ["LICENSE", "NOTICE", "THIRD_PARTY.md"].each { name ->
+        from(layout.projectDirectory.file(name)) {
+            rename { "${it}_${project.base.archivesName.get()}" }
+        }
+    }
+}

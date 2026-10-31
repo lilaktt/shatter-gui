@@ -1,0 +1,142 @@
+{
+  "schema": 2,
+  "id": "recede",
+  "name": "Recede",
+  "description": "Sinks away into the depth towards the horizon, leaning back and darkening, down to a speck.",
+  "open": true,
+  "duration": 12,
+  "fracture": {
+    "mode": "grid",
+    "cols": 1,
+    "rows": 1,
+    "jitter": 0
+  },
+  "trigger": {
+    "type": "none",
+    "spread": 0
+  },
+  "layers": [
+    {
+      "name": "Away",
+      "module": "follow-path",
+      "params": {
+        "points": [
+          [
+            0,
+            -0.06,
+            -1.6
+          ]
+        ],
+        "progress": {
+          "curve": "easeInOut",
+          "from": 0,
+          "to": 1
+        }
+      }
+    },
+    {
+      "name": "Tilt",
+      "module": "spin",
+      "params": {
+        "speed": 0,
+        "turn": {
+          "curve": "easeInOut",
+          "from": 0,
+          "to": -0.65
+        },
+        "axis": 0
+      }
+    },
+    {
+      "name": "Shrink",
+      "module": "scale",
+      "params": {
+        "value": {
+          "curve": "easeIn",
+          "from": 1,
+          "to": 0.12
+        }
+      }
+    }
+  ],
+  "appearance": {
+    "color": [
+      {
+        "t": 0,
+        "color": "#ffffff"
+      },
+      {
+        "t": 1,
+        "color": "#6e7078"
+      }
+    ],
+    "alpha": {
+      "keys": [
+        [
+          0,
+          1
+        ],
+        [
+          0.8,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ]
+    }
+  },
+  "sounds": [
+    {
+      "name": "Whoosh",
+      "sound": "minecraft:ui.toast.out",
+      "volume": 0.4,
+      "pitch": 1.2
+    }
+  ],
+  "reduced": {
+    "layers": [
+      {
+        "name": "Shrink",
+        "module": "scale",
+        "params": {
+          "value": {
+            "curve": "easeOut",
+            "from": 1,
+            "to": 0.9
+          }
+        }
+      }
+    ],
+    "appearance": {
+      "color": [
+        {
+          "t": 0,
+          "color": "#ffffff"
+        },
+        {
+          "t": 1,
+          "color": "#9a9ca4"
+        }
+      ],
+      "alpha": {
+        "keys": [
+          [
+            0,
+            1
+          ],
+          [
+            0.25,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      }
+    },
+    "emitters": []
+  }
+}

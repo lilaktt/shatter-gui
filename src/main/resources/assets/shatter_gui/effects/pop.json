@@ -1,0 +1,121 @@
+{
+  "schema": 2,
+  "id": "pop",
+  "name": "Pop",
+  "description": "Squeezes into a dot and is gone, with a soft pop.",
+  "open": true,
+  "duration": 9,
+  "fracture": {
+    "mode": "grid",
+    "cols": 1,
+    "rows": 1,
+    "jitter": 0
+  },
+  "trigger": {
+    "type": "none",
+    "spread": 0
+  },
+  "layers": [
+    {
+      "name": "Squeeze",
+      "module": "scale",
+      "params": {
+        "value": {
+          "keys": [
+            [
+              0,
+              1
+            ],
+            [
+              0.25,
+              1.06
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "ease": "smooth"
+        }
+      }
+    }
+  ],
+  "appearance": {
+    "alpha": {
+      "keys": [
+        [
+          0,
+          1
+        ],
+        [
+          0.75,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ]
+    }
+  },
+  "emitters": [
+    {
+      "name": "Sparkle",
+      "particle": "minecraft:end_rod",
+      "zone": "point",
+      "rate": 0,
+      "burst": 6,
+      "from": 0.8,
+      "velocity": [
+        0,
+        0,
+        0.01
+      ],
+      "spread": 0.03,
+      "life": 8
+    }
+  ],
+  "sounds": [
+    {
+      "name": "Pop",
+      "sound": "minecraft:entity.item.pickup",
+      "volume": 0.5,
+      "pitch": 1.4,
+      "at": 0.8
+    }
+  ],
+  "reduced": {
+    "layers": [
+      {
+        "name": "Squeeze",
+        "module": "scale",
+        "params": {
+          "value": {
+            "curve": "easeIn",
+            "from": 1,
+            "to": 0.6
+          }
+        }
+      }
+    ],
+    "appearance": {
+      "alpha": {
+        "keys": [
+          [
+            0,
+            1
+          ],
+          [
+            0.4,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      }
+    },
+    "emitters": []
+  }
+}

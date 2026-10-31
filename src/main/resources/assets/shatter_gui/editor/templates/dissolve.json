@@ -1,0 +1,17 @@
+{
+  "schema": 2,
+  "id": "dissolve_fx",
+  "name": "Dissolve",
+  "description": "Falls apart into tiny pixels that float away and fade.",
+  "duration": 44,
+  "fracture": { "mode": "pixels", "size": 4 },
+  "trigger": { "type": "random", "spread": 0.75 },
+  "layers": [
+    { "name": "Float", "module": "drift", "params": { "amount": 0.006, "frequency": 0.3, "out": 0.01 } },
+    { "name": "Up", "module": "gravity", "params": { "strength": -0.002 } },
+    { "name": "Shrink", "module": "scale", "params": { "value": { "curve": "easeIn", "from": 1, "to": 0 } } }
+  ],
+  "appearance": { "color": ["#ffffff", "#bfe3ff"], "alpha": { "curve": "easeIn", "from": 1, "to": 0 } },
+  "emitters": [ { "name": "Dust", "particle": "minecraft:white_ash", "zone": "surface", "rate": 1.5 } ],
+  "sounds": [ { "name": "Sand", "sound": "minecraft:block.sand.break", "volume": 0.4, "pitch": 1.5 } ]
+}

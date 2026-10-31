@@ -1,0 +1,58 @@
+{
+  "schema": 2,
+  "id": "iris",
+  "name": "Iris",
+  "description": "The edges close in towards the middle like a camera iris.",
+  "open": true,
+  "duration": 14,
+  "fracture": {
+    "mode": "radial",
+    "count": 10,
+    "rings": 2,
+    "jitter": 0
+  },
+  "trigger": {
+    "type": "radial",
+    "from": "center",
+    "invert": true,
+    "spread": 0.45
+  },
+  "layers": [
+    {
+      "name": "Close in",
+      "module": "attract",
+      "params": {
+        "to": "center",
+        "strength": 0.02,
+        "swirl": 0.6,
+        "absorb": 0.25
+      }
+    }
+  ],
+  "appearance": {
+    "alpha": {
+      "keys": [
+        [
+          0,
+          1
+        ],
+        [
+          0.8,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ]
+    }
+  },
+  "sounds": [
+    {
+      "name": "Shutter",
+      "sound": "minecraft:block.iron_trapdoor.close",
+      "volume": 0.3,
+      "pitch": 1.5
+    }
+  ]
+}

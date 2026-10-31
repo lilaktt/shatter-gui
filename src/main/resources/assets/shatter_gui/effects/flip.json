@@ -1,0 +1,95 @@
+{
+  "schema": 2,
+  "id": "flip",
+  "name": "Card flip",
+  "description": "Turns about its vertical axis like a card, narrowing in perspective, and vanishes edge-on.",
+  "open": true,
+  "duration": 10,
+  "fracture": {
+    "mode": "grid",
+    "cols": 1,
+    "rows": 1,
+    "jitter": 0
+  },
+  "trigger": {
+    "type": "none",
+    "spread": 0
+  },
+  "layers": [
+    {
+      "name": "Turn",
+      "module": "spin",
+      "params": {
+        "speed": 0,
+        "turn": {
+          "curve": "easeInOut",
+          "from": 0,
+          "to": 1.5708
+        },
+        "axis": 1.5708
+      }
+    }
+  ],
+  "appearance": {
+    "alpha": {
+      "keys": [
+        [
+          0,
+          1
+        ],
+        [
+          0.9,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ]
+    }
+  },
+  "sounds": [
+    {
+      "name": "Flip",
+      "sound": "minecraft:item.book.page_turn",
+      "volume": 0.45,
+      "pitch": 1.2
+    }
+  ],
+  "reduced": {
+    "layers": [
+      {
+        "name": "Turn",
+        "module": "spin",
+        "params": {
+          "speed": 0,
+          "turn": {
+            "curve": "easeOut",
+            "from": 0,
+            "to": 0.5
+          },
+          "axis": 1.5708
+        }
+      }
+    ],
+    "appearance": {
+      "alpha": {
+        "keys": [
+          [
+            0,
+            1
+          ],
+          [
+            0.3,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      }
+    },
+    "emitters": []
+  }
+}

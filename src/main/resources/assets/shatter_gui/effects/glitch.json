@@ -1,0 +1,35 @@
+{
+  "schema": 2,
+  "id": "glitch",
+  "name": "Glitch",
+  "description": "Strips and blocks jump sideways and flicker in split colours before they vanish.",
+  "open": true,
+  "duration": 26,
+  "fracture": { "mode": "strips", "count": 16, "segments": 6, "jitter": 0 },
+  "trigger": { "type": "random", "spread": 0.6 },
+  "layers": [
+    { "name": "Shift", "module": "follow-path", "target": { "group": "random", "chance": 0.5, "seed": 3 },
+      "params": { "points": [[0.06, 0], [-0.05, 0], [0.12, 0]],
+                  "progress": { "keys": [[0, 0], [0.25, 0.34], [0.5, 0.67], [0.75, 1]], "ease": "step" } } },
+    { "name": "Shift back", "module": "follow-path", "target": { "group": "random", "chance": 0.5, "seed": 3, "invert": true },
+      "params": { "points": [[-0.04, 0], [0.07, 0], [-0.1, 0]],
+                  "progress": { "keys": [[0, 0], [0.3, 0.34], [0.55, 0.67], [0.8, 1]], "ease": "step" } } }
+  ],
+  "appearance": {
+    "palette": ["#ffffff", "#ff6fe0", "#6ff2ff", "#ffffff"],
+    "alpha": { "keys": [[0, 1], [0.3, 1], [0.32, 0.35], [0.4, 1], [0.6, 1], [0.62, 0.3], [0.7, 1], [1, 0]] }
+  },
+  "sounds": [
+    { "name": "Bit", "sound": "minecraft:block.note_block.bit", "volume": 0.35, "pitch": 0.6 },
+    { "name": "Off", "sound": "minecraft:block.copper_bulb.turn_off", "volume": 0.3, "pitch": 1.4, "at": 0.5 }
+  ],
+  "reduced": {
+    "layers": [
+      { "name": "Slide", "module": "follow-path", "target": { "group": "alternate" },
+        "params": { "points": [[0.05, 0]] } },
+      { "name": "Slide back", "module": "follow-path", "target": { "group": "alternate", "invert": true },
+        "params": { "points": [[-0.05, 0]] } }
+    ],
+    "appearance": { "alpha": { "keys": [[0, 1], [0.6, 1], [1, 0]] } }
+  }
+}

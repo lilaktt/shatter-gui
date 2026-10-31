@@ -1,0 +1,23 @@
+{
+  "schema": 2,
+  "id": "vortex_fx",
+  "name": "Vortex",
+  "description": "Pieces spiral into the centre, glow violet and shrink to nothing.",
+  "duration": 40,
+  "fracture": { "mode": "grid", "cols": 14, "rows": 9, "jitter": 0.4 },
+  "trigger": { "type": "radial", "from": "center", "spread": 0.3 },
+  "layers": [
+    { "name": "Swirl", "module": "attract",
+      "params": { "to": "center", "strength": { "curve": "easeIn", "from": 0.005, "to": 0.03 }, "swirl": 2.5, "absorb": 0.08 } },
+    { "name": "Spin", "module": "spin", "params": { "speed": 0.3 } },
+    { "name": "Drag", "module": "drag", "params": { "amount": 0.04 } },
+    { "name": "Shrink", "module": "scale", "params": { "value": { "curve": "easeInCubic", "from": 1, "to": 0 } } }
+  ],
+  "appearance": {
+    "color": ["#ffffff", "#b77bff", "#ffffff"],
+    "alpha": { "keys": [[0, 1], [0.85, 1], [1, 0]] },
+    "emissive": { "curve": "easeIn", "from": 0, "to": 0.7 },
+    "emissiveColor": "#c08bff"
+  },
+  "sounds": [ { "name": "Portal", "sound": "minecraft:block.portal.trigger", "volume": 0.3, "pitch": 1.6 } ]
+}
