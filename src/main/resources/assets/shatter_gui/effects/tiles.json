@@ -1,0 +1,30 @@
+{
+  "schema": 2,
+  "id": "tiles",
+  "name": "Tiles",
+  "description": "Comes apart in square tiles that pop loose one by one and fall.",
+  "open": true,
+  "duration": 40,
+  "fracture": { "mode": "grid", "cols": 8, "rows": 5, "jitter": 0 },
+  "trigger": { "type": "random", "spread": 0.6 },
+  "layers": [
+    { "name": "Loosen", "module": "stay", "to": 0.15 },
+    { "name": "Pop", "module": "scale", "to": 0.25, "params": { "value": { "keys": [[0, 1], [0.4, 0.93], [1, 1]] } } },
+    { "name": "Pop out", "module": "launch", "from": 0.15,
+      "params": { "from": "center", "speed": 0.008, "spread": 0.3, "out": 0.03 } },
+    { "name": "Fall", "module": "gravity", "from": 0.15, "params": { "strength": 0.035 } },
+    { "name": "Tumble", "module": "spin", "from": 0.15,
+      "params": { "speed": { "random": [-0.12, 0.12] }, "tumble": { "random": [-0.15, 0.15] } } }
+  ],
+  "appearance": {
+    "color": [ { "t": 0, "color": "#ffffff" }, { "t": 0.3, "color": "#ffffff" }, { "t": 1, "color": "#9a9a9a" } ],
+    "alpha": { "keys": [[0, 1], [0.8, 1], [1, 0]] }
+  },
+  "emitters": [
+    { "name": "Dust", "particle": "minecraft:poof", "zone": "front", "rate": 0.6, "velocity": [0, 0, 0.01], "spread": 0.01 }
+  ],
+  "sounds": [
+    { "name": "Crack", "sound": "minecraft:block.deepslate_tiles.break", "volume": 0.5 },
+    { "name": "Fall", "sound": "minecraft:block.stone.break", "volume": 0.35, "pitch": 1.2, "at": 0.5 }
+  ]
+}

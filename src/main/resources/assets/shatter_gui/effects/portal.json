@@ -1,0 +1,31 @@
+{
+  "schema": 2,
+  "id": "portal",
+  "name": "Ender portal",
+  "description": "A purple vortex pulls the pieces into the middle, with portal particles.",
+  "open": true,
+  "duration": 40,
+  "fracture": { "mode": "voronoi", "count": 80, "jitter": 0.6 },
+  "trigger": { "type": "radial", "from": "center", "spread": 0.35 },
+  "layers": [
+    { "name": "Pull", "module": "attract",
+      "params": { "to": "center", "strength": { "curve": "easeIn", "from": 0.004, "to": 0.03 }, "swirl": 3.5, "absorb": 0.1 } },
+    { "name": "Spin", "module": "spin", "params": { "speed": 0.35 } },
+    { "name": "Drag", "module": "drag", "params": { "amount": 0.04 } },
+    { "name": "Shrink", "module": "scale", "params": { "value": { "curve": "easeInCubic", "from": 1, "to": 0 } } }
+  ],
+  "appearance": {
+    "color": ["#ffffff", "#c48bff", "#5b1f9e"],
+    "alpha": { "keys": [[0, 1], [0.85, 1], [1, 0]] },
+    "emissive": { "curve": "easeIn", "from": 0, "to": 0.85 },
+    "emissiveColor": "#b366ff"
+  },
+  "emitters": [
+    { "name": "Portal", "particle": "minecraft:portal", "zone": "surface", "rate": 3, "velocity": [0, 0, 0.02], "spread": 0.03 },
+    { "name": "Rift", "particle": "minecraft:reverse_portal", "zone": "point", "at": "center", "rate": 1.5, "from": 0.3, "spread": 0.05 }
+  ],
+  "sounds": [
+    { "name": "Teleport", "sound": "minecraft:entity.enderman.teleport", "volume": 0.4, "pitch": 1.2 },
+    { "name": "Hum", "sound": "minecraft:block.portal.trigger", "volume": 0.2, "pitch": 1.8 }
+  ]
+}

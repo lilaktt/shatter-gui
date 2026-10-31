@@ -1,0 +1,20 @@
+{
+  "_comment": "Thematic mode: the close effect by kind of interface. Rules are tried in order; 'match' lists menu types (minecraft:furnace) and source blocks (block:minecraft:ender_chest). The player can change each rule's effect in the Screens tab.",
+  "rules": [
+    { "id": "ender_chest", "match": ["block:minecraft:ender_chest"], "effect": "portal" },
+    { "id": "containers", "match": ["minecraft:generic_9x1", "minecraft:generic_9x2", "minecraft:generic_9x3", "minecraft:generic_9x4", "minecraft:generic_9x5", "minecraft:generic_9x6", "minecraft:shulker_box"], "effect": "fly" },
+    { "id": "furnaces", "match": ["minecraft:furnace", "minecraft:smoker", "minecraft:blast_furnace"], "effect": "burn" },
+    { "id": "enchanting", "match": ["minecraft:enchantment"], "effect": "runes" },
+    { "id": "brewing", "match": ["minecraft:brewing_stand"], "effect": "bubbles" },
+    { "id": "anvil", "match": ["minecraft:anvil"], "effect": "explosion" },
+    { "id": "beacon", "match": ["minecraft:beacon"], "effect": "vortex" },
+    { "id": "crafting", "match": ["minecraft:crafting"], "effect": "glass" },
+    { "id": "merchant", "match": ["minecraft:merchant"], "effect": "confetti" },
+    { "id": "grindstone", "match": ["minecraft:grindstone"], "effect": "twirl" },
+    { "id": "loom", "match": ["minecraft:loom"], "effect": "accordion" },
+    { "id": "cartography", "match": ["minecraft:cartography_table"], "effect": "peel" },
+    { "id": "stonecutter", "match": ["minecraft:stonecutter"], "effect": "tear" },
+    { "id": "lectern", "match": ["minecraft:lectern"], "effect": "flip" },
+    { "id": "hopper", "match": ["minecraft:hopper"], "effect": "drop" }
+  ]
+}

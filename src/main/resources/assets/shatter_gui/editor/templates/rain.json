@@ -1,0 +1,22 @@
+{
+  "schema": 2,
+  "id": "particle_rain",
+  "name": "Particle rain",
+  "description": "Drops rain down from above while the strips slide down and wash away.",
+  "duration": 70,
+  "fracture": { "mode": "strips", "direction": "vertical", "count": 16, "segments": 4, "jitter": 0.3 },
+  "trigger": { "type": "wave", "direction": [0, 1], "spread": 0.6 },
+  "layers": [
+    { "name": "Fall", "module": "gravity", "params": { "strength": 0.02 } },
+    { "name": "Wobble", "module": "drift", "params": { "amount": 0.004 } },
+    { "name": "Air", "module": "drag", "params": { "amount": 0.03 } },
+    { "name": "Land", "module": "collide", "params": { "bounce": 0.1, "friction": 0.6, "rest": "fade" } }
+  ],
+  "appearance": { "color": ["#ffffff", "#a8c8ff"] },
+  "emitters": [
+    { "name": "Rain", "particle": "minecraft:falling_water", "zone": "line", "lineFrom": [0, -0.1], "lineTo": [1, -0.1],
+      "rate": { "curve": "pulse", "from": 0, "to": 6 }, "velocity": [0, -0.05, 0] },
+    { "name": "Splash", "particle": "minecraft:splash", "zone": "front", "rate": 1 }
+  ],
+  "sounds": [ { "name": "Rain", "sound": "minecraft:weather.rain", "volume": 0.4, "pitch": 1.3 } ]
+}

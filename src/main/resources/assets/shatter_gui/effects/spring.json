@@ -1,0 +1,133 @@
+{
+  "schema": 2,
+  "id": "spring",
+  "name": "Spring",
+  "description": "Squashes down like a spring, then shoots up out of sight.",
+  "open": true,
+  "duration": 12,
+  "fracture": {
+    "mode": "grid",
+    "cols": 1,
+    "rows": 1,
+    "jitter": 0
+  },
+  "trigger": {
+    "type": "none",
+    "spread": 0
+  },
+  "layers": [
+    {
+      "name": "Squash",
+      "module": "spin",
+      "params": {
+        "speed": 0,
+        "turn": {
+          "keys": [
+            [
+              0,
+              0
+            ],
+            [
+              0.4,
+              -1.05
+            ],
+            [
+              0.55,
+              0.15
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "ease": "smooth"
+        },
+        "axis": 0,
+        "pivot": [
+          0.5,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Shoot",
+      "module": "follow-path",
+      "from": 0.45,
+      "params": {
+        "points": [
+          [
+            0,
+            -1.4,
+            0
+          ]
+        ],
+        "progress": {
+          "curve": "easeIn",
+          "from": 0,
+          "to": 1
+        }
+      }
+    }
+  ],
+  "appearance": {
+    "alpha": {
+      "keys": [
+        [
+          0,
+          1
+        ],
+        [
+          0.6,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ]
+    }
+  },
+  "sounds": [
+    {
+      "name": "Boing",
+      "sound": "minecraft:block.piston.extend",
+      "volume": 0.3,
+      "pitch": 1.5,
+      "at": 0.35
+    }
+  ],
+  "reduced": {
+    "layers": [
+      {
+        "name": "Shrink",
+        "module": "scale",
+        "params": {
+          "value": {
+            "curve": "easeOut",
+            "from": 1,
+            "to": 0.92
+          }
+        }
+      }
+    ],
+    "appearance": {
+      "alpha": {
+        "keys": [
+          [
+            0,
+            1
+          ],
+          [
+            0.25,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      }
+    },
+    "emitters": []
+  }
+}

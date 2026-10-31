@@ -1,0 +1,68 @@
+{
+  "schema": 2,
+  "id": "twirl",
+  "name": "Twirl",
+  "description": "Spins around its centre faster and faster as it shrinks away.",
+  "open": true,
+  "duration": 11,
+  "fracture": {
+    "mode": "grid",
+    "cols": 1,
+    "rows": 1,
+    "jitter": 0
+  },
+  "trigger": {
+    "type": "none",
+    "spread": 0
+  },
+  "layers": [
+    {
+      "name": "Spin",
+      "module": "spin",
+      "params": {
+        "speed": {
+          "curve": "easeIn",
+          "from": 0.05,
+          "to": 0.45
+        }
+      }
+    },
+    {
+      "name": "Shrink",
+      "module": "scale",
+      "params": {
+        "value": {
+          "curve": "easeIn",
+          "from": 1,
+          "to": 0
+        }
+      }
+    }
+  ],
+  "appearance": {
+    "alpha": {
+      "keys": [
+        [
+          0,
+          1
+        ],
+        [
+          0.8,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ]
+    }
+  },
+  "sounds": [
+    {
+      "name": "Swish",
+      "sound": "minecraft:entity.player.attack.sweep",
+      "volume": 0.3,
+      "pitch": 1.4
+    }
+  ]
+}

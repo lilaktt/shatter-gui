@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "id": "pack_pulse",
+  "name": "Pack pulse",
+  "base": "dissolve",
+  "params": { "duration": 12, "notAParam": 5 },
+  "particles": [
+    { "particle": "minecraft:end_rod", "density": 0.5, "stage": "during" },
+    { "particle": "minecraft:no_such_particle", "density": 1, "stage": "end" }
+  ],
+  "sounds": [
+    { "sound": "minecraft:block.note_block.chime", "volume": 0.5, "pitch": 1.5, "moment": "start" },
+    { "sound": "minecraft:no.such.sound", "moment": "end" }
+  ]
+}

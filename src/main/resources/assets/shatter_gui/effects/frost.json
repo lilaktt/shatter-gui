@@ -1,0 +1,33 @@
+{
+  "schema": 2,
+  "id": "frost",
+  "name": "Frost",
+  "description": "Ice creeps in from the edges to the centre; each frozen piece then cracks off and falls.",
+  "open": true,
+  "duration": 46,
+  "fracture": { "mode": "voronoi", "count": 100, "jitter": 0.7 },
+  "trigger": { "type": "radial", "from": "center", "invert": true, "spread": 0.45, "noise": 0.15 },
+  "layers": [
+    { "name": "Freeze", "module": "stay", "to": 0.5 },
+    { "name": "Crack off", "module": "launch", "from": 0.5,
+      "params": { "from": "center", "speed": { "random": [0.015, 0.035] }, "spread": 0.6, "out": 0.02 } },
+    { "name": "Fall", "module": "gravity", "from": 0.5, "params": { "strength": 0.03 } },
+    { "name": "Tumble", "module": "spin", "from": 0.5,
+      "params": { "speed": { "random": [-0.2, 0.2] }, "tumble": { "random": [-0.25, 0.25] } } }
+  ],
+  "appearance": {
+    "color": [ { "t": 0, "color": "#ffffff" }, { "t": 0.3, "color": "#d6f1ff" }, { "t": 0.5, "color": "#9fd8ff" }, { "t": 1, "color": "#9fd8ff" } ],
+    "alpha": { "keys": [[0, 1], [0.75, 1], [1, 0]] },
+    "emissive": { "keys": [[0, 0], [0.4, 0.3], [0.52, 0.5], [0.7, 0]] },
+    "emissiveColor": "#e3f7ff"
+  },
+  "emitters": [
+    { "name": "Frost", "particle": "minecraft:snowflake", "zone": "front", "rate": 1.2, "to": 0.6, "velocity": [0, 0.004, 0.01] },
+    { "name": "Ice dust", "particle": "minecraft:snowflake", "zone": "surface", "rate": 1, "from": 0.45, "velocity": [0, -0.01, 0.01] }
+  ],
+  "sounds": [
+    { "name": "Freeze", "sound": "minecraft:block.powder_snow.break", "volume": 0.5, "pitch": 1.2 },
+    { "name": "Crack", "sound": "minecraft:block.glass.break", "volume": 0.4, "pitch": 1.5, "at": 0.5 },
+    { "name": "Chime", "sound": "minecraft:block.amethyst_block.chime", "volume": 0.4, "pitch": 1.4, "at": 0.25 }
+  ]
+}

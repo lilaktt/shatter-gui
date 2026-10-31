@@ -1,0 +1,1 @@
+{ "schema": 2, "id": "fx_broken", "layers": [ { "module": "teleport" } ], "appearance": { "color": ["#fff", "notacolor"] } }

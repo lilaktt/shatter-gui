@@ -1,0 +1,33 @@
+{
+  "schema": 2,
+  "id": "explosion",
+  "name": "Explosion",
+  "description": "A white-hot flash and a shock wave throw the pieces outwards, with sparks but no smoke.",
+  "open": true,
+  "duration": 30,
+  "fracture": { "mode": "radial", "count": 16, "rings": 4, "jitter": 0.6, "center": [0.5, 0.5] },
+  "trigger": { "type": "radial", "from": "center", "spread": 0.15, "curve": "easeOut" },
+  "layers": [
+    { "name": "Shock wave", "module": "scale", "to": 0.15, "params": { "value": { "keys": [[0, 1], [0.4, 1.08], [1, 1]] } } },
+    { "name": "Blast", "module": "launch", "from": 0.05,
+      "params": { "from": "center", "speed": { "random": [0.09, 0.16] }, "spread": 0.35, "out": { "random": [0.03, 0.08] } } },
+    { "name": "Drag", "module": "drag", "params": { "amount": 0.05 } },
+    { "name": "Fall", "module": "gravity", "from": 0.3, "params": { "strength": 0.02 } },
+    { "name": "Tumble", "module": "spin", "from": 0.05,
+      "params": { "speed": { "random": [-0.5, 0.5] }, "tumble": { "random": [-0.45, 0.45] } } }
+  ],
+  "appearance": {
+    "color": [ { "t": 0, "color": "#ffffff" }, { "t": 0.08, "color": "#fff1c4" }, { "t": 0.3, "color": "#e8b48a" }, { "t": 1, "color": "#7a6a60" } ],
+    "alpha": { "keys": [[0, 1], [0.75, 1], [1, 0]] },
+    "emissive": { "keys": [[0, 1], [0.12, 0.9], [0.35, 0]] },
+    "emissiveColor": "#ffd27a"
+  },
+  "emitters": [
+    { "name": "Sparks", "particle": "minecraft:firework", "zone": "point", "at": "center", "burst": 24, "to": 0.1, "rate": 0, "velocity": [0, 0, 0.03], "spread": 0.12 },
+    { "name": "Shock ring", "particle": "minecraft:crit", "zone": "edge", "burst": 30, "to": 0.15, "rate": 0, "velocity": [0, 0, 0.02], "spread": 0.06 }
+  ],
+  "sounds": [
+    { "name": "Bang", "sound": "minecraft:entity.generic.explode", "volume": 0.35, "pitch": 1.2 },
+    { "name": "Crackle", "sound": "minecraft:entity.firework_rocket.blast", "volume": 0.4, "at": 0.05 }
+  ]
+}

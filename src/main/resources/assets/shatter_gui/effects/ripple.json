@@ -1,0 +1,83 @@
+{
+  "schema": 2,
+  "id": "ripple",
+  "name": "Ripple",
+  "description": "A wave crosses the interface; the pieces rise from it and float away.",
+  "open": true,
+  "duration": 16,
+  "fracture": {
+    "mode": "grid",
+    "cols": 8,
+    "rows": 6,
+    "jitter": 0
+  },
+  "trigger": {
+    "type": "wave",
+    "direction": [
+      1,
+      0
+    ],
+    "spread": 0.6,
+    "curve": "easeOut"
+  },
+  "layers": [
+    {
+      "name": "Rise",
+      "module": "force",
+      "params": {
+        "y": 0.012,
+        "z": 0.005
+      }
+    },
+    {
+      "name": "Tumble",
+      "module": "spin",
+      "params": {
+        "speed": 0,
+        "tumble": {
+          "random": [
+            -0.12,
+            0.12
+          ]
+        }
+      }
+    },
+    {
+      "name": "Shrink",
+      "module": "scale",
+      "params": {
+        "value": {
+          "curve": "easeIn",
+          "from": 1,
+          "to": 0.6
+        }
+      }
+    }
+  ],
+  "appearance": {
+    "alpha": {
+      "keys": [
+        [
+          0,
+          1
+        ],
+        [
+          0.35,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ]
+    }
+  },
+  "sounds": [
+    {
+      "name": "Chime",
+      "sound": "minecraft:block.amethyst_block.chime",
+      "volume": 0.25,
+      "pitch": 1.6
+    }
+  ]
+}

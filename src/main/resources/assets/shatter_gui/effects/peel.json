@@ -1,0 +1,140 @@
+{
+  "schema": 2,
+  "id": "peel",
+  "name": "Sticker",
+  "description": "A corner curls up and the whole interface peels away like a sticker.",
+  "open": true,
+  "duration": 13,
+  "fracture": {
+    "mode": "grid",
+    "cols": 1,
+    "rows": 1,
+    "jitter": 0
+  },
+  "trigger": {
+    "type": "none",
+    "spread": 0
+  },
+  "layers": [
+    {
+      "name": "Curl",
+      "module": "spin",
+      "params": {
+        "speed": 0,
+        "turn": {
+          "keys": [
+            [
+              0,
+              0
+            ],
+            [
+              0.45,
+              0.9
+            ],
+            [
+              1,
+              1.7
+            ]
+          ],
+          "ease": "smooth"
+        },
+        "axis": 0.785,
+        "pivot": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Peel off",
+      "module": "follow-path",
+      "from": 0.3,
+      "params": {
+        "points": [
+          [
+            0.15,
+            -0.1,
+            0.12
+          ],
+          [
+            0.7,
+            -0.6,
+            0.25
+          ]
+        ],
+        "progress": {
+          "curve": "easeIn",
+          "from": 0,
+          "to": 1
+        }
+      }
+    }
+  ],
+  "appearance": {
+    "alpha": {
+      "keys": [
+        [
+          0,
+          1
+        ],
+        [
+          0.65,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ]
+    }
+  },
+  "sounds": [
+    {
+      "name": "Peel",
+      "sound": "minecraft:block.honey_block.slide",
+      "volume": 0.4,
+      "pitch": 1.4
+    }
+  ],
+  "reduced": {
+    "layers": [
+      {
+        "name": "Peel off",
+        "module": "follow-path",
+        "params": {
+          "points": [
+            [
+              0.08,
+              -0.06,
+              0
+            ]
+          ],
+          "progress": {
+            "curve": "easeOut",
+            "from": 0,
+            "to": 1
+          }
+        }
+      }
+    ],
+    "appearance": {
+      "alpha": {
+        "keys": [
+          [
+            0,
+            1
+          ],
+          [
+            0.25,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      }
+    },
+    "emitters": []
+  }
+}

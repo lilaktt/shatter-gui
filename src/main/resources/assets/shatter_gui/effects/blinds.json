@@ -1,0 +1,16 @@
+{
+  "schema": 2,
+  "id": "blinds",
+  "name": "Blinds",
+  "description": "Horizontal slats slide out, every other one to the opposite side.",
+  "open": true,
+  "duration": 28,
+  "fracture": { "mode": "strips", "count": 12, "segments": 1, "jitter": 0 },
+  "trigger": { "type": "wave", "direction": [0, 1], "spread": 0.25 },
+  "layers": [
+    { "name": "Slide left", "module": "force", "target": { "group": "alternate" }, "params": { "x": -0.008 } },
+    { "name": "Slide right", "module": "force", "target": { "group": "alternate", "invert": true }, "params": { "x": 0.008 } }
+  ],
+  "appearance": { "alpha": { "keys": [[0, 1], [0.7, 1], [1, 0]] } },
+  "sounds": [ { "name": "Slats", "sound": "minecraft:block.bamboo_wood_trapdoor.close", "volume": 0.4, "pitch": 1.3 } ]
+}

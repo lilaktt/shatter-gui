@@ -1,0 +1,112 @@
+{
+  "schema": 2,
+  "id": "slide",
+  "name": "Slide",
+  "description": "Slides off to the side with a slight tilt.",
+  "open": true,
+  "duration": 10,
+  "fracture": {
+    "mode": "grid",
+    "cols": 1,
+    "rows": 1,
+    "jitter": 0
+  },
+  "trigger": {
+    "type": "none",
+    "spread": 0
+  },
+  "layers": [
+    {
+      "name": "Slide away",
+      "module": "follow-path",
+      "params": {
+        "points": [
+          [
+            1.3,
+            0.04,
+            0
+          ]
+        ],
+        "progress": {
+          "curve": "easeIn",
+          "from": 0,
+          "to": 1
+        }
+      }
+    },
+    {
+      "name": "Tilt",
+      "module": "spin",
+      "params": {
+        "speed": -0.02
+      }
+    }
+  ],
+  "appearance": {
+    "alpha": {
+      "keys": [
+        [
+          0,
+          1
+        ],
+        [
+          0.55,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ]
+    }
+  },
+  "sounds": [
+    {
+      "name": "Swish",
+      "sound": "minecraft:item.book.page_turn",
+      "volume": 0.4,
+      "pitch": 1.5
+    }
+  ],
+  "reduced": {
+    "layers": [
+      {
+        "name": "Slide away",
+        "module": "follow-path",
+        "params": {
+          "points": [
+            [
+              0.2,
+              0,
+              0
+            ]
+          ],
+          "progress": {
+            "curve": "easeOut",
+            "from": 0,
+            "to": 1
+          }
+        }
+      }
+    ],
+    "appearance": {
+      "alpha": {
+        "keys": [
+          [
+            0,
+            1
+          ],
+          [
+            0.25,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      }
+    },
+    "emitters": []
+  }
+}

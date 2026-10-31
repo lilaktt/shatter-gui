@@ -1,0 +1,25 @@
+{
+  "schema": 2,
+  "id": "paper",
+  "name": "Paper plane",
+  "description": "Folds up in strips like paper and flies off up and away.",
+  "open": true,
+  "duration": 36,
+  "fracture": { "mode": "strips", "count": 4, "direction": "vertical", "segments": 1, "jitter": 0 },
+  "trigger": { "type": "wave", "direction": [1, 0], "spread": 0.35 },
+  "layers": [
+    { "name": "Fold", "module": "spin", "to": 0.4, "params": { "tumble": { "curve": "easeIn", "from": 0, "to": 0.22 } } },
+    { "name": "Fly away", "module": "follow-path", "from": 0.35,
+      "params": { "points": [[0.1, -0.05, 0.1], [0.5, -0.35, 0.3], [1.2, -0.8, 0.5]],
+                  "progress": { "curve": "easeIn", "from": 0, "to": 1 } } },
+    { "name": "Shrink", "module": "scale", "from": 0.3, "params": { "value": { "curve": "easeIn", "from": 1, "to": 0.35 } } }
+  ],
+  "appearance": {
+    "color": ["#ffffff", "#f4efe2"],
+    "alpha": { "keys": [[0, 1], [0.85, 1], [1, 0]] }
+  },
+  "sounds": [
+    { "name": "Fold", "sound": "minecraft:item.book.page_turn", "volume": 0.7 },
+    { "name": "Whoosh", "sound": "minecraft:entity.villager.work_cartographer", "volume": 0.35, "pitch": 1.3, "at": 0.4 }
+  ]
+}

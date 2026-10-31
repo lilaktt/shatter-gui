@@ -1,0 +1,15 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "net.shattergui.compat.spatial.mixin",
+  "plugin": "net.shattergui.compat.spatial.SpatialGuiMixinPlugin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "InventoryRendererAccessor",
+    "InventoryRendererFlyMixin",
+    "WorldBlurMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

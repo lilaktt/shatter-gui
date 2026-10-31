@@ -1,0 +1,107 @@
+{
+  "schema": 2,
+  "id": "door",
+  "name": "Door",
+  "description": "Swings open on hinges at its left edge, about 100° away from you, strip by strip.",
+  "open": true,
+  "duration": 14,
+  "fracture": {
+    "mode": "grid",
+    "cols": 1,
+    "rows": 5,
+    "jitter": 0
+  },
+  "trigger": {
+    "type": "wave",
+    "direction": [
+      0,
+      1
+    ],
+    "spread": 0.18
+  },
+  "layers": [
+    {
+      "name": "Swing",
+      "module": "spin",
+      "params": {
+        "speed": 0,
+        "turn": {
+          "curve": "easeInOut",
+          "from": 0,
+          "to": 1.745
+        },
+        "axis": 1.5708,
+        "pivot": [
+          0,
+          0.5
+        ]
+      }
+    }
+  ],
+  "appearance": {
+    "alpha": {
+      "keys": [
+        [
+          0,
+          1
+        ],
+        [
+          0.8,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ]
+    }
+  },
+  "sounds": [
+    {
+      "name": "Door",
+      "sound": "minecraft:block.wooden_door.open",
+      "volume": 0.35,
+      "pitch": 1.25
+    }
+  ],
+  "reduced": {
+    "layers": [
+      {
+        "name": "Swing",
+        "module": "spin",
+        "params": {
+          "speed": 0,
+          "turn": {
+            "curve": "easeOut",
+            "from": 0,
+            "to": 0.45
+          },
+          "axis": 1.5708,
+          "pivot": [
+            0,
+            0.5
+          ]
+        }
+      }
+    ],
+    "appearance": {
+      "alpha": {
+        "keys": [
+          [
+            0,
+            1
+          ],
+          [
+            0.3,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      }
+    },
+    "emitters": []
+  }
+}

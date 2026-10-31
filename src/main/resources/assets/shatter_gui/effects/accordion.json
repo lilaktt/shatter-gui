@@ -1,0 +1,122 @@
+{
+  "schema": 2,
+  "id": "accordion",
+  "name": "Accordion",
+  "description": "Folds up into strips like an accordion, towards the middle.",
+  "open": true,
+  "duration": 12,
+  "fracture": {
+    "mode": "strips",
+    "count": 6,
+    "direction": "vertical",
+    "segments": 1,
+    "jitter": 0
+  },
+  "trigger": {
+    "type": "none",
+    "spread": 0
+  },
+  "layers": [
+    {
+      "name": "Fold",
+      "module": "spin",
+      "target": {
+        "group": "alternate"
+      },
+      "params": {
+        "speed": 0,
+        "tumble": 0.12,
+        "axis": 1.5708
+      }
+    },
+    {
+      "name": "Fold back",
+      "module": "spin",
+      "target": {
+        "group": "alternate",
+        "invert": true
+      },
+      "params": {
+        "speed": 0,
+        "tumble": -0.12,
+        "axis": 1.5708
+      }
+    },
+    {
+      "name": "Gather",
+      "module": "attract",
+      "params": {
+        "to": "center",
+        "strength": 0.006
+      }
+    },
+    {
+      "name": "Shrink",
+      "module": "scale",
+      "params": {
+        "value": {
+          "curve": "easeIn",
+          "from": 1,
+          "to": 0.6
+        }
+      }
+    }
+  ],
+  "appearance": {
+    "alpha": {
+      "keys": [
+        [
+          0,
+          1
+        ],
+        [
+          0.7,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ]
+    }
+  },
+  "sounds": [
+    {
+      "name": "Fold",
+      "sound": "minecraft:block.wool.place",
+      "volume": 0.4,
+      "pitch": 1.2
+    }
+  ],
+  "reduced": {
+    "layers": [
+      {
+        "name": "Gather",
+        "module": "attract",
+        "params": {
+          "to": "center",
+          "strength": 0.004
+        }
+      }
+    ],
+    "appearance": {
+      "alpha": {
+        "keys": [
+          [
+            0,
+            1
+          ],
+          [
+            0.25,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      }
+    },
+    "emitters": []
+  }
+}
