@@ -45,7 +45,7 @@ body:
     id: log
     attributes:
       label: latest.log
-      description: Attach `logs/latest.log` from the session where it happened (drag the file here), and `crash-reports/…` after a crash. For a stutter, set `"profiling": true` in `config/shatter_gui.json` first.
+      description: 'Attach `logs/latest.log` from the session where it happened (drag the file here), and `crash-reports/…` after a crash. For a stutter, set `"profiling": true` in `config/shatter_gui.json` first.'
     validations:
       required: true
   - type: textarea
