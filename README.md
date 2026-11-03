@@ -58,7 +58,7 @@ English (source of truth) and Ukrainian are written by hand. German, Spanish, Fr
 Simplified Chinese, Russian, Japanese, Korean and Italian are **machine translations** and need review by native
 speakers. Missing keys fall back to English.
 
-To send a correction: change `src/main/resources/assets/shatter_gui/lang/<code>.json` and open a pull request on the
+To send a correction: change `core/src/main/resources/assets/shatter_gui/lang/<code>.json` and open a pull request on the
 mod's source page, or open an issue with the key, the current text and your text. Keep the terms of
 `docs/i18n/GLOSSARY.md` and every `%s`/`%d`; `./gradlew test` checks keys and placeholders. The same note is in
 the mod: General tab → About.
@@ -77,12 +77,16 @@ the mod: General tab → About.
 ## Building
 
 ```
-./gradlew build                 # build/libs/shatter-gui-<version>.jar, runs unit tests
-./gradlew runClientGameTest     # automated tests in a real client (screenshots in build/run/clientGameTest)
+./gradlew build                 # build/libs/shatter-gui-<version>+mc26.1.2-fabric.jar, runs unit tests
+./gradlew runClientGameTest     # automated tests in a real client (screenshots in platform-26/build/run/clientGameTest)
 ./gradlew runClientGameTest -PspatialGui=1.8 -PmodMenu
 ./gradlew runClientGameTest -Pshaders -PshaderPack=C:/path/to/Pack.zip
 ./gradlew runClientGameTest -PtestOnly=lang -Plang=ja_jp   # one language at GUI scales 1–4, screenshots lang_ja_…
+./gradlew build -Pmc=1.21.1     # the 1.21.1 port (a stub so far)
 ```
+
+The shared code (`core`, no Minecraft) and one module per Minecraft version (`platform-*`) are described in
+`docs/PORTING.md`.
 
 Author and links are in `gradle.properties` (`mod_author`, `mod_sources`, `mod_issues`, `mod_modrinth`,
 `mod_curseforge`).

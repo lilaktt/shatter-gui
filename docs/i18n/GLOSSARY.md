@@ -52,6 +52,6 @@ request.
 
 ## Sending a correction
 
-Open an issue or a pull request on the mod's source page with the changed `src/main/resources/assets/shatter_gui/lang/<code>.json`
+Open an issue or a pull request on the mod's source page with the changed `core/src/main/resources/assets/shatter_gui/lang/<code>.json`
 (and this file, if a term changes). Run `./gradlew test` before sending: it fails if a key is missing, extra, or has
 different placeholders than English.

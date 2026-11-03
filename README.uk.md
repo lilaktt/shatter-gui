@@ -15,7 +15,7 @@
 ## Збірка
 
 ```
-./gradlew build              # build/libs/shatter-gui-0.1.0-beta.jar
+./gradlew build              # build/libs/shatter-gui-0.1.0-beta+mc26.1.2-fabric.jar
 ./gradlew runClient          # dev-клієнт
 ./gradlew runClientGameTest  # автотест: відкриває/закриває екрани у справжньому клієнті, робить скріншоти
 ./gradlew runClientGameTest -PspatialGui=1.8   # те саме зі Spatial GUI 1.8 (або 1.9), береться з Modrinth Maven

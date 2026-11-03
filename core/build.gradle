@@ -1,0 +1,67 @@
+// The code shared by every Minecraft version and loader: effect format, parser and validation, the schema-2 simulation,
+// the config model, the parameters, the UI library, the effect editor and the settings screen, translations and data.
+// It must not see Minecraft or a loader: this module compiles against plain Java and the two libraries every supported
+// Minecraft ships (Gson, SLF4J), at the lowest version among them. The platform modules compile these sources again
+// with their own Minecraft (see platform-*/build.gradle), so the classes in each jar are built for that version.
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    mavenCentral()
+}
+
+// The oldest supported Minecraft (1.21.1) runs on Java 21 and ships Gson 2.10.1 and SLF4J 2.0.9.
+def coreJava = 21
+
+sourceSets {
+    main {
+        // The contract of the platform classes that core extends (PlatformScreen): compiled here with core only to check
+        // it, never part of a platform jar; each platform module supplies the real class with the same members.
+        java.srcDir 'src/contract/java'
+    }
+}
+
+dependencies {
+    compileOnly 'com.google.code.gson:gson:2.10.1'
+    compileOnly 'org.slf4j:slf4j-api:2.0.9'
+
+    // Unit tests of the pure parts (effect format parser, curves, fracture, languages): ./gradlew test (also part of build).
+    // Gson as in Minecraft 26.1.2 (the version these tests always ran with).
+    testImplementation 'com.google.code.gson:gson:2.13.2'
+    testImplementation 'org.slf4j:slf4j-api:2.0.17'
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = coreJava
+    it.options.encoding = 'UTF-8'
+}
+
+// Nothing to ship on its own: the platform jars contain these classes.
+jar {
+    enabled = false
+}
+
+test {
+    useJUnitPlatform()
+    // The tests read the repository (docs/examples, the sources for hard-coded text and translation keys).
+    workingDir = rootProject.projectDir
+}
+
+// Core must stay free of Minecraft and loaders even in fully qualified names, which the compiler would not catch here
+// only if such a class happened to be on the classpath; this check makes the rule explicit.
+tasks.register('checkNoMinecraft') {
+    def sources = fileTree('src/main/java') { include '**/*.java' }
+    inputs.files(sources)
+    doLast {
+        def banned = ~/\b(net\.minecraft|com\.mojang|net\.fabricmc|net\.neoforged|net\.irisshaders|org\.spongepowered|org\.lwjgl)\./
+        def offenders = sources.files.findAll { f -> f.text.readLines().any { line -> line =~ banned } }
+        if (!offenders.isEmpty()) {
+            throw new GradleException("core must not use Minecraft or a loader:\n  " + offenders.join('\n  '))
+        }
+    }
+}
+check.dependsOn checkNoMinecraft
