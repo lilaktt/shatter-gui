@@ -14,6 +14,7 @@ import net.shattergui.effect.ShatterWave;
 import net.shattergui.fly.FlyOpen;
 import net.shattergui.fly.FlyTarget;
 import net.shattergui.fly.OpenAssemble;
+import net.shattergui.params.FollowCamera;
 import net.shattergui.params.ParamValues;
 import net.shattergui.params.Params;
 import org.joml.Vector3f;
@@ -27,6 +28,13 @@ import java.util.Locale;
 /** Owns all live shards, grouped by the captured texture they sample. */
 public final class ShardManager {
     /** One closed screen: its capture texture plus the shards cut from it. The texture slot is freed with the last shard. */
+    /**
+     * An opening's plane: as it was when its picture was taken ({@code captured}, centre in world coordinates) and as it
+     * is in the current frame ({@code now}, centre relative to the camera; may return null when unknown).
+     */
+    public record OpenAnchor(PlaneBasis captured, java.util.function.Supplier<PlaneBasis> now, boolean onSpatialPlane) {
+    }
+
     public static final class Batch {
         final CapturePool.Slot slot;
         final List<ShardInstance> shards;
@@ -44,17 +52,26 @@ public final class ShardManager {
         /** The length of the hurry, in ticks. */
         int hurryTotal = HURRY_TICKS;
         /**
-         * Camera position the batch is drawn relative to instead of the live camera, or null. Set while a screen is
-         * gathered on a Spatial GUI plane: that plane hangs at a fixed offset from the camera (which still moves out to
-         * third person), and so do the pieces, so they land where the plane will appear.
+         * For an opening: the plane it was cut from and where that plane is now, or null. While it follows the camera
+         * ({@link #follows}) the pieces are drawn relative to the plane of this frame (see {@link CameraSpace#follow}),
+         * so they stay in front of the face while the player moves and land where the real screen appears.
          */
-        final Vec3 cameraAnchor;
+        final OpenAnchor anchor;
+        /** Whether this opening follows the camera (the player's setting, the effect's own, the role's default). */
+        final boolean follows;
+        private PlaneBasis lastPlane;
         /** The screen an opening (gathering) wave belongs to, or null for a close. */
         final Screen owner;
 
         Batch(CapturePool.Slot slot, List<ShardInstance> shards, ShatterEffect effect, ShatterWave wave,
-              ParamValues params, boolean preview, Vec3 cameraAnchor, Screen owner) {
-            this.cameraAnchor = cameraAnchor;
+              ParamValues params, boolean preview, OpenAnchor anchor, Screen owner) {
+            this.anchor = anchor;
+            // Openings follow by default; of the closes only the fly effect can (it then leaves from where the
+            // screen is now), and only when asked to: the pieces of the others stay in the world.
+            this.follows = anchor != null && (effect.opens()
+                    ? FollowCamera.follows(params, effect.followCamera(), true)
+                    : effect.base() instanceof net.shattergui.effect.FlyEffect
+                    && FollowCamera.follows(params, effect.followCamera(), false));
             this.owner = owner;
             this.slot = slot;
             this.shards = shards;
@@ -81,9 +98,32 @@ public final class ShardManager {
             return !effect.opens() || owner == null || owner == Minecraft.getInstance().screen;
         }
 
-        /** The camera position to draw relative to, given the live one (see {@link #cameraAnchor}). */
-        public Vec3 camera(Vec3 live) {
-            return cameraAnchor != null ? cameraAnchor : live;
+        /** How this batch's world positions are drawn this frame, given the live camera position. */
+        public CameraSpace space(Vec3 live) {
+            if (follows) {
+                PlaneBasis now = anchor.now().get();
+                // A frame without the plane (Spatial GUI not drawing it): where it was last seen, relative to the camera.
+                lastPlane = now != null ? now : lastPlane;
+                if (lastPlane != null) {
+                    return CameraSpace.follow(anchor.captured(), lastPlane);
+                }
+            }
+            return CameraSpace.world(live);
+        }
+
+        /** World centre of the plane an opening was cut from (tests check where it is drawn), or null. */
+        public org.joml.Vector3d planeCenter() {
+            return anchor != null ? anchor.captured().center() : null;
+        }
+
+        /** Whether it is drawn relative to the plane of this frame (an opening that follows the camera). */
+        public boolean follows() {
+            return follows;
+        }
+
+        /** Whether it is an opening on Spatial GUI's plane (drawn with the level's projection, like that plane). */
+        public boolean onSpatialPlane() {
+            return anchor != null && anchor.onSpatialPlane();
         }
 
         boolean hurried() {
@@ -144,8 +184,29 @@ public final class ShardManager {
 
     private static final List<Batch> BATCHES = new ArrayList<>();
     private static final RandomSource RANDOM = RandomSource.create();
+    /**
+     * Set by tests ({@link #seedForTests}): each wave then gets its own generator made from this seed and the wave's
+     * number, so how a wave breaks and flies does not depend on the waves before it or on timing. Null in the game.
+     */
+    private static Long testSeed;
+    /** The wave the last {@link #spawn} call started, or null if it started none. */
+    private static Batch lastSpawned;
+    private static long seededWaves;
 
     private ShardManager() {
+    }
+
+    /**
+     * Tests: from now on every wave breaks and flies the same way each run ({@code seed}), counting waves from 0 again;
+     * null goes back to the game's unseeded randomness.
+     */
+    public static Batch lastSpawned() {
+        return lastSpawned;
+    }
+
+    public static void seedForTests(Long seed) {
+        testSeed = seed;
+        seededWaves = 0;
     }
 
     public static List<Batch> batches() {
@@ -299,12 +360,13 @@ public final class ShardManager {
     }
 
     /**
-     * As above; {@code cameraAnchor}: the batch stays at a fixed offset from the camera (see {@link Batch#camera});
+     * As above; {@code anchor}: an opening's plane, then and now (see {@link Batch#space});
      * {@code owner}: the screen an opening wave gathers (it ends when that screen is no longer shown).
      */
     public static void spawn(CapturePool.Slot slot, ShardPlane plane, ImageRect bounds, Vector3f forward,
                              ShatterEffect effect, FlyTarget target, ParamValues params, boolean preview,
-                             Vec3 cameraAnchor, Screen owner) {
+                             OpenAnchor anchor, Screen owner) {
+        lastSpawned = null;
         if (effect.opens() && (owner == null || owner != mc().screen)) {
             // The screen closed or changed before its picture was taken: nothing to gather.
             CapturePool.release(slot);
@@ -322,7 +384,8 @@ public final class ShardManager {
         }
         long spawnStart = ShatterProfiler.now();
         params = effect.prepare(params);
-        ShardSource source = new ShardSource(plane, bounds, forward, params, mc.level, RANDOM, target);
+        RandomSource random = testSeed != null ? RandomSource.create(testSeed * 31 + seededWaves++) : RANDOM;
+        ShardSource source = new ShardSource(plane, bounds, forward, params, mc.level, random, target);
         List<ShardInstance> shards = effect.createShards(source);
         ShatterWave wave = effect.createWave(source, shards);
         ShatterProfiler.step("spawn.effect.createShards [" + effect.id() + "] (mesh + initial motion)", spawnStart);
@@ -333,13 +396,18 @@ public final class ShardManager {
         int maxShards = params.i(Params.MAX_SHARDS);
         if (effect.countsTowardShardLimit()) {
             if (shards.size() > maxShards) {
-                Collections.shuffle(shards);
+                if (testSeed != null) {
+                    Collections.shuffle(shards, new java.util.Random(random.nextLong()));
+                } else {
+                    Collections.shuffle(shards);
+                }
                 shards = new ArrayList<>(shards.subList(0, maxShards));
             }
             enforceLimit(shards.size(), maxShards);
         }
         hurryOldWaves(shards.size());
-        BATCHES.add(new Batch(slot, shards, effect, wave, params, preview, cameraAnchor, effect.opens() ? owner : null));
+        lastSpawned = new Batch(slot, shards, effect, wave, params, preview, anchor, effect.opens() ? owner : null);
+        BATCHES.add(lastSpawned);
         peakPlaying = Math.max(peakPlaying, playingCount());
         effect.playSound(source);
         ShatterProfiler.step(String.format(Locale.ROOT, "spawn.total (%d shards, GUI %.0f%%x%.0f%% of %dx%d, textures in memory: %d)",

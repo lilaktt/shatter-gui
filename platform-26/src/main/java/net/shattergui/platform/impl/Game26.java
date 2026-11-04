@@ -78,6 +78,37 @@ final class Game26 implements GameInfo, Desktop {
     }
 
     @Override
+    public java.util.Map<String, String> diagnostics() {
+        java.util.Map<String, String> out = new java.util.LinkedHashMap<>();
+        out.put("Shatter GUI", version(net.shattergui.ShatterMod.MOD_ID));
+        out.put("Minecraft", version("minecraft"));
+        out.put("Fabric Loader", version("fabricloader"));
+        out.put("Fabric API", version("fabric-api"));
+        out.put("Iris", version("iris"));
+        out.put("Sodium", version("sodium"));
+        // 1.8 is "spatial-gui", later versions "spatial_gui".
+        String spatial = version("spatial_gui");
+        out.put("Spatial GUI", spatial.equals("not installed") ? version("spatial-gui") : spatial);
+        try {
+            com.mojang.blaze3d.systems.GpuDevice device = com.mojang.blaze3d.systems.RenderSystem.getDevice();
+            out.put("GPU", device.getRenderer());
+            out.put("Driver (OpenGL)", device.getVersion());
+            out.put("GPU vendor", device.getVendor());
+            out.put("Graphics backend", device.getBackendName());
+        } catch (RuntimeException e) {
+            out.put("GPU", "unknown (" + e.getClass().getSimpleName() + ")");
+        }
+        out.put("Shader pack", net.shattergui.compat.iris.IrisCompat.describePack());
+        out.put("Language", Minecraft.getInstance().options.languageCode);
+        return out;
+    }
+
+    private static String version(String modId) {
+        return net.shattergui.debug.Diagnostics.version(FabricLoader.getInstance().getModContainer(modId)
+                .map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse(null));
+    }
+
+    @Override
     public ModMeta mod(String modId) {
         return FabricLoader.getInstance().getModContainer(modId).map(ModContainer::getMetadata).map(Meta::new)
                 .orElse(null);

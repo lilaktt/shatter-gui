@@ -57,6 +57,11 @@ public final class ReversedEffect implements ShatterEffect {
     }
 
     @Override
+    public Boolean followCamera() {
+        return forward.followCamera();
+    }
+
+    @Override
     public ParamValues prepare(ParamValues params) {
         return forward.prepare(params);
     }

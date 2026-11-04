@@ -109,6 +109,18 @@ public final class FlyEffect implements ShatterEffect {
         out.set((Math.round(alpha * 255) << 24) | 0xFFFFFF);
     }
 
+    /**
+     * How far a flight following the camera has moved from where the screen is now towards its target in the world
+     * (rendering blends the two, see {@code CameraSpace#towardsWorld}): the flight's own easing into a container; 0 for
+     * an edge exit or a fade in place, which stay in front of the face.
+     */
+    public static float towardsTarget(ShardInstance shard, float partialTick) {
+        if (shard.effectData != INTO_POINT) {
+            return 0f;
+        }
+        return eased(shard.age() - 1 + partialTick, shard.lifetime() - 1);
+    }
+
     /** Ease-in: slow start, fastest at the end. */
     static float eased(float time, int duration) {
         float t = Math.clamp(time / Math.max(1, duration), 0f, 1f);

@@ -51,6 +51,19 @@ public final class ShardRenderTypes {
                     .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, false))
                     .build());
 
+    /**
+     * The darkened world behind a closed screen while it fades out: the vanilla GUI fill (position + colour, straight
+     * alpha blending, the same shader and blending as {@code fillGradient}) without depth test or culling, drawn
+     * over the whole window in normalised device coordinates.
+     */
+    public static final RenderPipeline BACKDROP_PIPELINE = RenderPipelinesAccessor.shatterGui$register(
+            RenderPipeline.builder(net.minecraft.client.renderer.RenderPipelines.GUI_SNIPPET)
+                    .withLocation(Identifier.fromNamespaceAndPath(ShatterGuiClient.MOD_ID, "pipeline/backdrop"))
+                    .withDepthStencilState(java.util.Optional.empty())
+                    .withCull(false)
+                    .build());
+    private static RenderType backdrop;
+
     /** One render type per capture texture; the texture pool is small, so this stays small. */
     private static final Map<Identifier, RenderType> TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> MULTIPLY_TYPES = new HashMap<>();
@@ -70,6 +83,15 @@ public final class ShardRenderTypes {
                         .useOverlay()
                         .sortOnUpload()
                         .createRenderSetup()));
+    }
+
+    /** The fading background ({@link #BACKDROP_PIPELINE}). */
+    public static RenderType backdrop() {
+        if (backdrop == null) {
+            backdrop = RenderTypeAccessor.shatterGui$create("shatter_gui_backdrop",
+                    RenderSetup.builder(BACKDROP_PIPELINE).createRenderSetup());
+        }
+        return backdrop;
     }
 
     /** A multiply overlay with this texture (effect textures; one type each). */

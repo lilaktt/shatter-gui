@@ -38,7 +38,16 @@ public abstract class GameRendererMixin {
             target = "Lnet/minecraft/client/renderer/ProjectionMatrixBuffer;getBuffer(Lorg/joml/Matrix4f;)Lcom/mojang/blaze3d/buffers/GpuBufferSlice;"))
     private Matrix4f shatterGui$levelProjection(Matrix4f projection) {
         OnTopPass.levelProjection(projection);
+        OnTopPass.cleanProjection(gameRenderState.levelRenderState.cameraRenderState.projectionMatrix);
         return projection;
+    }
+
+    /** The menu blur radius of this frame: faded with an opening or closing screen (OpenBackdrop). */
+    @ModifyArg(method = "render", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/GlobalSettingsUniform;update(IIDJLnet/minecraft/client/DeltaTracker;ILnet/minecraft/world/phys/Vec3;Z)V"),
+            index = 5)
+    private int shatterGui$fadeBlur(int radius) {
+        return Math.round(net.shattergui.fly.OpenBackdrop.blurRadius(radius));
     }
 
     /** The camera rotation the level is drawn with (its model-view). */
@@ -50,12 +59,15 @@ public abstract class GameRendererMixin {
         return viewRotation;
     }
 
-    /** Effects over the world, under the player's hand (vanilla has just cleared the depth for the hand). */
-    @Inject(method = "renderLevel", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/GameRenderer;renderItemInHand(Lnet/minecraft/client/renderer/state/level/CameraRenderState;FLorg/joml/Matrix4fc;)V"))
-    private void shatterGui$beforeHand(DeltaTracker deltaTracker, CallbackInfo ci) {
+    /**
+     * After the level and the hand, before vanilla clears the depth for the GUI: the fading darkness of a closed screen
+     * and the effects over the world, depth-tested against the hand (see {@link OnTopPass#drawAfterLevel}).
+     */
+    @Inject(method = "render", at = @At(value = "INVOKE",
+            target = "Lcom/mojang/blaze3d/systems/CommandEncoder;clearDepthTexture(Lcom/mojang/blaze3d/textures/GpuTexture;D)V"))
+    private void shatterGui$afterLevel(DeltaTracker deltaTracker, boolean advanceGameTime, CallbackInfo ci) {
         long start = System.nanoTime();
-        OnTopPass.draw(fogRenderer.getBuffer(FogRenderer.FogMode.NONE));
+        OnTopPass.drawAfterLevel(fogRenderer.getBuffer(FogRenderer.FogMode.NONE));
         CloseWatchdog.step("draw the effects over the world", start);
     }
 
@@ -87,10 +99,7 @@ public abstract class GameRendererMixin {
         long start = System.nanoTime();
         SpatialGuiCompat.completePending();
         start = CloseWatchdog.step("Spatial GUI: copy its plane and spawn the pieces", start);
-        // Effects over the world if the hand was not drawn this frame (else drawn already, under it); before the capture
-        // backs the frame up (the restored frame has them, the GUI covers them).
-        OnTopPass.draw(fogRenderer.getBuffer(FogRenderer.FogMode.NONE));
-        start = CloseWatchdog.step("draw the effects over the world", start);
+        // The effects over the world are drawn already (after the level), so the backed-up frame has them.
         ScreenCapture.beforeGuiRender();
         CloseWatchdog.step("capture: back up and clear the frame", start);
         RealPreview.beforeGuiRender();
@@ -102,8 +111,15 @@ public abstract class GameRendererMixin {
     private void shatterGui$afterGuiRender(DeltaTracker deltaTracker, boolean advanceGameTime, CallbackInfo ci) {
         long start = System.nanoTime();
         ScreenCapture.afterGuiRender();
-        CloseWatchdog.step("capture: copy to the texture pool and spawn the pieces", start);
+        start = CloseWatchdog.step("capture: copy to the texture pool and spawn the pieces", start);
+        // The frame of the capture shows the world without the closed screen: its pieces are drawn in it right away,
+        // where it was (else this one frame has neither the screen nor the pieces).
+        net.shattergui.render.ShardRenderer.drawFirstFrame(ScreenCapture.takeSpawnedClose(),
+                fogRenderer.getBuffer(FogRenderer.FogMode.NONE));
+        CloseWatchdog.step("draw the first frame of the close", start);
         RealPreview.afterGuiRender();
         SpatialGuiCompat.completeOpenPending();
+        // Openings over the GUI drawn so far (the HUD and the screen's own darkened background).
+        net.shattergui.render.ShardRenderer.drawOpenings(fogRenderer.getBuffer(FogRenderer.FogMode.NONE));
     }
 }

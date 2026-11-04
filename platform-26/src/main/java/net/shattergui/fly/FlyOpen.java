@@ -42,6 +42,11 @@ public final class FlyOpen {
     private static Screen screen;
     private static FlyTarget from;
     private static boolean spatial;
+    /** Whether the end of the flight is where the screen is in this frame (else where it was on the first frame). */
+    private static boolean follows = true;
+    /** Not following: the end of the flight in world coordinates, fixed on the first frame. */
+    private static Vec3 fixedEnd;
+    private static boolean startLogged;
     private static boolean drawingFlat;
     private static int duration;
     /** Game time of the first frame of the animation; NaN until that frame. */
@@ -53,11 +58,20 @@ public final class FlyOpen {
 
     /** @param origin the container (point), or, for the fly effect on screens without one, the screen edge */
     public static void start(Screen opened, FlyTarget origin, boolean onSpatialPlane, int durationTicks) {
+        start(opened, origin, onSpatialPlane, durationTicks, true);
+    }
+
+    /** {@code followCamera}: the flight ends where the screen is in each frame, in front of the moving camera. */
+    public static void start(Screen opened, FlyTarget origin, boolean onSpatialPlane, int durationTicks,
+                             boolean followCamera) {
         screen = opened;
         from = origin;
         spatial = onSpatialPlane;
         duration = Math.max(1, durationTicks);
         startTime = Double.NaN;
+        follows = followCamera;
+        fixedEnd = null;
+        startLogged = false;
     }
 
     /** A fly-in is running (for the limit of effects at once). */
@@ -108,8 +122,31 @@ public final class FlyOpen {
         if (from.isEdge()) {
             from.edge().applyFlatEntry(pose, centerX, centerY, s.width, s.height, e);
         } else {
-            float[] start = projectToGui(from.point(), s.width, s.height);
-            pose.translate(Mth.lerp(e, start[0], centerX), Mth.lerp(e, start[1], centerY));
+            // In the world: from the container to the point in front of the camera where the screen is (this frame's
+            // camera when following it), projected with this frame's camera. At the end it is that point exactly.
+            Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+            Vec3 cam = camera.position();
+            Vector3f end = screenPoint(camera, centerX, centerY, s.width, s.height);
+            if (!follows) {
+                if (fixedEnd == null) {
+                    fixedEnd = cam.add(end.x(), end.y(), end.z());
+                }
+                end.set((float) (fixedEnd.x - cam.x), (float) (fixedEnd.y - cam.y), (float) (fixedEnd.z - cam.z));
+            }
+            Vector3f source = new Vector3f((float) (from.point().x - cam.x), (float) (from.point().y - cam.y),
+                    (float) (from.point().z - cam.z));
+            Vector3f at = source.lerp(end, e, new Vector3f());
+            float[] gui = projectToGui(at, s.width, s.height);
+            if (!startLogged) {
+                startLogged = true;
+                float[] first = projectToGui(new Vector3f((float) (from.point().x - cam.x),
+                        (float) (from.point().y - cam.y), (float) (from.point().z - cam.z)), s.width, s.height);
+                net.shattergui.debug.ShatterProfiler.openValue("fly.start", String.format(java.util.Locale.ROOT,
+                        "container at GUI %.0f, %.0f of %dx%d (%.2f blocks ahead), screen centre %.0f, %.0f",
+                        first[0], first[1], s.width, s.height, source.dot(camera.forwardVector()), centerX, centerY));
+            }
+            net.shattergui.debug.FrameAudit.openPlane(at);
+            pose.translate(gui[0], gui[1]);
             pose.scale(Mth.lerp(e, START_SCALE, 1f));
             pose.translate(-centerX, -centerY);
         }
@@ -154,7 +191,18 @@ public final class FlyOpen {
         Vec3 cam = camera.position();
         Vector3f start = new Vector3f((float) (from.point().x - cam.x), (float) (from.point().y - cam.y),
                 (float) (from.point().z - cam.z));
-        return new Matrix4f().translation(start.lerp(planeCenter, e)).scale(Mth.lerp(e, START_SCALE, 1f))
+        // The plane's centre this frame (Spatial GUI keeps it in front of its camera); not following the camera: where
+        // it was on the first frame, in the world.
+        Vector3f end = new Vector3f(planeCenter);
+        if (!follows) {
+            if (fixedEnd == null) {
+                fixedEnd = cam.add(planeCenter.x(), planeCenter.y(), planeCenter.z());
+            }
+            end.set((float) (fixedEnd.x - cam.x), (float) (fixedEnd.y - cam.y), (float) (fixedEnd.z - cam.z));
+        }
+        Vector3f at = start.lerp(end, e);
+        net.shattergui.debug.FrameAudit.openPlane(at);
+        return new Matrix4f().translation(at).scale(Mth.lerp(e, START_SCALE, 1f))
                 .translate(-planeCenter.x(), -planeCenter.y(), -planeCenter.z());
     }
 
@@ -164,6 +212,11 @@ public final class FlyOpen {
             return 1f;
         }
         return Math.min(1f, progress() * 2f);
+    }
+
+    /** How far {@code s} has flown in, 0..1 (1 when it is not flying in). */
+    public static float progress(Screen s) {
+        return s != null && s == screen ? progress() : 1f;
     }
 
     /** For tests and the profile log: game time now and the animation's progress (1 = none running). */
@@ -201,17 +254,31 @@ public final class FlyOpen {
         return 1f - u * u;
     }
 
-    /** World point → GUI coordinates on the current camera, kept near the screen if it is off screen or behind. */
-    private static float[] projectToGui(Vec3 world, int guiWidth, int guiHeight) {
+    /**
+     * The point on the flat GUI's plane (1 block in front of the camera, see {@code PlaneBasis}) that shows at GUI
+     * coordinates (x, y): where the real screen is in the world, relative to the camera.
+     */
+    private static Vector3f screenPoint(Camera camera, float x, float y, int guiWidth, int guiHeight) {
+        Minecraft mc = Minecraft.getInstance();
+        double tanHalf = Math.tan(Math.toRadians(camera.getFov()) / 2);
+        double aspect = (double) mc.getMainRenderTarget().width / Math.max(1, mc.getMainRenderTarget().height);
+        float right = (float) ((x / guiWidth * 2 - 1) * tanHalf * aspect);
+        float above = (float) ((1 - y / guiHeight * 2) * tanHalf);
+        Vector3f out = new Vector3f(camera.forwardVector());
+        out.add(new Vector3f(camera.leftVector()).mul(-right)).add(new Vector3f(camera.upVector()).mul(above));
+        return out;
+    }
+
+    /** A point relative to the camera → GUI coordinates, kept near the screen if it is off screen or behind. */
+    private static float[] projectToGui(Vector3fc d, int guiWidth, int guiHeight) {
         Minecraft mc = Minecraft.getInstance();
         Camera camera = mc.gameRenderer.getMainCamera();
-        Vec3 d = world.subtract(camera.position());
         Vector3fc forward = camera.forwardVector();
         Vector3fc up = camera.upVector();
         Vector3fc left = camera.leftVector();
-        double depth = d.x * forward.x() + d.y * forward.y() + d.z * forward.z();
-        double right = -(d.x * left.x() + d.y * left.y() + d.z * left.z());
-        double above = d.x * up.x() + d.y * up.y() + d.z * up.z();
+        double depth = d.x() * forward.x() + d.y() * forward.y() + d.z() * forward.z();
+        double right = -(d.x() * left.x() + d.y() * left.y() + d.z() * left.z());
+        double above = d.x() * up.x() + d.y() * up.y() + d.z() * up.z();
         double tanHalf = Math.tan(Math.toRadians(camera.getFov()) / 2);
         double aspect = (double) mc.getMainRenderTarget().width / Math.max(1, mc.getMainRenderTarget().height);
         float ndcX;

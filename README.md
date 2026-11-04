@@ -1,6 +1,6 @@
 # Shatter GUI
 
-A client-side Fabric mod for Minecraft 26.1.2. When you close an interface (chest, furnace, inventory, pause menu…)
+A client-side Fabric mod for Minecraft 26.1.x (26.1, 26.1.1, 26.1.2). When you close an interface (chest, furnace, inventory, pause menu…)
 its last frame breaks into pieces that live in the world: glass shards, fire, ice, sand, confetti, a portal vortex…
 Effects can also play backwards when you open an interface, so it gathers from its pieces.
 
@@ -34,7 +34,7 @@ effect editor.
 
 ## Requirements
 
-Minecraft 26.1.2, Fabric Loader ≥ 0.19.3, Fabric API, Java 25. Optional: Mod Menu, Spatial GUI, Iris + Sodium.
+Minecraft 26.1, 26.1.1 or 26.1.2 (one jar), Fabric Loader ≥ 0.19.3, Fabric API, Java 25. Optional: Mod Menu, Spatial GUI, Iris + Sodium.
 
 ## Configuration
 
@@ -65,10 +65,11 @@ the mod: General tab → About.
 
 ## Known limitations
 
-- When an interface opens by gathering, the darkened/blurred world behind it appears together with the interface
-  at the end (as it disappears at once on closing).
-- With "Draw over blocks" switched off and a shader pack, the pieces are lit and coloured by the pack (they are in the
-  world), the interface that replaces them is not: its colour changes when it appears.
+- While the darkened world behind a closed interface fades out, the hotbar is not darkened (it stays over the close
+  effect, as before), so it brightens at once when the close starts. The menu blur fades in steps of one pixel.
+- With "Draw over blocks" switched off and a shader pack, a close is drawn over the world while the darkened background
+  fades (about 0.5 s) and in the world after that, where the pack lights and colours it: its colour changes at that
+  moment. Openings are always drawn over the world, unlit, like the interface they become.
 - Validation messages of the effect format (with JSON paths) are in English.
 - "Darken" overlays are drawn as normal blending with shader packs.
 - With a shader pack, the pieces drawn over blocks are also drawn over the player's hand (the pack draws the hand
@@ -77,7 +78,7 @@ the mod: General tab → About.
 ## Building
 
 ```
-./gradlew build                 # build/libs/shatter-gui-<version>+mc26.1.2-fabric.jar, runs unit tests
+./gradlew build                 # build/libs/shatter-gui-<version>+mc26.1-fabric.jar, runs unit tests
 ./gradlew runClientGameTest     # automated tests in a real client (screenshots in platform-26/build/run/clientGameTest)
 ./gradlew runClientGameTest -PspatialGui=1.8 -PmodMenu
 ./gradlew runClientGameTest -Pshaders -PshaderPack=C:/path/to/Pack.zip

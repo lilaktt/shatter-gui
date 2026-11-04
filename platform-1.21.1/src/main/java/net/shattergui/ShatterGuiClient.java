@@ -27,6 +27,8 @@ public final class ShatterGuiClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        // First, so a warning while starting up is kept for the diagnostics too.
+        net.shattergui.debug.WarningLog.install();
         ShatterConfig.load();
         ScreenCatalog.load();
         CustomEffects.init();

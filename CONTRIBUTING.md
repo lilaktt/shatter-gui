@@ -4,6 +4,11 @@
 
 Open an issue at https://github.com/lilaktt/shatter-gui/issues (the "Bug report" form asks for all of this):
 
+- The diagnostics: in game, Shatter GUI settings → General → About → **Copy diagnostics**, and paste them into the form.
+  They hold the versions of Shatter GUI, Minecraft, Fabric Loader, Fabric API, Iris, Sodium and Spatial GUI, the GPU
+  and driver (OpenGL renderer and version strings), the active shader pack, the chosen open and close effects, the
+  thematic mode and the mod's last warnings of the session. Your user name, file paths and e-mail addresses are taken
+  out. If the settings do not open, write these by hand.
 - Minecraft version and Shatter GUI version (Mod Menu shows it, or the jar name).
 - Your mod list (the `mods` folder or Mod Menu), with versions of Spatial GUI, Iris, Sodium and the shader pack if you
   use them.

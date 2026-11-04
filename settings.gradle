@@ -22,16 +22,18 @@ include 'core'
 // One platform module per Minecraft version (and loader). Only the chosen ones are configured, so a build never sets up
 // two Minecraft versions at once (memory): ./gradlew build -> the active one; -Pmc=1.21.1 -> that one; -Pmc=all -> all.
 def platforms = [
-        '26.1.2': 'platform-26',     // active: the published version
+        '26.1': 'platform-26',       // active: the published version, one jar for 26.1, 26.1.1 and 26.1.2
+        '26.1.1': 'platform-26',
+        '26.1.2': 'platform-26',
         '1.21.1': 'platform-1.21.1', // the port in progress
 ]
-def active = '26.1.2'
+def active = '26.1'
 def chosen = providers.gradleProperty('mc').getOrElse(active)
-def selected = chosen == 'all' ? platforms.values() : chosen.split(',').collect { v ->
+def selected = chosen == 'all' ? platforms.values().unique() : chosen.split(',').collect { v ->
     def module = platforms[v.trim()]
     if (module == null) {
         throw new GradleException("Unknown -Pmc=${v}; known: ${platforms.keySet().join(', ')} or all")
     }
     module
 }
-selected.each { include it }
+selected.unique().each { include it }

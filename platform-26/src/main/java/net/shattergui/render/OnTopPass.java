@@ -16,6 +16,8 @@ import net.minecraft.client.renderer.ProjectionMatrixBuffer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.shattergui.ShatterGuiClient;
+import net.shattergui.compat.iris.IrisCompat;
+import net.shattergui.fly.OpenBackdrop;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Matrix4fc;
@@ -24,26 +26,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Effects drawn over the world ({@code "alwaysOnTop"}): the geometry is built during the level render as before (same
- * camera, same partial tick), but drawn after the whole world — blocks, translucent blocks, clouds, a shader pack's
- * composite — and before the player's hand and the GUI, so the hand, the HUD and screens stay on top. The pass runs in
- * {@code GameRenderer#renderLevel} right before {@code renderItemInHand}, where vanilla has just cleared the main depth
- * buffer, so the pieces depth-test only against each other; translucent layers are sorted back to front. If the hand
- * is not drawn in a frame, the pass runs before {@code GuiRenderer#render} instead (depth cleared there too). A shader
- * pack has finished by then: the pieces use the mod's own pipeline as without shaders (they are not lit by the pack,
- * like the GUI they came from); Iris draws the hand inside its own pass, so with a shader pack the hand stays under
- * the pieces.
+ * Effects drawn over the world instead of in it. The geometry is built during the level render as before (same camera,
+ * same partial tick) or, for openings, after the GUI; it is drawn at two points of {@code GameRenderer#render}:
+ *
+ * <ul>
+ *   <li>{@link #drawAfterLevel}: after the whole level — blocks, translucent blocks, clouds, a shader pack's composite,
+ *       the player's hand — and before the GUI. First the darkened world of a screen that just closed, fading out
+ *       ({@link OpenBackdrop}), then the closes ({@code "alwaysOnTop"}). The depth buffer still holds the hand there
+ *       (vanilla clears it before the hand and again after this point), so the pieces depth-test against the hand and
+ *       each other: the hand stays over them while the fading darkness covers the hand like vanilla's did. A shader
+ *       pack draws the hand in its own pass; with one the depth is cleared first (the hand then stays under the
+ *       pieces, as before).</li>
+ *   <li>{@link #drawOpenings}: after the GUI, so the pieces of a screen being gathered lie over the HUD and over its
+ *       darkened background, as the screen will. Flat GUI pieces use the level's projection without view bobbing (the
+ *       screen does not bob); pieces on Spatial GUI's plane the level's own (its plane does).</li>
+ * </ul>
+ *
+ * <p>Both use the mod's own pipelines: the pieces are not lit by a shader pack, like the GUI they came from.
  */
 public final class OnTopPass {
-    private record Entry(RenderType type, SubmitNodeCollector.CustomGeometryRenderer geometry) {
+    /** Geometry relative to the camera position, in world axes, as for {@code submitCustomGeometry}. */
+    public record Entry(RenderType type, SubmitNodeCollector.CustomGeometryRenderer geometry) {
     }
 
     private static final List<Entry> PENDING = new ArrayList<>();
-    /** The level's projection of this frame (view bobbing and nausea included) and its camera rotation. */
+    /** The level's projection of this frame (view bobbing and nausea included), without them, and its camera rotation. */
     private static final Matrix4f PROJECTION = new Matrix4f();
+    private static final Matrix4f CLEAN_PROJECTION = new Matrix4f();
     private static final Matrix4f VIEW_ROTATION = new Matrix4f();
     private static ByteBufferBuilder buffer;
     private static ProjectionMatrixBuffer projectionBuffer;
+    private static ProjectionMatrixBuffer screenBuffer;
     private static boolean failed;
 
     private OnTopPass() {
@@ -52,6 +65,11 @@ public final class OnTopPass {
     /** {@code GameRenderer#renderLevel}: the projection the level is drawn with. */
     public static void levelProjection(Matrix4fc projection) {
         PROJECTION.set(projection);
+    }
+
+    /** {@code GameRenderer#renderLevel}: the camera's projection before view bobbing and nausea are added. */
+    public static void cleanProjection(Matrix4fc projection) {
+        CLEAN_PROJECTION.set(projection);
     }
 
     /** {@code GameRenderer#renderLevel}: the camera rotation (model-view) the level is drawn with. */
@@ -64,7 +82,6 @@ public final class OnTopPass {
         PENDING.clear();
     }
 
-    /** Geometry relative to the camera position, in world axes, as for {@code submitCustomGeometry}. */
     static void add(RenderType type, SubmitNodeCollector.CustomGeometryRenderer geometry) {
         PENDING.add(new Entry(type, geometry));
     }
@@ -75,12 +92,32 @@ public final class OnTopPass {
     }
 
     /**
-     * Before the hand ({@code renderItemInHand}), or before {@code GuiRenderer#render} if the hand was not drawn: draws
-     * what the level render collected, in order (once per frame), then clears the depth again so
-     * the GUI finds it as vanilla left it. {@code noFog}: the fog the GUI is drawn with.
+     * After the level (and the hand), before the GUI: the fading darkness of a closed screen, then what the level render
+     * collected. Once per frame. {@code noFog}: the fog the GUI is drawn with.
      */
-    public static void draw(GpuBufferSlice noFog) {
-        if (PENDING.isEmpty()) {
+    public static void drawAfterLevel(GpuBufferSlice noFog) {
+        int closing = OpenBackdrop.closingKind();
+        if (PENDING.isEmpty() && closing == 0) {
+            return;
+        }
+        try {
+            if (closing != 0) {
+                drawBackdrop(closing, OpenBackdrop.closeFactor());
+            }
+            // With a shader pack the hand is not in this depth buffer, but other leftovers may be.
+            draw(PENDING, PROJECTION, IrisCompat.shaderPackInUse(), noFog);
+        } finally {
+            PENDING.clear();
+        }
+    }
+
+    /** After the GUI: the openings ({@code flat}: without view bobbing). */
+    public static void drawOpenings(List<Entry> entries, boolean flat, GpuBufferSlice noFog) {
+        draw(entries, flat ? CLEAN_PROJECTION : PROJECTION, true, noFog);
+    }
+
+    private static void draw(List<Entry> entries, Matrix4f projection, boolean clearFirst, GpuBufferSlice noFog) {
+        if (entries.isEmpty()) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -93,19 +130,20 @@ public final class OnTopPass {
         Matrix4fStack modelView = RenderSystem.getModelViewStack();
         GpuBufferSlice fog = RenderSystem.getShaderFog();
         Lighting lighting = mc.gameRenderer.getLighting();
-        // Whatever lighting comes next (the hand, the GUI) gets the lighting it was going to have.
+        // Whatever lighting comes next (the GUI) gets the lighting it was going to have.
         GpuBufferSlice lights = RenderSystem.getShaderLights();
         RenderSystem.backupProjectionMatrix();
         modelView.pushMatrix();
         try {
-            // Vanilla cleared it just before; cleared here too, so the pass never depends on what ran in between.
-            encoder.clearDepthTexture(main.getDepthTexture(), 1.0);
-            RenderSystem.setProjectionMatrix(projectionBuffer.getBuffer(PROJECTION), ProjectionType.PERSPECTIVE);
+            if (clearFirst) {
+                encoder.clearDepthTexture(main.getDepthTexture(), 1.0);
+            }
+            RenderSystem.setProjectionMatrix(projectionBuffer.getBuffer(projection), ProjectionType.PERSPECTIVE);
             RenderSystem.setShaderFog(noFog);
             lighting.setupFor(Lighting.Entry.LEVEL);
             modelView.set(VIEW_ROTATION);
             PoseStack.Pose pose = new PoseStack().last();
-            for (Entry entry : PENDING) {
+            for (Entry entry : entries) {
                 BufferBuilder builder = new BufferBuilder(buffer, entry.type.mode(), entry.type.format());
                 entry.geometry.render(pose, builder);
                 MeshData mesh = builder.build();
@@ -125,12 +163,72 @@ public final class OnTopPass {
                 ShatterGuiClient.LOGGER.warn("Drawing effects over the world failed; this frame's effects are skipped", e);
             }
         } finally {
-            PENDING.clear();
             modelView.popMatrix();
             RenderSystem.setShaderLights(lights);
             RenderSystem.setShaderFog(fog);
             RenderSystem.restoreProjectionMatrix();
+            // The GUI finds the depth as vanilla left it.
             encoder.clearDepthTexture(main.getDepthTexture(), 1.0);
+        }
+    }
+
+    /**
+     * The darkened world of a closed screen at {@code opacity} (1 = as vanilla drew it): the menu blur (radius already
+     * scaled for this frame, see {@link OpenBackdrop#blurRadius}), then the gradient or the menu texture's black.
+     * The fill covers the whole window in normalised device coordinates, the colours at the corners as
+     * {@code GuiGraphicsExtractor#fillGradient} puts them.
+     */
+    private static void drawBackdrop(int kind, float opacity) {
+        if (opacity <= 0f) {
+            return;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if ((kind & OpenBackdrop.BLUR) != 0) {
+            mc.gameRenderer.processBlurEffect();
+        }
+        int top;
+        int bottom;
+        if ((kind & OpenBackdrop.GRADIENT) != 0) {
+            top = OpenBackdrop.withAlpha(OpenBackdrop.GRADIENT_TOP, opacity);
+            bottom = OpenBackdrop.withAlpha(OpenBackdrop.GRADIENT_BOTTOM, opacity);
+        } else if ((kind & OpenBackdrop.MENU) != 0) {
+            top = OpenBackdrop.withAlpha(OpenBackdrop.MENU_COLOR, opacity);
+            bottom = top;
+        } else {
+            return;
+        }
+        if (buffer == null) {
+            buffer = new ByteBufferBuilder(RenderType.SMALL_BUFFER_SIZE);
+            projectionBuffer = new ProjectionMatrixBuffer("shatter_gui on top");
+        }
+        if (screenBuffer == null) {
+            screenBuffer = new ProjectionMatrixBuffer("shatter_gui backdrop");
+        }
+        RenderType type = ShardRenderTypes.backdrop();
+        Matrix4fStack modelView = RenderSystem.getModelViewStack();
+        RenderSystem.backupProjectionMatrix();
+        modelView.pushMatrix();
+        try {
+            RenderSystem.setProjectionMatrix(screenBuffer.getBuffer(new Matrix4f()), ProjectionType.ORTHOGRAPHIC);
+            modelView.identity();
+            BufferBuilder builder = new BufferBuilder(buffer, type.mode(), type.format());
+            builder.addVertex(-1f, 1f, 0f).setColor(top);
+            builder.addVertex(-1f, -1f, 0f).setColor(bottom);
+            builder.addVertex(1f, -1f, 0f).setColor(bottom);
+            builder.addVertex(1f, 1f, 0f).setColor(top);
+            MeshData mesh = builder.build();
+            if (mesh != null) {
+                type.draw(mesh);
+            }
+        } catch (RuntimeException e) {
+            buffer.discard();
+            if (!failed) {
+                failed = true;
+                ShatterGuiClient.LOGGER.warn("Drawing the fading background failed; it is skipped", e);
+            }
+        } finally {
+            modelView.popMatrix();
+            RenderSystem.restoreProjectionMatrix();
         }
     }
 }

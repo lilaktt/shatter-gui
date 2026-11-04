@@ -41,6 +41,8 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
         context.getInput().resizeWindow(1920, 1080);
         context.waitTicks(5);
 
+        // Every wave breaks and flies the same way in every run (scenarios that check where pieces go seed again).
+        context.runOnClient(mc -> ShardManager.seedForTests(OnTopScenario.TEST_SEED));
         ShatterConfig config = ShatterConfig.get();
         // The [ShatterProfile] lines are part of what a test run leaves for reading (off by default for players).
         config.profiling = true;
@@ -70,7 +72,8 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
             // With Iris only the shader screenshots run; everything else is covered by the runs without shaders.
             String irisOnly = System.getProperty("shatter.test.only", "");
             if (FabricLoader.getInstance().isModLoaded("iris") && (irisOnly.contains("gather")
-                    || irisOnly.contains("duplicates") || irisOnly.contains("thematic") || irisOnly.contains("esc") || irisOnly.contains("ontop"))) {
+                    || irisOnly.contains("duplicates") || irisOnly.contains("thematic") || irisOnly.contains("esc") || irisOnly.contains("ontop")
+                    || irisOnly.contains("backdrop") || irisOnly.contains("follow"))) {
                 context.waitTicks(100);
                 boolean withSpatial = FabricLoader.getInstance().isModLoaded("spatial-gui");
                 String tag = "shader_" + ShaderScenarios.packTag() + (withSpatial ? "_spatial" : "");
@@ -88,6 +91,12 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
                 }
                 if (irisOnly.contains("ontop")) {
                     OnTopScenario.run(context, singleplayer, this::check, tag);
+                }
+                if (irisOnly.contains("backdrop")) {
+                    BackdropScenario.run(context, singleplayer, this::check, tag);
+                }
+                if (irisOnly.contains("follow")) {
+                    FollowScenario.run(context, singleplayer, this::check, tag);
                 }
             } else if (FabricLoader.getInstance().isModLoaded("iris")) {
                 new ShaderScenarios(context, this::check).run(ShaderScenarios.packTag(), ShatterClientGameTest::furnace,
@@ -115,129 +124,166 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
             java.util.Set<String> chosen = java.util.Set.of(only.split(","));
             String prefix = spatial ? "spatial_" : "";
             ShatterGuiClient.LOGGER.info("[ShatterTest] only {} (Spatial GUI {})", chosen, spatial ? "loaded" : "not loaded");
-            if (chosen.contains("shots")) {
-                EditorShotsScenario.run(context, this::check, context::takeScreenshot, prefix);
-            }
-            if (chosen.contains("crawler")) {
-                UiCrawlerScenario.run(context, this::check, context::takeScreenshot, prefix + "crawler");
-            }
-            if (chosen.contains("lang")) {
-                for (String code : System.getProperty("shatter.test.lang", "de_de,ja_jp,ru_ru").split(",")) {
-                    LangScenario.run(context, this::check, context::takeScreenshot, code.trim());
+            // -Prepeat=N: the chosen scenarios N times in a row (each round seeded the same way, see ShardManager).
+            int repeat = Integer.getInteger("shatter.test.repeat", 1);
+            for (int round = 1; round <= repeat; round++) {
+                if (repeat > 1) {
+                    ShatterGuiClient.LOGGER.info("[ShatterTest] round {} of {}, failures so far: {}", round, repeat, failures.size());
+                    context.runOnClient(mc -> ShardManager.seedForTests(OnTopScenario.TEST_SEED));
                 }
-            }
-            if (chosen.contains("gather")) {
-                if (spatial) {
-                    SpatialScenarios setup = new SpatialScenarios(context, this::check);
-                    setup.setSpatial("firstPersonModeInventory", true);
-                    setup.setSpatial("firstPersonModeContainers", true);
-                    GatherScenario.run(context, this::check, "spatial_first", true, ShatterClientGameTest::furnace);
-                    setup.setSpatial("firstPersonModeInventory", false);
-                    setup.setSpatial("firstPersonModeContainers", false);
-                    GatherScenario.run(context, this::check, "spatial_third", false, ShatterClientGameTest::furnace);
-                } else {
-                    GatherScenario.run(context, this::check, "flat", true, ShatterClientGameTest::furnace);
+                if (chosen.contains("shots")) {
+                    EditorShotsScenario.run(context, this::check, context::takeScreenshot, prefix);
                 }
-            }
-            for (String which : List.of("duplicates", "thematic")) {
-                if (!chosen.contains(which)) {
-                    continue;
+                if (chosen.contains("crawler")) {
+                    UiCrawlerScenario.run(context, this::check, context::takeScreenshot, prefix + "crawler");
                 }
-                java.util.function.Consumer<String> scenario = m -> {
-                    if (which.equals("duplicates")) {
-                        DuplicateScenario.run(context, this::check, m, ShatterClientGameTest::furnace);
-                    } else {
-                        ThematicPlaneScenario.run(context, this::check, m, ShatterClientGameTest::furnace);
+                if (chosen.contains("lang")) {
+                    for (String code : System.getProperty("shatter.test.lang", "de_de,ja_jp,ru_ru").split(",")) {
+                        LangScenario.run(context, this::check, context::takeScreenshot, code.trim());
                     }
-                };
-                if (spatial) {
-                    String spatialMode = System.getProperty("shatter.test.spatialMode", "");
-                    SpatialScenarios setup = new SpatialScenarios(context, this::check);
-                    if (!spatialMode.equals("third")) {
+                }
+                if (chosen.contains("gather")) {
+                    if (spatial) {
+                        SpatialScenarios setup = new SpatialScenarios(context, this::check);
                         setup.setSpatial("firstPersonModeInventory", true);
                         setup.setSpatial("firstPersonModeContainers", true);
-                        scenario.accept("spatial_first");
+                        GatherScenario.run(context, this::check, "spatial_first", true, ShatterClientGameTest::furnace);
+                        setup.setSpatial("firstPersonModeInventory", false);
+                        setup.setSpatial("firstPersonModeContainers", false);
+                        GatherScenario.run(context, this::check, "spatial_third", false, ShatterClientGameTest::furnace);
+                    } else {
+                        GatherScenario.run(context, this::check, "flat", true, ShatterClientGameTest::furnace);
                     }
-                    setup.setSpatial("firstPersonModeInventory", false);
-                    setup.setSpatial("firstPersonModeContainers", false);
-                    if (!spatialMode.equals("first")) {
-                        scenario.accept("spatial_third");
+                }
+                for (String which : List.of("duplicates", "thematic")) {
+                    if (!chosen.contains(which)) {
+                        continue;
                     }
-                } else {
-                    scenario.accept("flat");
+                    java.util.function.Consumer<String> scenario = m -> {
+                        if (which.equals("duplicates")) {
+                            DuplicateScenario.run(context, this::check, m, ShatterClientGameTest::furnace);
+                        } else {
+                            ThematicPlaneScenario.run(context, this::check, m, ShatterClientGameTest::furnace);
+                        }
+                    };
+                    if (spatial) {
+                        String spatialMode = System.getProperty("shatter.test.spatialMode", "");
+                        SpatialScenarios setup = new SpatialScenarios(context, this::check);
+                        if (!spatialMode.equals("third")) {
+                            setup.setSpatial("firstPersonModeInventory", true);
+                            setup.setSpatial("firstPersonModeContainers", true);
+                            scenario.accept("spatial_first");
+                        }
+                        setup.setSpatial("firstPersonModeInventory", false);
+                        setup.setSpatial("firstPersonModeContainers", false);
+                        if (!spatialMode.equals("first")) {
+                            scenario.accept("spatial_third");
+                        }
+                    } else {
+                        scenario.accept("flat");
+                    }
                 }
-            }
-            if (chosen.contains("esc")) {
-                if (spatial) {
-                    SpatialScenarios setup = new SpatialScenarios(context, this::check);
-                    setup.setSpatial("firstPersonModeInventory", true);
-                    setup.setSpatial("firstPersonModeContainers", true);
-                    EscScenario.run(context, singleplayer, this::check, "spatial_first");
-                    setup.setSpatial("firstPersonModeInventory", false);
-                    setup.setSpatial("firstPersonModeContainers", false);
-                    EscScenario.run(context, singleplayer, this::check, "spatial_third");
-                } else {
-                    EscScenario.run(context, singleplayer, this::check, "flat");
+                if (chosen.contains("esc")) {
+                    if (spatial) {
+                        SpatialScenarios setup = new SpatialScenarios(context, this::check);
+                        setup.setSpatial("firstPersonModeInventory", true);
+                        setup.setSpatial("firstPersonModeContainers", true);
+                        EscScenario.run(context, singleplayer, this::check, "spatial_first");
+                        setup.setSpatial("firstPersonModeInventory", false);
+                        setup.setSpatial("firstPersonModeContainers", false);
+                        EscScenario.run(context, singleplayer, this::check, "spatial_third");
+                    } else {
+                        EscScenario.run(context, singleplayer, this::check, "flat");
+                    }
                 }
-            }
-            if (chosen.contains("leak")) {
-                LeakScenario.run(context, this::check, spatial ? "spatial" : "flat", ShatterClientGameTest::furnace);
-            }
-            if (chosen.contains("budget")) {
-                new EffectScenarios(context, this::check, context::takeScreenshot).configMigration("config_migration");
-                BudgetScenario.run(context, this::check, spatial ? "spatial" : "flat");
-            }
-            if (chosen.contains("ontop")) {
-                if (spatial) {
-                    SpatialScenarios setup = new SpatialScenarios(context, this::check);
-                    setup.setSpatial("firstPersonModeInventory", true);
-                    setup.setSpatial("firstPersonModeContainers", true);
-                    OnTopScenario.run(context, singleplayer, this::check, "spatial_first");
-                    setup.setSpatial("firstPersonModeInventory", false);
-                    setup.setSpatial("firstPersonModeContainers", false);
-                    OnTopScenario.run(context, singleplayer, this::check, "spatial_third");
-                } else {
-                    OnTopScenario.run(context, singleplayer, this::check, "flat");
+                if (chosen.contains("backdrop")) {
+                    if (spatial) {
+                        SpatialScenarios setup = new SpatialScenarios(context, this::check);
+                        setup.setSpatial("firstPersonModeInventory", true);
+                        setup.setSpatial("firstPersonModeContainers", true);
+                        BackdropScenario.run(context, singleplayer, this::check, "spatial_first");
+                        setup.setSpatial("firstPersonModeInventory", false);
+                        setup.setSpatial("firstPersonModeContainers", false);
+                        BackdropScenario.run(context, singleplayer, this::check, "spatial_third");
+                    } else {
+                        BackdropScenario.run(context, singleplayer, this::check, "flat");
+                    }
                 }
-            }
-            if (chosen.contains("choose")) {
-                ChooseScenario.run(context, this::check, context::takeScreenshot, prefix + "choose");
-            }
-            if (chosen.contains("quickshots")) {
-                if (spatial) {
-                    // Third person is Spatial GUI's default; in first person the closing is not drawn during the
-                    // camera's way back, which shows the moments better.
-                    QuickShotsScenario.run(context, "spatial_third", ShatterClientGameTest::furnace);
-                    SpatialScenarios setup = new SpatialScenarios(context, this::check);
-                    setup.setSpatial("firstPersonModeInventory", true);
-                    setup.setSpatial("firstPersonModeContainers", true);
-                    QuickShotsScenario.run(context, "spatial_first", ShatterClientGameTest::furnace);
-                    setup.setSpatial("firstPersonModeInventory", false);
-                    setup.setSpatial("firstPersonModeContainers", false);
-                } else {
-                    QuickShotsScenario.run(context, "flat", ShatterClientGameTest::furnace);
+                if (chosen.contains("diagnostics")) {
+                    DiagnosticsScenario.run(context, this::check);
                 }
-            }
-            if (chosen.contains("bundled")) {
-                BundledEffectsScenario.run(context, this::check, context::takeScreenshot, prefix + "bundled",
-                        ShatterClientGameTest::furnace);
-            }
-            if (chosen.contains("editor")) {
-                EditorScenario.run(context, this::check, context::takeScreenshot, prefix + "editor");
-            }
-            if (chosen.contains("tooltips")) {
-                TooltipScenario.run(context, this::check, context::takeScreenshot, prefix + "tooltips");
-            }
-            if (chosen.contains("realpreview")) {
-                RealPreviewScenario.run(context, singleplayer, this::check, context::takeScreenshot, prefix + "real_preview");
-            }
-            if (chosen.contains("collide")) {
-                CollideScenario.run(context, singleplayer, this::check, context::takeScreenshot, prefix + "collide",
-                        ShatterClientGameTest::furnace);
-            }
-            if (chosen.contains("fxeditor")) {
-                FxEditorScenario.run(context, this::check, context::takeScreenshot, prefix + "fx_editor",
-                        ShatterClientGameTest::furnace);
+                if (chosen.contains("follow")) {
+                    if (spatial) {
+                        SpatialScenarios setup = new SpatialScenarios(context, this::check);
+                        setup.setSpatial("firstPersonModeInventory", true);
+                        setup.setSpatial("firstPersonModeContainers", true);
+                        FollowScenario.run(context, singleplayer, this::check, "spatial_first");
+                        setup.setSpatial("firstPersonModeInventory", false);
+                        setup.setSpatial("firstPersonModeContainers", false);
+                        FollowScenario.run(context, singleplayer, this::check, "spatial_third");
+                    } else {
+                        FollowScenario.run(context, singleplayer, this::check, "flat");
+                    }
+                }
+                if (chosen.contains("leak")) {
+                    LeakScenario.run(context, this::check, spatial ? "spatial" : "flat", ShatterClientGameTest::furnace);
+                }
+                if (chosen.contains("budget")) {
+                    new EffectScenarios(context, this::check, context::takeScreenshot).configMigration("config_migration");
+                    BudgetScenario.run(context, this::check, spatial ? "spatial" : "flat");
+                }
+                if (chosen.contains("ontop")) {
+                    if (spatial) {
+                        SpatialScenarios setup = new SpatialScenarios(context, this::check);
+                        setup.setSpatial("firstPersonModeInventory", true);
+                        setup.setSpatial("firstPersonModeContainers", true);
+                        OnTopScenario.run(context, singleplayer, this::check, "spatial_first");
+                        setup.setSpatial("firstPersonModeInventory", false);
+                        setup.setSpatial("firstPersonModeContainers", false);
+                        OnTopScenario.run(context, singleplayer, this::check, "spatial_third");
+                    } else {
+                        OnTopScenario.run(context, singleplayer, this::check, "flat");
+                    }
+                }
+                if (chosen.contains("choose")) {
+                    ChooseScenario.run(context, this::check, context::takeScreenshot, prefix + "choose");
+                }
+                if (chosen.contains("quickshots")) {
+                    if (spatial) {
+                        // Third person is Spatial GUI's default; in first person the closing is not drawn during the
+                        // camera's way back, which shows the moments better.
+                        QuickShotsScenario.run(context, "spatial_third", ShatterClientGameTest::furnace);
+                        SpatialScenarios setup = new SpatialScenarios(context, this::check);
+                        setup.setSpatial("firstPersonModeInventory", true);
+                        setup.setSpatial("firstPersonModeContainers", true);
+                        QuickShotsScenario.run(context, "spatial_first", ShatterClientGameTest::furnace);
+                        setup.setSpatial("firstPersonModeInventory", false);
+                        setup.setSpatial("firstPersonModeContainers", false);
+                    } else {
+                        QuickShotsScenario.run(context, "flat", ShatterClientGameTest::furnace);
+                    }
+                }
+                if (chosen.contains("bundled")) {
+                    BundledEffectsScenario.run(context, this::check, context::takeScreenshot, prefix + "bundled",
+                            ShatterClientGameTest::furnace);
+                }
+                if (chosen.contains("editor")) {
+                    EditorScenario.run(context, this::check, context::takeScreenshot, prefix + "editor");
+                }
+                if (chosen.contains("tooltips")) {
+                    TooltipScenario.run(context, this::check, context::takeScreenshot, prefix + "tooltips");
+                }
+                if (chosen.contains("realpreview")) {
+                    RealPreviewScenario.run(context, singleplayer, this::check, context::takeScreenshot, prefix + "real_preview");
+                }
+                if (chosen.contains("collide")) {
+                    CollideScenario.run(context, singleplayer, this::check, context::takeScreenshot, prefix + "collide",
+                            ShatterClientGameTest::furnace);
+                }
+                if (chosen.contains("fxeditor")) {
+                    FxEditorScenario.run(context, this::check, context::takeScreenshot, prefix + "fx_editor",
+                            ShatterClientGameTest::furnace);
+                }
             }
             return;
         }
@@ -266,6 +312,7 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
         EditorScenario.run(context, this::check, context::takeScreenshot, prefix + "editor");
         RealPreviewScenario.run(context, singleplayer, this::check, context::takeScreenshot, prefix + "real_preview");
         TooltipScenario.run(context, this::check, context::takeScreenshot, prefix + "tooltips");
+        DiagnosticsScenario.run(context, this::check);
         VortexScenario.run(context, singleplayer, this::check, context::takeScreenshot, prefix + "vortex",
                 ShatterClientGameTest::furnace);
         CustomScenario.run(context, this::check, context::takeScreenshot, prefix + "custom", ShatterClientGameTest::furnace);

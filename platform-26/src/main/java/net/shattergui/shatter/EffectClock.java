@@ -15,6 +15,8 @@ import net.minecraft.client.Minecraft;
 public final class EffectClock {
     private static final float NANOS_PER_TICK = 50_000_000f;
     private static long lastTickNanos = System.nanoTime();
+    /** Client ticks since the game started, paused or not. */
+    private static long ticks;
 
     private EffectClock() {
     }
@@ -22,6 +24,12 @@ public final class EffectClock {
     /** END_CLIENT_TICK, before the waves tick. */
     public static void tick() {
         lastTickNanos = System.nanoTime();
+        ticks++;
+    }
+
+    /** Client ticks plus the partial tick ({@link #partialTick}): smooth time for the openings' fades. */
+    public static double now() {
+        return ticks + partialTick();
     }
 
     /** Partial tick for drawing an opening: smooth also while the game is paused. */

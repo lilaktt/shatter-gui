@@ -124,6 +124,8 @@ public final class FxParser {
         String description = clean(root.str("description", ""), MAX_DESCRIPTION);
         int duration = root.integer("duration", 40, FxLimits.MIN_DURATION, FxLimits.MAX_DURATION);
         boolean openable = root.bool("open", false);
+        // Absent: the default of the role the effect plays (openings follow the camera, closes do not).
+        Boolean followCamera = root.has("followCamera") ? root.bool("followCamera", false) : null;
         // Read (checked) by parse(): only marked as known here.
         root.get("reduced");
         Map<String, FxDef.TextureRole> textures = new LinkedHashMap<>();
@@ -170,7 +172,7 @@ public final class FxParser {
         }
         root.finish();
         return new FxDef(id, name.isEmpty() ? String.valueOf(id) : name, description, duration, fracture, trigger,
-                List.copyOf(layers), appearance, List.copyOf(emitters), List.copyOf(sounds), edge, textures, json, openable);
+                List.copyOf(layers), appearance, List.copyOf(emitters), List.copyOf(sounds), edge, textures, json, openable, followCamera);
     }
 
     // --- sections ---

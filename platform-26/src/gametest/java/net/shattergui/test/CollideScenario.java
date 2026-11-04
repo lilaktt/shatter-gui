@@ -105,11 +105,27 @@ final class CollideScenario {
     private record Result(int shards, double lowest, double maxRise, double landedShare) {
     }
 
+    /** Height of the top of the first block with a collision shape at or below {@code pos} (4 blocks down at most). */
+    private static double surfaceBelow(net.minecraft.client.multiplayer.ClientLevel level, org.joml.Vector3d pos) {
+        net.minecraft.core.BlockPos.MutableBlockPos at = new net.minecraft.core.BlockPos.MutableBlockPos(
+                Math.floor(pos.x), Math.floor(pos.y), Math.floor(pos.z));
+        for (int i = 0; i < 5; i++) {
+            net.minecraft.world.phys.shapes.VoxelShape shape = level.getBlockState(at).getCollisionShape(level, at);
+            if (!shape.isEmpty() && at.getY() + shape.max(net.minecraft.core.Direction.Axis.Y) <= pos.y + 0.01) {
+                return at.getY() + shape.max(net.minecraft.core.Direction.Axis.Y);
+            }
+            at.move(net.minecraft.core.Direction.DOWN);
+        }
+        return Double.NEGATIVE_INFINITY;
+    }
+
     private static Result play(ClientGameTestContext context, Consumer<String> shot, String name, String id,
                                Supplier<Screen> furnace, ShatterConfig config, double floorTop) {
         config.effect = id;
         context.setScreen(furnace);
         context.waitTicks(15);
+        // The pieces break and fall the same way in every run.
+        context.runOnClient(mc -> ShardManager.seedForTests(OnTopScenario.TEST_SEED));
         context.runOnClient(mc -> mc.setScreen(null));
         context.waitTicks(1);
         int shards = context.computeOnClient(mc -> ShardManager.liveShardCount());
@@ -126,7 +142,10 @@ final class CollideScenario {
                     for (ShardInstance shard : batch.shards()) {
                         low = Math.min(low, shard.pos().y);
                         rise = Math.max(rise, shard.pos().y - shard.prevPos().y);
-                        near += shard.pos().y < floorTop + 0.4 ? 1 : 0;
+                        // Lying = within 0.4 of the top of whatever is under it. Measured against the stone floor's
+                        // height alone, a piece that came to rest on any other block counted as not lying, and the
+                        // share depended on how the pieces scattered (spatial_collide_land failed now and then at 77%).
+                        near += shard.pos().y < surfaceBelow(mc.level, shard.pos()) + 0.4 ? 1 : 0;
                         count++;
                     }
                 }

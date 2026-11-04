@@ -90,6 +90,10 @@ public abstract class MinecraftMixin {
                                            @Share("opening") LocalBooleanRef opening,
                                            @Share("spatial") LocalBooleanRef spatial,
                                            @Share("start") LocalLongRef start) {
+        if (this.screen != null) {
+            // A screen is up again: it draws its own background (fading in if it opens with an effect).
+            net.shattergui.fly.OpenBackdrop.cancelClose();
+        }
         // A screen opened over the world (Spatial GUI has hooked it by now, in ScreenEvents.BEFORE_INIT).
         if (opening.get() && this.screen == newScreen && level != null && player != null) {
             FlyController.onScreenOpened(newScreen);
@@ -150,6 +154,10 @@ public abstract class MinecraftMixin {
         // Spatial GUI's own plane if it was showing this screen, otherwise (or if that fails) the flat capture.
         stepStart = ShatterProfiler.now();
         SpatialGuiCompat.startClose(old, spatial.get(), effect, target, ParamValues.current(), false);
+        if (!spatial.get()) {
+            // The darkened world behind the flat screen fades out with the effect instead of vanishing at once.
+            net.shattergui.fly.OpenBackdrop.startClose(old, ParamValues.current());
+        }
         CloseWatchdog.step("start the close (queue the capture or take the Spatial GUI plane)", stepStart);
         CloseWatchdog.endCall(start.get());
         ShatterProfiler.step("trigger (pick effect + snapshot camera)", triggerStart);

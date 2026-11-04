@@ -53,6 +53,13 @@ public interface GameInfo {
     /** Shows a screen made in core ({@link PlatformScreen}). */
     void showScreen(Object screen);
 
+    /**
+     * What a bug report needs to know about the game, in order (label → value, "not installed" for missing mods): the
+     * mod, Minecraft, the loader, Fabric API, Iris, Sodium, Spatial GUI, the graphics card and driver (OpenGL renderer,
+     * version and vendor strings) and the shader pack. Values may hold anything; the caller removes names and paths.
+     */
+    java.util.Map<String, String> diagnostics();
+
     /** A message in the action bar (nothing without a player). */
     void actionBar(Text message);
 }

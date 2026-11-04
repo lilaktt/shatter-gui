@@ -58,6 +58,11 @@ public final class DataEffect implements ShatterEffect, EffectCatalog.Data, Effe
     }
 
     /** The same effect played backwards, for opening a screen (same textures, particles and sounds). */
+    @Override
+    public Boolean followCamera() {
+        return def.followCamera;
+    }
+
     public DataEffect reversed() {
         if (reversed) {
             return this;

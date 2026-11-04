@@ -56,4 +56,12 @@ public interface ShatterEffect {
     default boolean countsTowardShardLimit() {
         return true;
     }
+
+    /**
+     * The effect's own choice of following the camera (schema 2 {@code "followCamera"}), or null for the default of the
+     * role it plays (see {@link net.shattergui.params.FollowCamera}).
+     */
+    default Boolean followCamera() {
+        return null;
+    }
 }

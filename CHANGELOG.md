@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+- One jar for every Minecraft 26.1.x: 26.1, 26.1.1 and 26.1.2 (`shatter-gui-<version>+mc26.1-fabric.jar`).
+- The darkened world behind a chest, furnace, crafting table or inventory now fades in with the opening effect and
+  out with the close effect instead of appearing at the end of the opening and vanishing at the start of the close
+  (menus with a blurred background fade their blur too). The same with Spatial GUI and shader packs.
+- The first frame of a close no longer shows the world without the interface for a moment: the pieces are there from
+  the very first frame.
+- Openings follow the camera: walking, sprinting or turning while an interface opens no longer leaves its pieces behind;
+  they land exactly where the interface appears. New setting "Follow the camera" (General → Playback: auto / always /
+  never) and `"followCamera"` for effect files; with it on, the fly close leaves from where the interface is now.
+- Opening pieces are drawn over the HUD and the darkened background like the interface they become, and are no longer
+  coloured by a shader pack (the colour jump at the end of an opening with shaders is gone).
+- "Copy diagnostics" in Settings → About: versions, graphics card and driver, shader pack, chosen effects and the
+  mod's last warnings for bug reports, without user names, file paths or e-mail addresses.
+
 ## 0.1.0-beta — 2026-10-31
 
 First public release, for Minecraft 26.1.2 (Fabric).

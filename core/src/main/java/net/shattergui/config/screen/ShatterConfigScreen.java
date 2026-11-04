@@ -688,6 +688,7 @@ public final class ShatterConfigScreen extends UiScreen {
         Section playback = section(tr("ui.shatter_gui.playback.title"), null);
         playback.add(paramRow(Params.EFFECT_SPEED, work));
         playback.add(paramRow(Params.OPEN_SPEED, work));
+        playback.add(paramRow(Params.FOLLOW_CAMERA, work));
         playback.add(paramRow(Params.SOUND_VOLUME, work));
         playback.add(new SettingRow(tr("ui.shatter_gui.always_on_top"), tr("ui.shatter_gui.always_on_top.desc"), false,
                 new Toggle(() -> work.alwaysOnTop, v -> work.alwaysOnTop = v), () -> !work.alwaysOnTop,
@@ -795,6 +796,11 @@ public final class ShatterConfigScreen extends UiScreen {
             open.tooltip(tr(key), tr(key + ".tooltip"));
             pages.add(open);
         }
+        // Everything a bug report needs, as text for the issue form (no user name, paths or e-mail addresses).
+        Button diagnostics = new Button(tr("ui.shatter_gui.about.copy_diagnostics"), Icon.COPY, Button.Kind.SECONDARY,
+                this::copyDiagnostics);
+        diagnostics.tooltip(tr("ui.shatter_gui.about.copy_diagnostics"), tr("ui.shatter_gui.about.copy_diagnostics.tooltip"));
+        pages.add(diagnostics);
         // Cells as wide as the widest label, so no label is cut (they wrap to more rows instead).
         Grid links = about.add(new Grid(pages.stream().mapToInt(Button::naturalWidth).max().orElse(80), 6));
         pages.forEach(links::add);
@@ -1720,6 +1726,19 @@ public final class ShatterConfigScreen extends UiScreen {
         selectedCustom = customs.isEmpty() ? null : customs.getFirst().id();
         setStatus(tr("ui.shatter_gui.custom.deleted", def.name()), true);
         rebuild();
+    }
+
+    /**
+     * "Copy diagnostics": versions, graphics, shader pack, the effects in use (as saved) and the mod's last warnings, to
+     * the clipboard; returns the text.
+     */
+    public String copyDiagnostics() {
+        ShatterConfig saved = ShatterConfig.get();
+        String text = net.shattergui.debug.Diagnostics.build(Platform.get().game().diagnostics(), saved.openEffect,
+                saved.effect, saved.thematic, net.shattergui.debug.RecentWarnings.all());
+        Platform.get().desktop().setClipboard(text);
+        setStatus(tr("ui.shatter_gui.about.diagnostics_copied"), true);
+        return text;
     }
 
     /** Copies the selected effect's code (compressed JSON) to the clipboard; returns it. */

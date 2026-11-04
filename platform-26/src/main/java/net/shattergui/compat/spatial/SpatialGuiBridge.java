@@ -155,13 +155,49 @@ final class SpatialGuiBridge {
         }
         RenderSystem.getDevice().createCommandEncoder()
                 .copyTextureToTexture(color, slot.getTexture(), 0, 0, 0, 0, 0, target.width, target.height);
+        // The plane hangs in front of Spatial GUI's camera (which may still move out to the third person): the pieces
+        // are placed relative to it in every frame and land where it appears.
+        net.shattergui.shatter.PlaneBasis captured = basis(basis, camera.position());
         ShardManager.spawn(slot, plane, job.bounds(), new Vector3f(camera.forwardVector()), job.effect(), job.target(),
-                job.params(), false, camera.position(), job.screen());
+                job.params(), false, new ShardManager.OpenAnchor(captured, SpatialGuiBridge::planeNow, true), job.screen());
         ShatterProfiler.openStep(String.format(Locale.ROOT,
                 "spatial.completeOpen (frame +%d, center %.2f %.2f %.2f, size %.2fx%.2f, %dx%d)", openFrames,
                 plane.center().x, plane.center().y, plane.center().z, basis.halfWidth() * 2, basis.halfHeight() * 2,
                 target.width, target.height), start);
         return true;
+    }
+
+    /** A {@code QuadBasis} as a {@link net.shattergui.shatter.PlaneBasis}, its centre moved by {@code origin}. */
+    private static net.shattergui.shatter.PlaneBasis basis(RenderUtil.QuadBasis quad, net.minecraft.world.phys.Vec3 origin) {
+        Vector3f c = quad.centerOffset();
+        Vector3f forward = new Vector3f(quad.normal()).normalize();
+        if (forward.dot(c) < 0) {
+            forward.negate();
+        }
+        return new net.shattergui.shatter.PlaneBasis(new org.joml.Vector3d(origin.x + c.x(), origin.y + c.y(), origin.z + c.z()),
+                new Vector3f(quad.right()).normalize(), new Vector3f(quad.up()).normalize(), forward, quad.halfWidth(),
+                quad.halfHeight());
+    }
+
+    /**
+     * Where the plane of the screen on display is in this frame, centre relative to the camera; null if Spatial GUI does
+     * not show one. Read when the gathering pieces are drawn, after Spatial GUI has placed its plane for this frame.
+     */
+    static net.shattergui.shatter.PlaneBasis planeNow() {
+        try {
+            SpatialGUIRenderer renderer = SpatialGUIClient.renderer();
+            if (renderer == null || renderer.getHookedScreen() == null) {
+                return null;
+            }
+            RenderUtil.QuadBasis quad = renderer.getInventoryRenderer().getQuadBasis();
+            if (quad == null || quad.halfWidth() <= 0 || quad.halfHeight() <= 0) {
+                return null;
+            }
+            return basis(quad, net.minecraft.world.phys.Vec3.ZERO);
+        } catch (Throwable t) {
+            // Drawn where the plane was when the picture was taken instead (as before the pieces followed it).
+            return null;
+        }
     }
 
     static boolean queue(Screen screen, ShatterEffect effect, FlyTarget flyTarget, ParamValues params, boolean preview) {

@@ -11,6 +11,15 @@ final class IrisBridge {
         return IrisApi.getInstance().isShaderPackInUse();
     }
 
+    /** The selected pack's name (its file or folder name), or null; Iris's own (not API) method. */
+    static String packName() {
+        return net.irisshaders.iris.Iris.getCurrentPackName();
+    }
+
+    static boolean shadersEnabled() {
+        return IrisApi.getInstance().getConfig().areShadersEnabled();
+    }
+
     static boolean renderingShadowPass() {
         return IrisApi.getInstance().isRenderingShadowPass();
     }

@@ -1,6 +1,6 @@
 # Shatter GUI (beta 0.1)
 
-Клієнтський Fabric-мод для Minecraft 26.1.2. Коли ви закриваєте екран у світі (інвентар, скриню, меню паузи, чат…),
+Клієнтський Fabric-мод для Minecraft 26.1.x (26.1, 26.1.1, 26.1.2). Коли ви закриваєте екран у світі (інвентар, скриню, меню паузи, чат…),
 його останній кадр розпадається на уламки — склом, вогнем, розчиненням, вихором або відлітає назад у блок, з якого його
 відкрили. Уламки існують у світових координатах: обертаються, падають, відскакують від блоків і плавно зникають.
 
@@ -10,12 +10,12 @@
 
 ## Вимоги
 
-- Minecraft 26.1.2, Fabric Loader ≥ 0.19.3, Fabric API, Java 25.
+- Minecraft 26.1, 26.1.1 або 26.1.2 (один jar), Fabric Loader ≥ 0.19.3, Fabric API, Java 25.
 
 ## Збірка
 
 ```
-./gradlew build              # build/libs/shatter-gui-0.1.0-beta+mc26.1.2-fabric.jar
+./gradlew build              # build/libs/shatter-gui-0.1.0-beta+mc26.1-fabric.jar
 ./gradlew runClient          # dev-клієнт
 ./gradlew runClientGameTest  # автотест: відкриває/закриває екрани у справжньому клієнті, робить скріншоти
 ./gradlew runClientGameTest -PspatialGui=1.8   # те саме зі Spatial GUI 1.8 (або 1.9), береться з Modrinth Maven

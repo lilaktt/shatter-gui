@@ -47,6 +47,22 @@ public final class IrisCompat {
         }
     }
 
+    /** For the diagnostics: the shader pack in use, "none", "shaders off", or "Iris not installed". */
+    public static String describePack() {
+        if (!INSTALLED) {
+            return "Iris not installed";
+        }
+        try {
+            if (!IrisBridge.shadersEnabled()) {
+                return "shaders off";
+            }
+            String name = IrisBridge.packName();
+            return name == null || name.isBlank() ? "none" : name + (IrisBridge.shaderPackInUse() ? "" : " (not in use)");
+        } catch (Throwable t) {
+            return "unknown (" + t.getClass().getSimpleName() + ")";
+        }
+    }
+
     private static boolean active() {
         return INSTALLED && !failed && ShatterConfig.get().shaderCompat;
     }

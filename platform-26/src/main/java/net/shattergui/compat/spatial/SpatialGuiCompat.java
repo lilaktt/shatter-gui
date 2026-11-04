@@ -140,6 +140,18 @@ public final class SpatialGuiCompat {
     }
 
     /** The opened screen closed or was replaced before its gathering started: forget it. */
+    /**
+     * Centre of Spatial GUI's plane of the screen on display in this frame, relative to the camera in world axes, or null
+     * (no plane, Spatial GUI absent or switched off). Tests compare where an opening ends with it.
+     */
+    public static org.joml.Vector3d planeCenterNow() {
+        if (!active()) {
+            return null;
+        }
+        net.shattergui.shatter.PlaneBasis plane = SpatialGuiBridge.planeNow();
+        return plane == null ? null : plane.center();
+    }
+
     public static void cancelPendingOpen() {
         if (SpatialGuiDetector.isSupportedVersionInstalled() && !failed) {
             try {

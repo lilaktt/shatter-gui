@@ -25,6 +25,14 @@ public final class Params {
     public static final Param.Float EFFECT_SPEED = add(new Param.Float(GENERAL, "effectSpeed", 0.25f, 4f, 1f));
     /** Speed of openings only (effects played backwards, the fly-out): their length is divided by it, see OpenTiming. */
     public static final Param.Float OPEN_SPEED = add(new Param.Float(GENERAL, "openSpeed", 0.5f, 3f, 1.5f));
+    /**
+     * Whether an effect is placed relative to the camera in every frame (it stays in front of the face while the player
+     * moves or turns) or stays where it started in the world. "auto": openings follow (they become the screen, which is
+     * always in front of the face), closes stay; an effect file may say otherwise ({@code "followCamera"}, schema 2).
+     * For closes only the fly effect uses it (it then leaves from where the screen is now). See {@link FollowCamera}.
+     */
+    public static final Param.Choice FOLLOW_CAMERA = add(new Param.Choice(GENERAL, "followCamera", FollowCamera.AUTO,
+            FollowCamera.AUTO, FollowCamera.ALWAYS, FollowCamera.NEVER));
     /** Volume of all sounds of the mod (multiplies each effect's own volume). */
     public static final Param.Float SOUND_VOLUME = add(new Param.Float(GENERAL, "soundVolume", 0f, 1f, 1f));
     /** Live shards of effects that count towards the limit (glass, fly). */

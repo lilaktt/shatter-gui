@@ -10,7 +10,7 @@ base {
 }
 // The mod's own version (fabric.mod.json, "About") stays mod_version; the jar says which game and loader it is for.
 version = project.mod_version
-def jarVersion = "${project.mod_version}+mc${project.minecraft_version}-${project.mod_loader}"
+def jarVersion = "${project.mod_version}+mc${project.findProperty('minecraft_label') ?: project.minecraft_version}-${project.mod_loader}"
 
 // Core is compiled again here, against this Minecraft's libraries and Java: the classes of this jar are built for this
 // version, and core's own build (../core) checks that it needs no Minecraft at all.
@@ -78,6 +78,10 @@ loom {
         // Only one Spatial GUI camera mode in the "duplicates" and "thematic" scenarios: -PspatialMode=first|third.
         if (name == "clientGameTest" && project.hasProperty("spatialMode")) {
             vmArg "-Dshatter.test.spatialMode=${project.property('spatialMode')}"
+        }
+        // The chosen scenarios several times in one run (e.g. -PtestOnly=ontop,collide -Prepeat=5).
+        if (name == "clientGameTest" && project.hasProperty("repeat")) {
+            vmArg "-Dshatter.test.repeat=${project.property('repeat')}"
         }
         // Languages of the "lang" scenario (e.g. -Plang=ja_jp), one per run keeps the memory low.
         if (name == "clientGameTest" && project.hasProperty("lang")) {

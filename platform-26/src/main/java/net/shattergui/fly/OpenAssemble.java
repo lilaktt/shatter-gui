@@ -32,6 +32,8 @@ public final class OpenAssemble {
     private static long hardDeadline;
     /** Length of the running gathering wave in ticks, 0 before it started (tests time their frames by it). */
     private static int waveTicks;
+    /** {@link net.shattergui.shatter.EffectClock#now} when the gathering wave started. */
+    private static double waveStart;
     /** For the profile log: the screen whose opening is timed, when it started, when its real screen showed. */
     private static Screen timed;
     private static long openNanos;
@@ -103,6 +105,7 @@ public final class OpenAssemble {
     public static void waveStarted(int length) {
         if (screen != null) {
             waveTicks = length;
+            waveStart = net.shattergui.shatter.EffectClock.now();
             deadline = ticks + length + END_GRACE_TICKS;
         }
     }
@@ -126,7 +129,8 @@ public final class OpenAssemble {
             return false;
         }
         if (ticks > deadline || System.currentTimeMillis() > hardDeadline || Minecraft.getInstance().screen != screen) {
-            shown(ticks > deadline ? "deadline" : "screen changed");
+            shown(ticks > deadline ? "deadline" : Minecraft.getInstance().screen != screen ? "screen changed"
+                    : "time limit of " + MAX_MS + " ms");
             screen = null;
             return false;
         }
@@ -151,6 +155,21 @@ public final class OpenAssemble {
     /** Length of the gathering wave of the screen being gathered, 0 until it has started. */
     public static int waveTicks() {
         return screen != null ? waveTicks : 0;
+    }
+
+    /**
+     * How far the gathering of {@code s} is, 0..1 (0 until its wave exists, 1 when it is not being gathered): the darkened
+     * background behind it comes in with it ({@link OpenBackdrop}). Reaches 1 when the real screen shows.
+     */
+    public static float progress(Screen s) {
+        if (screen == null || s != screen) {
+            return 1f;
+        }
+        if (waveTicks <= 0) {
+            return 0f;
+        }
+        double t = (net.shattergui.shatter.EffectClock.now() - waveStart) / Math.max(1, waveTicks);
+        return (float) Math.clamp(t, 0.0, 1.0);
     }
 
     public static boolean active() {

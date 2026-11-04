@@ -139,6 +139,7 @@ final class Inspector extends Container {
         description.onChange(v -> editor.doc.set("description", v));
         field("field.description", "description", description, null, null);
         number("field.duration", "duration", "effect.duration");
+        followCamera();
 
         section("section.fracture", false);
         String mode = editor.doc.str("fracture.mode", "grid");
@@ -567,6 +568,34 @@ final class Inspector extends Container {
         });
         field(key, withDefault(EditorUi.tr(key + ".desc"), Text.translatable(def ? "options.on" : "options.off")), path, t,
                 null, null);
+    }
+
+    /**
+     * {@code "followCamera"}: absent (the default of the role it plays: openings follow the camera, closes do not),
+     * true or false. The player's setting "Follow the camera" may override it.
+     */
+    private void followCamera() {
+        String path = "followCamera";
+        java.util.function.Supplier<String> current = () -> !editor.doc.has(path) ? "auto"
+                : editor.doc.bool(path, true) ? "on" : "off";
+        Dropdown<String> box = new Dropdown<>(() -> {
+            List<Dropdown.Option<String>> options = new ArrayList<>();
+            for (String v : List.of("auto", "on", "off")) {
+                options.add(new Dropdown.Option<>(v, EditorUi.tr("follow." + v), EditorUi.tr("follow." + v + ".desc"), null));
+            }
+            return options;
+        }, current, v -> {
+            if (v.equals(current.get())) {
+                return;
+            }
+            if (v.equals("auto")) {
+                editor.doc.remove(path);
+            } else {
+                editor.doc.set(path, v.equals("on"));
+            }
+        });
+        field("field.follow_camera", withDefault(EditorUi.tr("field.follow_camera.desc"), EditorUi.tr("follow.auto")), path,
+                box, () -> editor.doc.remove(path), () -> editor.doc.has(path));
     }
 
     /** One of several names; {@code rebuild}: the controls below depend on it. */

@@ -139,7 +139,8 @@ public final class FlyController {
         // An opening: quicker with openSpeed, like every other opening.
         int duration = Math.max(2, Math.round(params.ticks(Params.FLY_DURATION) / params.f(Params.OPEN_SPEED)));
         OpenAssemble.flyStarted(screen, duration);
-        FlyOpen.start(screen, from, spatial, duration);
+        FlyOpen.start(screen, from, spatial, duration,
+                net.shattergui.params.FollowCamera.follows(params, null, true));
         EffectSounds.play(from.isEdge() ? SoundEvents.UI_TOAST_IN : SoundEvents.BUNDLE_REMOVE_ONE,
                 params.volume(Params.FLY_SOUND), 1f);
         ShatterProfiler.openStep("open.trigger (" + (spatial ? "Spatial GUI plane, its open animation cancelled"

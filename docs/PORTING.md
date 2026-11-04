@@ -12,7 +12,7 @@ core/              чиста логіка: без Minecraft, без заван�
   src/main/resources assets/shatter_gui: мови, ефекти, шаблони, приклади, themes.json, іконка
   src/contract/java  контракт PlatformScreen: компілюється лише з core, у jar не потрапляє
   src/test/java      юніт-тести (усі 85 колишніх)
-platform-26/       Minecraft 26.1.2 + Fabric: усе, що залежить від гри; game tests (src/gametest)
+platform-26/       Minecraft 26.1.x + Fabric (один jar для 26.1, 26.1.1, 26.1.2; компілюється проти 26.1.2): усе, що залежить від гри; game tests (src/gametest)
 platform-1.21.1/   Minecraft 1.21.1 + Fabric: порт у роботі; тести — власний харнес (src/gametest)
 ```
 
@@ -38,13 +38,13 @@ Core не має власного jar: кожен platform-модуль комп
 ## Збірка
 
 ```
-./gradlew build                      # core (+ юніт-тести, checkNoMinecraft) і 26.1.2: build/libs/shatter-gui-0.1.0-beta+mc26.1.2-fabric.jar
+./gradlew build                      # core (+ юніт-тести, checkNoMinecraft) і 26.1.x: build/libs/shatter-gui-0.1.0-beta+mc26.1-fabric.jar
 ./gradlew build -Pmc=1.21.1          # core і заготовка 1.21.1:          build/libs/shatter-gui-0.1.0-beta+mc1.21.1-fabric.jar
 ./gradlew build -Pmc=all             # усі по черзі (на слабкій машині — краще по одній)
 ./gradlew :platform-26:runClientGameTest [-PspatialGui=1.8] [-Pshaders -PshaderPack=…] [-PtestOnly=…]
 ```
 
-`settings.gradle` підключає лише вибрані platform-модулі (`-Pmc`, типово 26.1.2), тож Loom ніколи не налаштовує дві
+`settings.gradle` підключає лише вибрані platform-модулі (`-Pmc`, типово 26.1; `26.1.1` і `26.1.2` — той самий модуль), тож Loom ніколи не налаштовує дві
 версії Minecraft за один запуск. Ім'я jar: `shatter-gui-<mod_version>+mc<minecraft_version>-<mod_loader>.jar`, версія
 мода всередині (`fabric.mod.json`, «Про мод») лишається `mod_version`. Версії гри, завантажувача, Fabric API і Java —
 у `platform-*/gradle.properties`; спільні (мод, Loom) — у кореневому `gradle.properties`.
@@ -197,6 +197,16 @@ Core не має власного jar: кожен platform-модуль комп
 (GL-блит) → (3) mixin-и тригера → (4) ефекти (копія з 26 + точкові правки частинок/звуків) → (5) `OnTopPass`, Spatial GUI,
 справжнє прев'ю. Ігрові тести: спершу простий власний харнес (сценарії на `ClientTickEvents` + скріншоти через
 `Screenshot`), бо API клієнтських тестів Fabric для 1.21.1 немає.
+
+## Усі 26.1.x одним jar
+
+`fabric.mod.json`: `"minecraft": "~26.1"`. У Fabric Loader 0.19.3 `~` — це `SAME_TO_NEXT_MINOR` (вихідний код
+`VersionPredicateParser`/`VersionComparisonOperator`): версія ≥ 26.1 і та сама пара major.minor, тобто 26.1, 26.1.1,
+26.1.2 (і майбутні 26.1.x), без 26.1-pre/-rc і без 26.2. Список стабільних версій — з Fabric meta
+(`meta.fabricmc.net/v2/versions/game`: 26.1, 26.1.1, 26.1.2). Fabric API 0.155.3+26.1.2 сам оголошує
+`"minecraft": "~26.1-"`, тож той самий Fabric API працює на всіх трьох. Jar зібрано проти 26.1.2; ім'я —
+`shatter-gui-<версія>+mc26.1-fabric.jar` (`minecraft_label` у `platform-26/gradle.properties`). Ігрові тести на кожній
+патч-версії: `./gradlew :platform-26:runClientGameTest -Pminecraft_version=26.1` (і `26.1.1`; NOTES.md, «Усі 26.1.x»).
 
 ## 26.2 і 26.3
 

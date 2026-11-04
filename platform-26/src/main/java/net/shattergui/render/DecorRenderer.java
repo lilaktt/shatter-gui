@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 import net.shattergui.shatter.ShardInstance;
+import net.shattergui.shatter.CameraSpace;
 import net.shattergui.shatter.ShardManager;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -29,18 +30,19 @@ final class DecorRenderer {
     private DecorRenderer() {
     }
 
-    static void submit(ShardRenderer.Sink sink, ShardManager.Batch batch, WaveDecor decor, Vec3 camera,
+    static void submit(ShardRenderer.Sink sink, ShardManager.Batch batch, WaveDecor decor, CameraSpace camera,
                        Quaternionf cameraRotation, float partialTick, boolean shaders) {
         float fade = batch.fade(partialTick);
         overlays(sink, batch, decor, camera, partialTick, shaders, fade);
         sprites(sink, decor, camera, cameraRotation, partialTick, fade);
     }
 
-    private static void overlays(ShardRenderer.Sink sink, ShardManager.Batch batch, WaveDecor decor, Vec3 camera,
+    private static void overlays(ShardRenderer.Sink sink, ShardManager.Batch batch, WaveDecor decor, CameraSpace camera,
                                  float partialTick, boolean shaders, float fade) {
         Quaternionf rot = new Quaternionf();
         Vector3f normal = new Vector3f();
         Vector3f corner = new Vector3f();
+        Vector3f at = new Vector3f();
         float[] uv = new float[6];
         // Low quality: no texture overlays.
         int overlays = batch.params().fullQuality() ? decor.overlayCount() : 0;
@@ -61,10 +63,13 @@ final class DecorRenderer {
                     color = (Math.round(alpha * 255) << 24) | (color & 0xFFFFFF);
                 }
                 shard.prevRot().slerp(shard.rot(), partialTick, rot);
-                float px = (float) (shard.prevPos().x + (shard.pos().x - shard.prevPos().x) * partialTick - camera.x);
-                float py = (float) (shard.prevPos().y + (shard.pos().y - shard.prevPos().y) * partialTick - camera.y);
-                float pz = (float) (shard.prevPos().z + (shard.pos().z - shard.prevPos().z) * partialTick - camera.z);
-                rot.transform(shard.normal(), normal);
+                camera.point(shard.prevPos().x + (shard.pos().x - shard.prevPos().x) * partialTick,
+                        shard.prevPos().y + (shard.pos().y - shard.prevPos().y) * partialTick,
+                        shard.prevPos().z + (shard.pos().z - shard.prevPos().z) * partialTick, at);
+                float px = at.x;
+                float py = at.y;
+                float pz = at.z;
+                camera.direction(rot.transform(shard.normal(), normal));
                 if (normal.x * px + normal.y * py + normal.z * pz > 0) {
                     normal.negate();
                 }
@@ -72,7 +77,7 @@ final class DecorRenderer {
                 float scale = decor.scale(shard, partialTick);
                 float[] xyz = new float[9];
                 for (int c = 0; c < 3; c++) {
-                    rot.transform(shard.corners()[c], corner);
+                    camera.offset(rot.transform(shard.corners()[c], corner));
                     xyz[c * 3] = px + normal.x * lift + corner.x * scale;
                     xyz[c * 3 + 1] = py + normal.y * lift + corner.y * scale;
                     xyz[c * 3 + 2] = pz + normal.z * lift + corner.z * scale;
@@ -92,7 +97,7 @@ final class DecorRenderer {
         }
     }
 
-    private static void sprites(ShardRenderer.Sink sink, WaveDecor decor, Vec3 camera,
+    private static void sprites(ShardRenderer.Sink sink, WaveDecor decor, CameraSpace camera,
                                 Quaternionf cameraRotation, float partialTick, float fade) {
         Map<String, Mesh> meshes = new LinkedHashMap<>();
         Map<String, Identifier> textures = new LinkedHashMap<>();
@@ -109,9 +114,10 @@ final class DecorRenderer {
             String key = texture + (emissive ? "#e" : "#n");
             textures.putIfAbsent(key, texture);
             Mesh mesh = meshes.computeIfAbsent(key, k -> new Mesh(64));
-            float cx = (float) (x - camera.x);
-            float cy = (float) (y - camera.y);
-            float cz = (float) (z - camera.z);
+            Vector3f c = camera.point(x, y, z, new Vector3f());
+            float cx = c.x;
+            float cy = c.y;
+            float cz = c.z;
             float[] xyz = new float[12];
             for (int i = 0; i < 4; i++) {
                 cameraRotation.transform(corners[i].set(base[i][0] * half, base[i][1] * half, 0));

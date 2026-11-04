@@ -153,12 +153,18 @@ public final class FxDef {
     public final String json;
     /** It can also open a screen: played backwards, the pieces fly together into the interface. */
     public final boolean openable;
+    /**
+     * Whether it is placed relative to the camera every frame ({@code "followCamera"}), or null to use the default of
+     * its role (openings follow, closes do not); the player's setting may override it, see
+     * {@link net.shattergui.params.FollowCamera}.
+     */
+    public final Boolean followCamera;
     /** The version for "reduce motion" (the effect's "reduced" overrides applied), or null for the same. */
     FxDef reduced;
 
     FxDef(String id, String name, String description, int duration, Fracture fracture, Trigger trigger,
           List<Layer> layers, Appearance appearance, List<Emitter> emitters, List<Sound> sounds, Edge edge,
-          Map<String, TextureRole> textures, String json, boolean openable) {
+          Map<String, TextureRole> textures, String json, boolean openable, Boolean followCamera) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -173,6 +179,7 @@ public final class FxDef {
         this.textures = textures;
         this.json = json;
         this.openable = openable;
+        this.followCamera = followCamera;
     }
 
     /** The definition to run: its "reduced" variant when the player asked for less motion and it has one. */

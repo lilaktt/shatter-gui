@@ -66,6 +66,8 @@ public final class ScreenCapture {
     private static Capture armed;
     private static GpuTexture backup;
     private static long guiRenderStart;
+    /** The close wave the capture of this frame started (drawn in this frame, see {@link #takeSpawnedClose}). */
+    private static ShardManager.Batch spawnedClose;
 
     private ScreenCapture() {
     }
@@ -194,8 +196,20 @@ public final class ScreenCapture {
 
         if (slot != null) {
             ShardManager.spawn(slot, new CameraPlane(capture.camera()), capture.bounds(), capture.camera().forward(),
-                    capture.effect(), capture.target(), capture.params(), capture.preview(), null, capture.screen());
+                    capture.effect(), capture.target(), capture.params(), capture.preview(),
+                    new ShardManager.OpenAnchor(net.shattergui.shatter.PlaneBasis.flat(capture.camera()),
+                            net.shattergui.shatter.PlaneBasis::flatNow, false),
+                    capture.screen());
+            ShardManager.Batch batch = ShardManager.lastSpawned();
+            spawnedClose = batch != null && !capture.effect().opens() ? batch : null;
         }
+    }
+
+    /** The close wave started by this frame's capture, once (then null). */
+    public static ShardManager.Batch takeSpawnedClose() {
+        ShardManager.Batch batch = spawnedClose;
+        spawnedClose = null;
+        return batch;
     }
 
     /**
