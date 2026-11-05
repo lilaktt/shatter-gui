@@ -49,6 +49,8 @@ request.
 | package | a `.shatterfx` file with an effect and its textures | пакунок | Paket | paquete | paquet | pacote | paczka | 包 | пакет | パッケージ | 패키지 | pacchetto |
 | reduce motion | setting: calmer, shorter effects | менше руху | Weniger Bewegung | reducir movimiento | réduire les mouvements | reduzir movimento | mniej ruchu | 减少动态效果 | меньше движения | 動きを減らす | 움직임 줄이기 | riduci movimento |
 | thematic mode | setting: each screen gets its own fitting effect | тематичний режим | thematischer Modus | modo temático | mode thématique | modo temático | tryb tematyczny | 主题模式 | тематический режим | テーマモード | 테마 모드 | modalità a tema |
+| follow the camera | setting: an effect stays in front of the player while they move | слідувати за камерою | Kamera folgen | seguir la cámara | suivre la caméra | seguir a câmera | podążaj za kamerą | 跟随镜头 | следовать за камерой | カメラに追従 | 카메라 따라가기 | segui la telecamera |
+| diagnostics | the text copied for a bug report | діагностика | Diagnose | diagnóstico | diagnostic | diagnóstico | diagnostyka | 诊断信息 | диагностика | 診断情報 | 진단 정보 | diagnostica |
 
 ## Sending a correction
 

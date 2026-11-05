@@ -45,6 +45,7 @@ final class GatherScenario {
         ShatterConfig config = ShatterConfig.get();
         String effect = config.effect;
         String openEffect = config.openEffect;
+        context.runOnClient(mc -> net.shattergui.debug.FrameAudit.enable(true));
         try {
             // Closing again with a quick effect without particles keeps the run short and the next frames clean (vanilla
             // particles outlive the wave and would differ from frame to frame).
@@ -64,7 +65,18 @@ final class GatherScenario {
         } finally {
             config.effect = effect;
             config.openEffect = openEffect;
+            context.runOnClient(mc -> net.shattergui.debug.FrameAudit.enable(false));
         }
+    }
+
+    /** The last frames as the audit saw them: client time of the frame, what was drawn. For a failed jump check. */
+    private static String lastFrames(ClientGameTestContext context, long from) {
+        StringBuilder out = new StringBuilder();
+        for (net.shattergui.debug.FrameAudit.Frame f : context.computeOnClient(mc -> net.shattergui.debug.FrameAudit.since(from))) {
+            out.append(String.format(Locale.ROOT, "%n    t=%.2f flat=%s plane=%.2f open=%d close=%d", f.time(), f.flat(),
+                    f.planeAlpha(), f.openings(), f.closes()));
+        }
+        return out.toString();
     }
 
     private static void one(ClientGameTestContext context, BiConsumer<Boolean, String> check, String mode,
@@ -79,6 +91,7 @@ final class GatherScenario {
         FrameGrab.request(context, name + "_world", true);
         FrameGrab.Frame world = FrameGrab.get(context, name + "_world");
 
+        long auditFrom = context.computeOnClient(mc -> net.shattergui.debug.FrameAudit.next());
         context.runOnClient(mc -> mc.setScreen(furnace.get()));
         // The mouse to a corner (opening a screen puts it in the middle): a slot under it would light up once the real
         // screen takes input, which is no jump.
@@ -196,7 +209,7 @@ final class GatherScenario {
                 ShatterGuiClient.LOGGER.warn("[ShatterTest] KNOWN (shader pack colours the pieces): {}", jumpText);
             }
         } else {
-            check.accept(jump <= allowed, jumpText);
+            check.accept(jump <= allowed, jump <= allowed ? jumpText : jumpText + lastFrames(context, auditFrom));
         }
         if (worldComparable) {
             // The camera stands still: the screen just shown is the screen as it stays.

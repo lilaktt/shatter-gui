@@ -20,7 +20,7 @@ public final class FrameAudit {
      * blocks), or null; {@code backdrop}: opacity of the darkened world behind the screen (or of a closed one fading out).
      */
     public record Frame(long index, boolean screenOpen, boolean flat, float planeAlpha, int openings, int closes,
-                        float[] plane, float backdrop, float[] spatialPlane) {
+                        float[] plane, float backdrop, float[] spatialPlane, double time) {
         /** How many pictures of the interface were visible. */
         public int instances() {
             return (flat ? 1 : 0) + (planeAlpha > 0.01f ? 1 : 0) + openings + closes;
@@ -104,7 +104,8 @@ public final class FrameAudit {
         boolean flat = screenExtracted && open && !SpatialGuiCompat.isShowing(mc.screen);
         org.joml.Vector3d spatial = open && SpatialGuiCompat.isShowing(mc.screen) ? SpatialGuiCompat.planeCenterNow() : null;
         FRAMES.add(new Frame(index++, open, flat, planeAlpha, openings, closes, plane,
-                net.shattergui.fly.OpenBackdrop.shown(), spatial == null ? null : local(spatial.x, spatial.y, spatial.z)));
+                net.shattergui.fly.OpenBackdrop.shown(), spatial == null ? null : local(spatial.x, spatial.y, spatial.z),
+                net.shattergui.shatter.EffectClock.now()));
         if (FRAMES.size() > KEPT) {
             FRAMES.removeFirst();
         }

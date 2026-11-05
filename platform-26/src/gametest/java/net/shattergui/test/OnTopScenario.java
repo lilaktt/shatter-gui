@@ -24,7 +24,11 @@ import java.util.function.BiConsumer;
 final class OnTopScenario {
     /** Ticks of the fly-back for this test: long enough to catch frames behind the wall. */
     private static final int FLY_TICKS = 20;
-    private static final int[] SHOTS = {12, 15, 18};
+    /**
+     * Exact ticks of the frames. The last is t16, not t18: at t18 the whole interface is 90x85 pixels, 0.006 of the wall,
+     * less than {@link #LAST_VISIBLE}, and it only passed while the shots drifted to earlier moments of the flight.
+     */
+    private static final int[] SHOTS = {12, 15, 16};
     /** The wall above the HUD (with Spatial GUI in the third person the plane flies in from the side). */
     private static final double[] WALL = {0.05, 0.05, 0.95, 0.8};
     /**
