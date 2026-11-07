@@ -80,7 +80,7 @@
   "ui.shatter_gui.preset.cinematic.desc": "Länger, mehr Splitter und Partikel.",
   "ui.shatter_gui.playback.title": "Wiedergabe",
   "ui.shatter_gui.always_on_top": "Über Blöcken zeichnen",
-  "ui.shatter_gui.always_on_top.desc": "Effekte werden nach der Welt gezeichnet, Blöcke davor schneiden sie nie ab; HUD und Menüs bleiben darüber.",
+  "ui.shatter_gui.always_on_top.desc": "Splitter im Flug werden über Blöcken gezeichnet, eine Wand schneidet den Effekt also nie ab; ein liegender Splitter wird wie der Rest der Welt von Blöcken verdeckt. Aus: Blöcke davor verdecken den Effekt immer. HUD und Menüs bleiben darüber.",
   "ui.shatter_gui.performance.title": "Leistung",
   "ui.shatter_gui.performance.desc": "Verringern, wenn das Spiel während der Effekte ruckelt.",
   "ui.shatter_gui.quality": "Effektqualität",

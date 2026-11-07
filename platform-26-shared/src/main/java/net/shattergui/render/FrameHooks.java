@@ -25,6 +25,16 @@ public final class FrameHooks {
     }
 
     /**
+     * After the level, right before vanilla clears the depth for the hand: the settled pieces, depth-tested against the
+     * world (see {@link OnTopPass#drawSettled}).
+     */
+    public static void beforeHand(GpuBufferSlice noFog) {
+        long start = System.nanoTime();
+        OnTopPass.drawSettled(noFog);
+        CloseWatchdog.step("draw the settled pieces in the world", start);
+    }
+
+    /**
      * After the level and the hand, before vanilla clears the depth for the GUI: the fading darkness of a closed screen
      * and the effects over the world, depth-tested against the hand (see {@link OnTopPass#drawAfterLevel}).
      */

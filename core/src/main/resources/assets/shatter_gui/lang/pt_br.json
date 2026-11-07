@@ -80,7 +80,7 @@
   "ui.shatter_gui.preset.cinematic.desc": "Mais longo, mais cacos e partículas.",
   "ui.shatter_gui.playback.title": "Reprodução",
   "ui.shatter_gui.always_on_top": "Desenhar sobre os blocos",
-  "ui.shatter_gui.always_on_top.desc": "Os efeitos são desenhados depois do mundo, então blocos à frente nunca os cortam; o HUD e as interfaces ficam por cima.",
+  "ui.shatter_gui.always_on_top.desc": "Os fragmentos em voo são desenhados sobre os blocos, então uma parede nunca corta o efeito; um fragmento já parado fica escondido pelos blocos como o resto do mundo. Desligado: blocos à frente sempre escondem o efeito. O HUD e as interfaces ficam por cima.",
   "ui.shatter_gui.performance.title": "Desempenho",
   "ui.shatter_gui.performance.desc": "Reduza se o jogo travar durante os efeitos.",
   "ui.shatter_gui.quality": "Qualidade dos efeitos",

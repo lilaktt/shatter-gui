@@ -27,6 +27,11 @@ import java.util.List;
  * same partial tick) or, for openings, after the GUI; it is drawn at two points of {@code GameRenderer#render}:
  *
  * <ul>
+ *   <li>{@link #drawSettled}: the settled pieces of the closes ({@link net.shattergui.shatter.Settle}), right before
+ *       vanilla clears the depth for the hand: the depth buffer still holds the world, so they are depth-tested against
+ *       it (a wall or the block they lie under hides them), with the same pipeline and matrices as the pieces over the
+ *       world, so a piece looks the same in both. They are moved {@code Settle.BIAS} towards the camera along the line
+ *       of sight (no flicker with the face they lie on, no shift on the screen).</li>
  *   <li>{@link #drawAfterLevel}: after the whole level — blocks, translucent blocks, clouds, a shader pack's composite,
  *       the player's hand — and before the GUI. First the darkened world of a screen that just closed, fading out
  *       ({@link OpenBackdrop}), then the closes ({@code "alwaysOnTop"}). The depth buffer still holds the hand there
@@ -47,6 +52,8 @@ public final class OnTopPass {
     }
 
     private static final List<Entry> PENDING = new ArrayList<>();
+    /** Settled pieces of this frame: drawn in the world's depth ({@link #drawSettled}). */
+    private static final List<Entry> SETTLED = new ArrayList<>();
     /** The level's projection of this frame (view bobbing and nausea included), without them, and its camera rotation. */
     private static final Matrix4f PROJECTION = new Matrix4f();
     private static final Matrix4f CLEAN_PROJECTION = new Matrix4f();
@@ -76,15 +83,35 @@ public final class OnTopPass {
     /** Level render, before this frame's geometry is added: drops what an earlier frame did not draw. */
     static void begin() {
         PENDING.clear();
+        SETTLED.clear();
     }
 
     static void add(RenderType type, SubmitNodeCollector.CustomGeometryRenderer geometry) {
         PENDING.add(new Entry(type, geometry));
     }
 
+    static void addSettled(RenderType type, SubmitNodeCollector.CustomGeometryRenderer geometry) {
+        SETTLED.add(new Entry(type, geometry));
+    }
+
     /** Whether anything waits to be drawn this frame (tests). */
     public static boolean hasPending() {
-        return !PENDING.isEmpty();
+        return !PENDING.isEmpty() || !SETTLED.isEmpty();
+    }
+
+    /**
+     * Before vanilla clears the depth for the hand (the depth buffer holds the world): the settled pieces, depth-tested
+     * against the world. Vanilla clears the depth right after, so it is left as it is.
+     */
+    public static void drawSettled(GpuBufferSlice noFog) {
+        if (SETTLED.isEmpty()) {
+            return;
+        }
+        try {
+            draw(SETTLED, PROJECTION, false, false, noFog);
+        } finally {
+            SETTLED.clear();
+        }
     }
 
     /**
@@ -93,6 +120,11 @@ public final class OnTopPass {
      */
     public static void drawAfterLevel(GpuBufferSlice noFog) {
         int closing = OpenBackdrop.closingKind();
+        if (!SETTLED.isEmpty()) {
+            // The point before the hand was not reached this frame: over the world like the rest, not lost.
+            PENDING.addAll(0, SETTLED);
+            SETTLED.clear();
+        }
         if (PENDING.isEmpty() && closing == 0) {
             return;
         }
@@ -101,7 +133,7 @@ public final class OnTopPass {
                 drawBackdrop(closing, OpenBackdrop.closeFactor());
             }
             // With a shader pack the hand is not in this depth buffer, but other leftovers may be.
-            draw(PENDING, PROJECTION, IrisCompat.shaderPackInUse(), noFog);
+            draw(PENDING, PROJECTION, IrisCompat.shaderPackInUse(), true, noFog);
         } finally {
             PENDING.clear();
         }
@@ -109,10 +141,12 @@ public final class OnTopPass {
 
     /** After the GUI: the openings ({@code flat}: without view bobbing). */
     public static void drawOpenings(List<Entry> entries, boolean flat, GpuBufferSlice noFog) {
-        draw(entries, flat ? CLEAN_PROJECTION : PROJECTION, true, noFog);
+        draw(entries, flat ? CLEAN_PROJECTION : PROJECTION, true, true, noFog);
     }
 
-    private static void draw(List<Entry> entries, Matrix4f projection, boolean clearFirst, GpuBufferSlice noFog) {
+    /** {@code clearFirst}: depth-tested only among themselves; {@code clearAfter}: the depth as vanilla left it. */
+    private static void draw(List<Entry> entries, Matrix4f projection, boolean clearFirst, boolean clearAfter,
+                             GpuBufferSlice noFog) {
         if (entries.isEmpty()) {
             return;
         }
@@ -152,8 +186,10 @@ public final class OnTopPass {
             RenderSystem.setShaderLights(lights);
             RenderSystem.setShaderFog(fog);
             RenderSystem.restoreProjectionMatrix();
-            // The GUI finds the depth as vanilla left it.
-            encoder.clearDepthTexture(main.getDepthTexture(), Mc26.DEPTH_FAR);
+            if (clearAfter) {
+                // The GUI finds the depth as vanilla left it.
+                encoder.clearDepthTexture(main.getDepthTexture(), Mc26.DEPTH_FAR);
+            }
         }
     }
 

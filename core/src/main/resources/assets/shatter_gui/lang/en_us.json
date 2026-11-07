@@ -80,7 +80,7 @@
   "ui.shatter_gui.preset.cinematic.desc": "Longer, more shards and particles.",
   "ui.shatter_gui.playback.title": "Playback",
   "ui.shatter_gui.always_on_top": "Draw over blocks",
-  "ui.shatter_gui.always_on_top.desc": "Effects are drawn after the world, so blocks in front never cut into them; the HUD and screens stay on top.",
+  "ui.shatter_gui.always_on_top.desc": "Pieces in flight are drawn over blocks, so a wall never cuts into the effect; a piece that has settled is hidden by blocks like the rest of the world. Off: blocks in front always hide the effect. The HUD and screens stay on top.",
   "ui.shatter_gui.performance.title": "Performance",
   "ui.shatter_gui.performance.desc": "Lower these if the game stutters during effects.",
   "ui.shatter_gui.quality": "Effect quality",

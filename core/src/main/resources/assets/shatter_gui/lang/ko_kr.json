@@ -80,7 +80,7 @@
   "ui.shatter_gui.preset.cinematic.desc": "더 길고 조각과 입자가 많음.",
   "ui.shatter_gui.playback.title": "재생",
   "ui.shatter_gui.always_on_top": "블록 위에 그리기",
-  "ui.shatter_gui.always_on_top.desc": "효과를 월드 다음에 그려서 앞쪽 블록에 잘리지 않으며, HUD와 화면은 항상 위에 있습니다.",
+  "ui.shatter_gui.always_on_top.desc": "날아가는 조각은 블록 위에 그려져 벽에 잘리지 않고, 내려앉은 조각은 월드의 다른 것처럼 블록에 가려집니다. 끄면: 앞쪽 블록이 항상 효과를 가립니다. HUD와 화면은 항상 위에 있습니다.",
   "ui.shatter_gui.performance.title": "성능",
   "ui.shatter_gui.performance.desc": "효과 중에 게임이 끊기면 낮추세요.",
   "ui.shatter_gui.quality": "효과 품질",

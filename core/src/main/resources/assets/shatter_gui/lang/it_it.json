@@ -80,7 +80,7 @@
   "ui.shatter_gui.preset.cinematic.desc": "Più lungo, più pezzi e particelle.",
   "ui.shatter_gui.playback.title": "Riproduzione",
   "ui.shatter_gui.always_on_top": "Disegna sopra i blocchi",
-  "ui.shatter_gui.always_on_top.desc": "Gli effetti vengono disegnati dopo il mondo, quindi i blocchi davanti non li tagliano mai; HUD e interfacce restano sopra.",
+  "ui.shatter_gui.always_on_top.desc": "I frammenti in volo vengono disegnati sopra i blocchi, quindi un muro non taglia mai l'effetto; un frammento ormai fermo viene nascosto dai blocchi come il resto del mondo. Disattivato: i blocchi davanti nascondono sempre l'effetto. HUD e interfacce restano sopra.",
   "ui.shatter_gui.performance.title": "Prestazioni",
   "ui.shatter_gui.performance.desc": "Abbassali se il gioco scatta durante gli effetti.",
   "ui.shatter_gui.quality": "Qualità degli effetti",

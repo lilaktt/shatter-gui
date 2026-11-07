@@ -80,7 +80,7 @@
   "ui.shatter_gui.preset.cinematic.desc": "更长，碎块和粒子更多。",
   "ui.shatter_gui.playback.title": "播放",
   "ui.shatter_gui.always_on_top": "在方块之上绘制",
-  "ui.shatter_gui.always_on_top.desc": "效果在世界之后绘制，前方的方块不会遮挡它们；HUD 和界面始终在最上层。",
+  "ui.shatter_gui.always_on_top.desc": "飞行中的碎片绘制在方块之上，墙壁不会遮挡效果；已经落定的碎片会像世界中的其他东西一样被方块遮挡。关闭：前方的方块总会遮挡效果。HUD 和界面始终在最上层。",
   "ui.shatter_gui.performance.title": "性能",
   "ui.shatter_gui.performance.desc": "如果效果播放时游戏卡顿，请调低这些值。",
   "ui.shatter_gui.quality": "效果质量",

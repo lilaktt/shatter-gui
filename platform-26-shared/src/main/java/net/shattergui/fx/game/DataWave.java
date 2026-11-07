@@ -469,7 +469,11 @@ final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
             int color = s.emitter.color().at(t);
             float alpha = (color >>> 24) / 255f * s.emitter.alpha().at(t, s.rnd);
             int argb = (Math.round(Math.clamp(alpha, 0f, 1f) * 255) << 24) | (color & 0xFFFFFF);
-            sink.sprite(((net.shattergui.platform.impl.Texture26) tex.gpu()).id(), s.emitter.emissive(), at.x, at.y, at.z, s.emitter.size().at(t, s.rnd) / 2f, argb);
+            boolean settled = (s.stillTicks >= net.shattergui.shatter.Settle.STILL_TICKS
+                    || s.age >= net.shattergui.shatter.Settle.AGE_TICKS)
+                    && !BlockCollision.collides(Minecraft.getInstance().level, at.x, at.y, at.z);
+            sink.sprite(((net.shattergui.platform.impl.Texture26) tex.gpu()).id(), s.emitter.emissive(), at.x, at.y, at.z,
+                    s.emitter.size().at(t, s.rnd) / 2f, argb, settled);
         }
     }
 }

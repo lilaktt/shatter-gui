@@ -210,6 +210,26 @@ public final class ShardManager {
         seededWaves = 0;
     }
 
+    /** Tests: while true no shard settles (they stay over the blocks), to compare the same frame before and after. */
+    private static boolean settleHeld;
+
+    public static void holdSettledForTests(boolean held) {
+        settleHeld = held;
+    }
+
+    /** Settled shards of the closes now ({@link Settle}), for tests and the diagnostics. */
+    public static int settledShardCount() {
+        int count = 0;
+        for (Batch batch : BATCHES) {
+            for (ShardInstance shard : batch.shards) {
+                if (shard.settled()) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
     public static List<Batch> batches() {
         return BATCHES;
     }
@@ -482,6 +502,11 @@ public final class ShardManager {
                 return shard.isDead();
             });
             boolean waveAlive = batch.wave != null && batch.wave.tick(mc.level, batch.shards, batch.params);
+            // Closes only: an opening, a fly that follows the camera and a preview are never settled.
+            boolean settles = !batch.effect.opens() && !batch.follows() && !batch.preview && !settleHeld;
+            for (ShardInstance shard : batch.shards) {
+                shard.updateSettled(mc.level, settles);
+            }
             if (batch.hurried() && --batch.hurryLeft <= 0) {
                 batch.shards.clear();
                 waveAlive = false;

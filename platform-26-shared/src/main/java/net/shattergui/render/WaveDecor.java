@@ -32,7 +32,11 @@ public interface WaveDecor {
     void sprites(float partialTick, SpriteSink sink);
 
     interface SpriteSink {
-        /** A camera-facing square: world centre, half size in blocks, straight ARGB. */
-        void sprite(Identifier texture, boolean emissive, double x, double y, double z, float halfSize, int argb);
+        /**
+         * A camera-facing square: world centre, half size in blocks, straight ARGB. {@code settled}: it has stopped or is
+         * old ({@link net.shattergui.shatter.Settle}), so with "alwaysOnTop" it is drawn in the world's depth.
+         */
+        void sprite(Identifier texture, boolean emissive, double x, double y, double z, float halfSize, int argb,
+                    boolean settled);
     }
 }

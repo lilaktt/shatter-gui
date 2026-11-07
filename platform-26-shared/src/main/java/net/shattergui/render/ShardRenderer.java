@@ -19,6 +19,7 @@ import net.shattergui.fly.OpenBackdrop;
 import net.shattergui.platform.impl.Mc26;
 import net.shattergui.shatter.CameraSpace;
 import net.shattergui.shatter.EffectClock;
+import net.shattergui.shatter.Settle;
 import net.shattergui.shatter.ShardInstance;
 import net.shattergui.shatter.ShardManager;
 import org.joml.Quaternionf;
@@ -79,6 +80,15 @@ public final class ShardRenderer {
         void add(RenderType type, SubmitNodeCollector.CustomGeometryRenderer geometry);
     }
 
+    /** Which pieces of a wave go to a sink: all, those in motion, or the settled ones ({@link Settle}). */
+    enum Part {
+        ALL, MOVING, SETTLED;
+
+        boolean takes(boolean settled) {
+            return this == ALL || (this == SETTLED) == settled;
+        }
+    }
+
     public static void submit(LevelRenderContext context) {
         boolean shaders = IrisCompat.shaderPackInUse();
         if (shaders && IrisCompat.renderingShadowPass()) {
@@ -93,6 +103,10 @@ public final class ShardRenderer {
         // While the darkened world of a closed screen fades out (OpenBackdrop), the close is drawn over it (and over the
         // world) even without alwaysOnTop: in the world it would be darkened with the world.
         boolean overBackdrop = onTop || OpenBackdrop.closingKind() != 0;
+        // With alwaysOnTop only the pieces in motion go over the blocks; the settled ones are drawn in the world's depth
+        // with the same pipeline and matrices (OnTopPass#drawSettled). Not while the darkened world fades out: they would
+        // go under it.
+        boolean splitSettled = onTop && OpenBackdrop.closingKind() == 0;
         Sink inWorld = (type, geometry) -> context.submitNodeCollector().submitCustomGeometry(poseStack, type, geometry);
         Vec3 camera = context.levelState().cameraRenderState.pos;
         float partialTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
@@ -111,7 +125,12 @@ public final class ShardRenderer {
                 space = batch.space(camera).towardsWorld(camera, net.shattergui.effect.FlyEffect.towardsTarget(first,
                         partialTick));
             }
-            submitBatch(sink, batch, space, orientation, partialTick, shaders && !overBackdrop, overBackdrop);
+            if (overBackdrop && splitSettled && !batch.follows()) {
+                submitBatch(OnTopPass::add, batch, space, orientation, partialTick, false, true, Part.MOVING);
+                submitBatch(OnTopPass::addSettled, batch, space, orientation, partialTick, false, true, Part.SETTLED);
+            } else {
+                submitBatch(sink, batch, space, orientation, partialTick, shaders && !overBackdrop, overBackdrop, Part.ALL);
+            }
         }
     }
 
@@ -147,7 +166,7 @@ public final class ShardRenderer {
             // Flat GUI: the picture follows the screen, which does not bob with the view; Spatial GUI's plane does.
             List<OnTopPass.Entry> into = batch.onSpatialPlane() || !batch.follows() ? level : flat;
             submitBatch((type, geometry) -> into.add(new OnTopPass.Entry(type, geometry)), batch, space, orientation,
-                    0f, false, true);
+                    0f, false, true, Part.ALL);
         }
         OnTopPass.drawOpenings(level, false, noFog);
         OnTopPass.drawOpenings(flat, true, noFog);
@@ -165,31 +184,34 @@ public final class ShardRenderer {
         net.minecraft.client.Camera live = Mc26.camera();
         List<OnTopPass.Entry> entries = new ArrayList<>();
         submitBatch((type, geometry) -> entries.add(new OnTopPass.Entry(type, geometry)), batch,
-                CameraSpace.world(live.position()), new Quaternionf(live.rotation()), 0f, false, true);
+                CameraSpace.world(live.position()), new Quaternionf(live.rotation()), 0f, false, true, Part.ALL);
         OnTopPass.drawOpenings(entries, false, noFog);
     }
 
-    /** One wave's layers into {@code sink}; {@code decorAfter}: overlays after the shards (over the world). */
+    /**
+     * One wave's layers into {@code sink}; {@code decorAfter}: overlays after the shards (over the world); {@code part}:
+     * which of its pieces.
+     */
     private static void submitBatch(Sink sink, ShardManager.Batch batch, CameraSpace space, Quaternionf orientation,
-                                    float gamePartialTick, boolean shaders, boolean decorAfter) {
+                                    float gamePartialTick, boolean shaders, boolean decorAfter, Part part) {
         // Openings also play while the game is paused (the pause menu), on their own clock.
         float partialTick = batch.effect().opens() ? EffectClock.partialTick() : gamePartialTick;
         // Overlays and own particles of schema-2 effects (particles may outlive the shards). Over the world they come
         // after the shards: they are lifted towards the camera and would hide the shards in the depth test.
         WaveDecor decor = batch.wave() instanceof WaveDecor d ? d : null;
         if (decor != null && (!decorAfter || batch.shards().isEmpty())) {
-            DecorRenderer.submit(sink, batch, decor, space, orientation, partialTick, shaders);
+            DecorRenderer.submit(sink, batch, decor, space, orientation, partialTick, shaders, part);
         }
         if (batch.shards().isEmpty()) {
             return;
         }
         boolean first = batch.markRendered();
         long start = ShatterProfiler.now();
-        Layers layers = Layers.build(batch, space, partialTick, shaders);
+        Layers layers = Layers.build(batch, space, partialTick, shaders, part);
         if (batch.effect().opens()) {
             gatherShardsDrawn += layers.opaque.count + layers.fading.count;
         }
-        if (layers.opaque.count + layers.fading.count + layers.glow.count > 0) {
+        if (layers.opaque.count + layers.fading.count + layers.glow.count > 0 && part != Part.SETTLED) {
             net.shattergui.debug.FrameAudit.wave(batch.effect().opens());
         }
         Identifier texture = batch.texture();
@@ -201,7 +223,7 @@ public final class ShardRenderer {
         }
         submit(sink, RenderTypes.eyes(texture), layers.glow, false);
         if (decor != null && decorAfter) {
-            DecorRenderer.submit(sink, batch, decor, space, orientation, partialTick, false);
+            DecorRenderer.submit(sink, batch, decor, space, orientation, partialTick, false, part);
         }
         if (first) {
             if (!batch.effect().opens() && !batch.preview()) {
@@ -254,7 +276,7 @@ public final class ShardRenderer {
             glow = new Geometry(capacity / 4 + 1);
         }
 
-        static Layers build(ShardManager.Batch batch, CameraSpace space, float partialTick, boolean shaders) {
+        static Layers build(ShardManager.Batch batch, CameraSpace space, float partialTick, boolean shaders, Part part) {
             ShatterEffect effect = batch.effect();
             Layers layers = new Layers(batch.shards().size());
             Quaternionf rot = new Quaternionf();
@@ -266,6 +288,12 @@ public final class ShardRenderer {
             float fade = batch.fade(partialTick);
 
             for (ShardInstance shard : batch.shards()) {
+                boolean settled = shard.settled();
+                if (!part.takes(settled)) {
+                    continue;
+                }
+                // Settled pieces sit a little nearer along the line of sight: no flicker with the face they lie on.
+                float bias = settled ? Settle.BIAS : 0f;
                 tint.reset();
                 effect.tint(shard, partialTick, batch.params(), tint);
                 if (fade < 1f) {
@@ -314,12 +342,13 @@ public final class ShardRenderer {
                         center = ShardRenderTypes.premultiply(center, shade);
                         edge = ShardRenderTypes.premultiply(edge, shade);
                     }
-                    target.add(shard, px, py, pz, corners, tint.scale, 0f, normal, center, edge);
+                    target.add(shard, px, py, pz, corners, tint.scale, 0f, normal, center, edge, bias);
                 }
                 if (tint.glow > 0f && batch.params().fullQuality()) {
                     int alpha = Math.round(Math.min(1f, tint.glow) * GLOW_MAX_ALPHA * 255);
                     int color = (alpha << 24) | (tint.glowColor & 0xFFFFFF);
-                    layers.glow.add(shard, px, py, pz, corners, tint.scale * GLOW_SCALE, GLOW_LIFT, normal, color, color);
+                    layers.glow.add(shard, px, py, pz, corners, tint.scale * GLOW_SCALE, GLOW_LIFT, normal, color, color,
+                            bias);
                 }
             }
             return layers;
@@ -349,10 +378,11 @@ public final class ShardRenderer {
 
         /**
          * One shard as a fan around its centroid, corners scaled by {@code scale} and everything moved {@code lift}
-         * along the camera-facing normal.
+         * along the camera-facing normal, then each vertex {@code bias} blocks towards the camera along its line of sight.
          */
         void add(ShardInstance shard, float px, float py, float pz, Vector3f[] corners, float scale, float lift,
-                 Vector3f normal, int centerColor, int edgeColor) {
+                 Vector3f normal, int centerColor, int edgeColor, float bias) {
+            this.bias = bias;
             if (count == lights.length) {
                 int grown = count * 2;
                 vertices = Arrays.copyOf(vertices, grown * VERTICES_PER_SHARD * STRIDE);
@@ -408,10 +438,14 @@ public final class ShardRenderer {
             }
         }
 
+        /** The bias of the shard being added (see {@link #add}). */
+        private float bias;
+
         private int put(int v, float x, float y, float z, float u, float tv) {
-            vertices[v++] = x;
-            vertices[v++] = y;
-            vertices[v++] = z;
+            float k = Settle.towardsCamera(x, y, z, bias);
+            vertices[v++] = x * k;
+            vertices[v++] = y * k;
+            vertices[v++] = z * k;
             vertices[v++] = u;
             vertices[v++] = tv;
             return v;

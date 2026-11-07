@@ -80,7 +80,7 @@
   "ui.shatter_gui.preset.cinematic.desc": "Dłużej, więcej odłamków i cząsteczek.",
   "ui.shatter_gui.playback.title": "Odtwarzanie",
   "ui.shatter_gui.always_on_top": "Rysuj nad blokami",
-  "ui.shatter_gui.always_on_top.desc": "Efekty są rysowane po świecie, więc bloki z przodu nigdy ich nie przycinają; HUD i interfejsy zostają na wierzchu.",
+  "ui.shatter_gui.always_on_top.desc": "Odłamki w locie są rysowane nad blokami, więc ściana nigdy nie przycina efektu; odłamek, który już leży, chowa się za blokami jak reszta świata. Wyłączone: bloki z przodu zawsze zasłaniają efekt. HUD i interfejsy zostają na wierzchu.",
   "ui.shatter_gui.performance.title": "Wydajność",
   "ui.shatter_gui.performance.desc": "Zmniejsz, jeśli gra przycina się podczas efektów.",
   "ui.shatter_gui.quality": "Jakość efektów",

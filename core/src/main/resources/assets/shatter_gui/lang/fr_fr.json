@@ -80,7 +80,7 @@
   "ui.shatter_gui.preset.cinematic.desc": "Plus long, plus d'éclats et de particules.",
   "ui.shatter_gui.playback.title": "Lecture",
   "ui.shatter_gui.always_on_top": "Dessiner sur les blocs",
-  "ui.shatter_gui.always_on_top.desc": "Les effets sont dessinés après le monde, les blocs devant ne les coupent jamais ; le HUD et les interfaces restent au-dessus.",
+  "ui.shatter_gui.always_on_top.desc": "Les éclats en vol sont dessinés sur les blocs, un mur ne coupe donc jamais l'effet ; un éclat posé est caché par les blocs comme le reste du monde. Désactivé : les blocs devant cachent toujours l'effet. Le HUD et les interfaces restent au-dessus.",
   "ui.shatter_gui.performance.title": "Performances",
   "ui.shatter_gui.performance.desc": "Baissez-les si le jeu saccade pendant les effets.",
   "ui.shatter_gui.quality": "Qualité des effets",

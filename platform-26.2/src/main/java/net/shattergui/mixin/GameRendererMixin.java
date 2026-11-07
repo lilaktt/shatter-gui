@@ -49,6 +49,13 @@ public abstract class GameRendererMixin {
         FrameHooks.afterLevel(fogRenderer.getBuffer(FogRenderer.FogMode.NONE));
     }
 
+    /** Right before vanilla clears the depth for the hand (javap: the one clear in renderLevel): it still holds the world. */
+    @Inject(method = "renderLevel", at = @At(value = "INVOKE",
+            target = "Lcom/mojang/blaze3d/systems/CommandEncoder;clearDepthTexture(Lcom/mojang/blaze3d/textures/GpuTexture;D)V"))
+    private void shatterGui$beforeHand(DeltaTracker deltaTracker, CallbackInfo ci) {
+        FrameHooks.beforeHand(fogRenderer.getBuffer(FogRenderer.FogMode.NONE));
+    }
+
     @Inject(method = "render", at = @At("HEAD"))
     private void shatterGui$frameStart(DeltaTracker deltaTracker, boolean advanceGameTime, CallbackInfo ci) {
         FrameHooks.frameStart();

@@ -80,7 +80,7 @@
   "ui.shatter_gui.preset.cinematic.desc": "長く、破片とパーティクルが多め。",
   "ui.shatter_gui.playback.title": "再生",
   "ui.shatter_gui.always_on_top": "ブロックの上に描画",
-  "ui.shatter_gui.always_on_top.desc": "エフェクトをワールドの後に描画するので手前のブロックで欠けず、HUD と画面は常に最前面に残ります。",
+  "ui.shatter_gui.always_on_top.desc": "飛んでいる破片はブロックの上に描画されるので壁で欠けません。落ち着いた破片はワールドの他のものと同じくブロックに隠れます。オフ: 手前のブロックが常にエフェクトを隠します。HUD と画面は常に最前面に残ります。",
   "ui.shatter_gui.performance.title": "パフォーマンス",
   "ui.shatter_gui.performance.desc": "エフェクト中にゲームがカクつくなら下げてください。",
   "ui.shatter_gui.quality": "エフェクト品質",

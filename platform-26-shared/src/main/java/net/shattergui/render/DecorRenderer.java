@@ -10,6 +10,7 @@ import net.minecraft.world.phys.Vec3;
 import net.shattergui.shatter.ShardInstance;
 import net.shattergui.shatter.CameraSpace;
 import net.shattergui.shatter.ShardManager;
+import net.shattergui.shatter.Settle;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -30,15 +31,29 @@ final class DecorRenderer {
     private DecorRenderer() {
     }
 
+    /** {@code part}: overlays of which shards and which sprites (settled ones are biased, see {@link Settle}). */
     static void submit(ShardRenderer.Sink sink, ShardManager.Batch batch, WaveDecor decor, CameraSpace camera,
-                       Quaternionf cameraRotation, float partialTick, boolean shaders) {
+                       Quaternionf cameraRotation, float partialTick, boolean shaders, ShardRenderer.Part part) {
         float fade = batch.fade(partialTick);
-        overlays(sink, batch, decor, camera, partialTick, shaders, fade);
-        sprites(sink, decor, camera, cameraRotation, partialTick, fade);
+        overlays(sink, batch, decor, camera, partialTick, shaders, fade, part);
+        sprites(sink, decor, camera, cameraRotation, partialTick, fade, part);
+    }
+
+    /** Each corner of {@code count} moved {@code bias} blocks towards the camera (the origin) along its line of sight. */
+    private static void bias(float[] xyz, int count, float bias) {
+        if (bias <= 0f) {
+            return;
+        }
+        for (int i = 0; i < count; i++) {
+            float k = Settle.towardsCamera(xyz[i * 3], xyz[i * 3 + 1], xyz[i * 3 + 2], bias);
+            xyz[i * 3] *= k;
+            xyz[i * 3 + 1] *= k;
+            xyz[i * 3 + 2] *= k;
+        }
     }
 
     private static void overlays(ShardRenderer.Sink sink, ShardManager.Batch batch, WaveDecor decor, CameraSpace camera,
-                                 float partialTick, boolean shaders, float fade) {
+                                 float partialTick, boolean shaders, float fade, ShardRenderer.Part part) {
         Quaternionf rot = new Quaternionf();
         Vector3f normal = new Vector3f();
         Vector3f corner = new Vector3f();
@@ -51,6 +66,9 @@ final class DecorRenderer {
             boolean multiply = blend == WaveDecor.Blend.MULTIPLY && !shaders;
             Mesh mesh = new Mesh(batch.shards().size() * 4);
             for (ShardInstance shard : batch.shards()) {
+                if (!part.takes(shard.settled())) {
+                    continue;
+                }
                 int color = decor.overlayColor(shard, k, partialTick);
                 float alpha = (color >>> 24) / 255f * fade;
                 if (alpha <= 0.004f || !decor.overlayUv(shard, k, partialTick, uv)) {
@@ -82,6 +100,7 @@ final class DecorRenderer {
                     xyz[c * 3 + 1] = py + normal.y * lift + corner.y * scale;
                     xyz[c * 3 + 2] = pz + normal.z * lift + corner.z * scale;
                 }
+                bias(xyz, 3, shard.settled() ? Settle.BIAS : 0f);
                 mesh.triangle(xyz, uv, color, normal);
             }
             if (mesh.count == 0) {
@@ -98,16 +117,16 @@ final class DecorRenderer {
     }
 
     private static void sprites(ShardRenderer.Sink sink, WaveDecor decor, CameraSpace camera,
-                                Quaternionf cameraRotation, float partialTick, float fade) {
+                                Quaternionf cameraRotation, float partialTick, float fade, ShardRenderer.Part part) {
         Map<String, Mesh> meshes = new LinkedHashMap<>();
         Map<String, Identifier> textures = new LinkedHashMap<>();
         Vector3f facing = cameraRotation.transform(new Vector3f(0, 0, 1));
         Vector3f[] corners = {new Vector3f(), new Vector3f(), new Vector3f(), new Vector3f()};
         float[][] base = {{-1, -1}, {-1, 1}, {1, 1}, {1, -1}};
         float[] uvQuad = {0, 1, 0, 0, 1, 0, 1, 1};
-        decor.sprites(partialTick, (texture, emissive, x, y, z, half, argb) -> {
+        decor.sprites(partialTick, (texture, emissive, x, y, z, half, argb, settled) -> {
             float alpha = (argb >>> 24) / 255f * fade;
-            if (alpha <= 0.004f || half <= 0) {
+            if (alpha <= 0.004f || half <= 0 || !part.takes(settled)) {
                 return;
             }
             int color = (Math.round(alpha * 255) << 24) | (argb & 0xFFFFFF);
@@ -125,6 +144,7 @@ final class DecorRenderer {
                 xyz[i * 3 + 1] = cy + corners[i].y;
                 xyz[i * 3 + 2] = cz + corners[i].z;
             }
+            bias(xyz, 4, settled ? Settle.BIAS : 0f);
             mesh.quad(xyz, uvQuad, color, facing);
         });
         for (Map.Entry<String, Mesh> entry : meshes.entrySet()) {

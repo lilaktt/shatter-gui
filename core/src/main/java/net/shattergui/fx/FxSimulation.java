@@ -153,6 +153,8 @@ public final class FxSimulation {
         public int age;
         public final int life;
         public final float rnd;
+        /** Ticks it has not moved in a row (see {@code Settle}). */
+        public int stillTicks;
 
         Sprite(FxDef.Emitter emitter, float x, float y, float z, float vx, float vy, float vz, int life, float rnd) {
             this.emitter = emitter;
@@ -1213,6 +1215,8 @@ public final class FxSimulation {
             s.x += s.vx;
             s.y += s.vy;
             s.z += s.vz;
+            s.stillTicks = net.shattergui.shatter.Settle.stillTicks(s.stillTicks,
+                    net.shattergui.shatter.Settle.moved(s.vx, s.vy, s.vz, 0f));
             return false;
         });
         if (tracked) {

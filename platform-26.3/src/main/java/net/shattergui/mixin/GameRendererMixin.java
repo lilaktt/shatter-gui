@@ -3,6 +3,9 @@ package net.shattergui.mixin;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.client.renderer.state.GameRenderState;
+import net.minecraft.client.renderer.state.OptionsRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.client.renderer.state.level.PlayerRenderState;
 import net.shattergui.render.FrameHooks;
 import net.shattergui.render.OnTopPass;
 import org.joml.Matrix4f;
@@ -46,6 +49,17 @@ public abstract class GameRendererMixin {
             target = "Lcom/mojang/renderpearl/api/commands/CommandEncoder;clearDepthTexture(Lcom/mojang/renderpearl/api/textures/GpuTexture;D)V"))
     private void shatterGui$afterLevel(CallbackInfo ci) {
         FrameHooks.afterLevel(fogRenderer.getBuffer(FogRenderer.FogMode.NONE));
+    }
+
+    /**
+     * Right before vanilla clears the depth for the hand (javap: the one clear in render3dHud). The main depth still holds
+     * the world; with post effects vanilla clears its separate HUD depth instead and the main one keeps the world anyway.
+     */
+    @Inject(method = "render3dHud", at = @At(value = "INVOKE",
+            target = "Lcom/mojang/renderpearl/api/commands/CommandEncoder;clearDepthTexture(Lcom/mojang/renderpearl/api/textures/GpuTexture;D)V"))
+    private void shatterGui$beforeHand(CameraRenderState cameraState, PlayerRenderState playerState,
+                                       OptionsRenderState optionsState, boolean consistentDepthRequired, CallbackInfo ci) {
+        FrameHooks.beforeHand(fogRenderer.getBuffer(FogRenderer.FogMode.NONE));
     }
 
     @Inject(method = "render", at = @At("HEAD"))
