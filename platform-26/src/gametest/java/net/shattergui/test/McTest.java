@@ -9,6 +9,11 @@ final class McTest {
     private McTest() {
     }
 
+    /** What the last frame was drawn with (camera, options); read on the client thread before the next frame starts. */
+    static net.minecraft.client.renderer.state.GameRenderState renderState(Minecraft mc) {
+        return mc.gameRenderer.getGameRenderState();
+    }
+
     static Overlay overlay(Minecraft mc) {
         return mc.getOverlay();
     }

@@ -40,7 +40,19 @@ final class FullFrame {
 
     /** On the client thread: reads back the frame drawn last. */
     static void grab(Minecraft mc, String name, boolean save) {
+        grab(mc, name, save, null);
+    }
+
+    /** Results of {@link #grab} with an analysis: only what the analysis returned is kept, not the frame. */
+    private static final Map<String, Object> ANALYSES = new ConcurrentHashMap<>();
+
+    /**
+     * On the client thread: reads back the frame drawn last; with {@code analyze} the frame is analysed as soon as it
+     * arrives and dropped (many frames would otherwise sit in memory, 8 MB each at 1920x1080), see {@link #analysis}.
+     */
+    static void grab(Minecraft mc, String name, boolean save, java.util.function.Function<Image, Object> analyze) {
         RESULTS.remove(name);
+        ANALYSES.remove(name);
         Screenshot.takeScreenshot(Mc26.mainTarget(), image -> {
             try {
                 int w = image.getWidth();
@@ -51,7 +63,11 @@ final class FullFrame {
                         argb[y * w + x] = image.getPixel(x, y);
                     }
                 }
-                RESULTS.put(name, new Image(w, h, argb));
+                if (analyze != null) {
+                    ANALYSES.put(name, analyze.apply(new Image(w, h, argb)));
+                } else {
+                    RESULTS.put(name, new Image(w, h, argb));
+                }
                 if (save) {
                     Path dir = mc.gameDirectory.toPath().resolve("screenshots");
                     Files.createDirectories(dir);
@@ -73,6 +89,14 @@ final class FullFrame {
             context.waitTick();
         }
         return RESULTS.remove(name);
+    }
+
+    /** What the analysis of frame {@code name} returned, waiting for it up to 60 ticks; null if it never came. */
+    static Object analysis(ClientGameTestContext context, String name) {
+        for (int i = 0; i < 60 && !ANALYSES.containsKey(name); i++) {
+            context.waitTick();
+        }
+        return ANALYSES.remove(name);
     }
 
     static int r(int c) {

@@ -80,7 +80,8 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
             }
             if (FabricLoader.getInstance().isModLoaded("iris") && (irisOnly.contains("gather") || irisOnly.contains("matrix")
                     || irisOnly.contains("duplicates") || irisOnly.contains("thematic") || irisOnly.contains("esc") || irisOnly.contains("ontop")
-                    || irisOnly.contains("backdrop") || irisOnly.contains("follow") || irisOnly.contains("settle"))) {
+                    || irisOnly.contains("backdrop") || irisOnly.contains("follow") || irisOnly.contains("settle")
+                    || irisOnly.contains("bob"))) {
                 context.waitTicks(100);
                 boolean withSpatial = FabricLoader.getInstance().isModLoaded("spatial-gui");
                 String tag = "shader_" + ShaderScenarios.packTag() + (withSpatial ? "_spatial" : "");
@@ -110,6 +111,9 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
                 }
                 if (irisOnly.contains("settle")) {
                     SettleScenario.run(context, singleplayer, this::check, tag);
+                }
+                if (irisOnly.contains("bob")) {
+                    BobScenario.run(context, singleplayer, this::check, tag);
                 }
             } else if (FabricLoader.getInstance().isModLoaded("iris")) {
                 new ShaderScenarios(context, this::check).run(ShaderScenarios.packTag(), ShatterClientGameTest::furnace,
@@ -278,6 +282,9 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
                 if (chosen.contains("settle")) {
                     SettleScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
                 }
+                if (chosen.contains("bob")) {
+                    BobScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
+                }
                 if (chosen.contains("choose")) {
                     ChooseScenario.run(context, this::check, context::takeScreenshot, prefix + "choose");
                 }
@@ -334,6 +341,7 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
         EscScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
         OnTopScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
         SettleScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
+        BobScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
         EffectScenarios effects = new EffectScenarios(context, this::check, context::takeScreenshot);
         String prefix = spatial ? "spatial_" : "";
         effects.edgeFlights(prefix + "edge");

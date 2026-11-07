@@ -33,7 +33,8 @@ public abstract class GameRendererMixin {
     private Matrix4f shatterGui$levelProjection(Matrix4f projection) {
         OnTopPass.levelProjection(projection);
         OnTopPass.cleanProjection(gameRenderState.levelRenderState.cameraRenderState.projectionMatrix);
-        OnTopPass.levelViewRotation(gameRenderState.levelRenderState.cameraRenderState.viewRotationMatrix);
+        // Before the level render: without a shader pack's view bobbing (it is put into this matrix during the render).
+        OnTopPass.cleanViewRotation(gameRenderState.levelRenderState.cameraRenderState.viewRotationMatrix);
         return projection;
     }
 
@@ -48,7 +49,8 @@ public abstract class GameRendererMixin {
     @Inject(method = "render", at = @At(value = "INVOKE",
             target = "Lcom/mojang/renderpearl/api/commands/CommandEncoder;clearDepthTexture(Lcom/mojang/renderpearl/api/textures/GpuTexture;D)V"))
     private void shatterGui$afterLevel(CallbackInfo ci) {
-        FrameHooks.afterLevel(fogRenderer.getBuffer(FogRenderer.FogMode.NONE));
+        FrameHooks.afterLevel(fogRenderer.getBuffer(FogRenderer.FogMode.NONE),
+                gameRenderState.levelRenderState.cameraRenderState.viewRotationMatrix);
     }
 
     /**
@@ -59,7 +61,7 @@ public abstract class GameRendererMixin {
             target = "Lcom/mojang/renderpearl/api/commands/CommandEncoder;clearDepthTexture(Lcom/mojang/renderpearl/api/textures/GpuTexture;D)V"))
     private void shatterGui$beforeHand(CameraRenderState cameraState, PlayerRenderState playerState,
                                        OptionsRenderState optionsState, boolean consistentDepthRequired, CallbackInfo ci) {
-        FrameHooks.beforeHand(fogRenderer.getBuffer(FogRenderer.FogMode.NONE));
+        FrameHooks.beforeHand(fogRenderer.getBuffer(FogRenderer.FogMode.NONE), cameraState.viewRotationMatrix);
     }
 
     @Inject(method = "render", at = @At("HEAD"))

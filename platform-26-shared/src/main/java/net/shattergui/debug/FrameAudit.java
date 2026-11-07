@@ -94,7 +94,23 @@ public final class FrameAudit {
     }
 
     /** End of {@code GameRenderer#render}. */
+    /** Tests: actions to run once at the end of the next frame. */
+    private static final List<Runnable> AT_END = new ArrayList<>();
+
+    /**
+     * Tests: runs {@code action} once at the end of the next frame, when the main target holds that frame and the game's
+     * render state is still the one it was drawn with (a read-back and the camera state then belong together).
+     */
+    public static void atFrameEnd(Runnable action) {
+        AT_END.add(action);
+    }
+
     public static void endFrame() {
+        if (!AT_END.isEmpty()) {
+            List<Runnable> actions = new ArrayList<>(AT_END);
+            AT_END.clear();
+            actions.forEach(Runnable::run);
+        }
         if (!enabled) {
             reset();
             return;

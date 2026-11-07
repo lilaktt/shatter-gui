@@ -31,7 +31,8 @@ public abstract class GameRendererMixin {
     private Matrix4f shatterGui$levelProjection(Matrix4f projection) {
         OnTopPass.levelProjection(projection);
         OnTopPass.cleanProjection(gameRenderState.levelRenderState.cameraRenderState.projectionMatrix);
-        OnTopPass.levelViewRotation(gameRenderState.levelRenderState.cameraRenderState.viewRotationMatrix);
+        // Before the level render: without a shader pack's view bobbing (it is put into this matrix during the render).
+        OnTopPass.cleanViewRotation(gameRenderState.levelRenderState.cameraRenderState.viewRotationMatrix);
         return projection;
     }
 
@@ -46,14 +47,16 @@ public abstract class GameRendererMixin {
     @Inject(method = "render", at = @At(value = "INVOKE",
             target = "Lcom/mojang/blaze3d/systems/CommandEncoder;clearDepthTexture(Lcom/mojang/blaze3d/textures/GpuTexture;D)V"))
     private void shatterGui$afterLevel(DeltaTracker deltaTracker, boolean advanceGameTime, CallbackInfo ci) {
-        FrameHooks.afterLevel(fogRenderer.getBuffer(FogRenderer.FogMode.NONE));
+        FrameHooks.afterLevel(fogRenderer.getBuffer(FogRenderer.FogMode.NONE),
+                gameRenderState.levelRenderState.cameraRenderState.viewRotationMatrix);
     }
 
     /** Right before vanilla clears the depth for the hand (javap: the one clear in renderLevel): it still holds the world. */
     @Inject(method = "renderLevel", at = @At(value = "INVOKE",
             target = "Lcom/mojang/blaze3d/systems/CommandEncoder;clearDepthTexture(Lcom/mojang/blaze3d/textures/GpuTexture;D)V"))
     private void shatterGui$beforeHand(DeltaTracker deltaTracker, CallbackInfo ci) {
-        FrameHooks.beforeHand(fogRenderer.getBuffer(FogRenderer.FogMode.NONE));
+        FrameHooks.beforeHand(fogRenderer.getBuffer(FogRenderer.FogMode.NONE),
+                gameRenderState.levelRenderState.cameraRenderState.viewRotationMatrix);
     }
 
     @Inject(method = "render", at = @At("HEAD"))

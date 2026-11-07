@@ -26,10 +26,12 @@ public final class FrameHooks {
 
     /**
      * After the level, right before vanilla clears the depth for the hand: the settled pieces, depth-tested against the
-     * world (see {@link OnTopPass#drawSettled}).
+     * world (see {@link OnTopPass#drawSettled}). {@code viewRotation}: the camera rotation the level was drawn with (read
+     * after it: a shader pack's view bobbing is in it).
      */
-    public static void beforeHand(GpuBufferSlice noFog) {
+    public static void beforeHand(GpuBufferSlice noFog, org.joml.Matrix4fc viewRotation) {
         long start = System.nanoTime();
+        OnTopPass.levelViewRotation(viewRotation);
         OnTopPass.drawSettled(noFog);
         CloseWatchdog.step("draw the settled pieces in the world", start);
     }
@@ -38,8 +40,9 @@ public final class FrameHooks {
      * After the level and the hand, before vanilla clears the depth for the GUI: the fading darkness of a closed screen
      * and the effects over the world, depth-tested against the hand (see {@link OnTopPass#drawAfterLevel}).
      */
-    public static void afterLevel(GpuBufferSlice noFog) {
+    public static void afterLevel(GpuBufferSlice noFog, org.joml.Matrix4fc viewRotation) {
         long start = System.nanoTime();
+        OnTopPass.levelViewRotation(viewRotation);
         OnTopPass.drawAfterLevel(noFog);
         CloseWatchdog.step("draw the effects over the world", start);
     }

@@ -54,10 +54,16 @@ public final class OnTopPass {
     private static final List<Entry> PENDING = new ArrayList<>();
     /** Settled pieces of this frame: drawn in the world's depth ({@link #drawSettled}). */
     private static final List<Entry> SETTLED = new ArrayList<>();
-    /** The level's projection of this frame (view bobbing and nausea included), without them, and its camera rotation. */
+    /**
+     * The level's projection of this frame (view bobbing and nausea included) and its camera rotation as the level was
+     * drawn with it; the same without view bobbing (flat openings: the screen does not bob). Vanilla puts the bobbing
+     * into the projection; with a shader pack Iris leaves the projection clean and multiplies the camera rotation by it
+     * instead ({@code MixinModelViewBobbing}, in place, during the level render), so the rotation is read after the level.
+     */
     private static final Matrix4f PROJECTION = new Matrix4f();
     private static final Matrix4f CLEAN_PROJECTION = new Matrix4f();
     private static final Matrix4f VIEW_ROTATION = new Matrix4f();
+    private static final Matrix4f CLEAN_VIEW_ROTATION = new Matrix4f();
     private static ProjectionMatrixBuffer projectionBuffer;
     private static ProjectionMatrixBuffer screenBuffer;
     private static boolean failed;
@@ -75,8 +81,17 @@ public final class OnTopPass {
         CLEAN_PROJECTION.set(projection);
     }
 
-    /** {@code GameRenderer#renderLevel}: the camera rotation (model-view) the level is drawn with. */
+    /**
+     * After the level render: the camera rotation (model-view) the level was drawn with, view bobbing included when a
+     * shader pack moved it there.
+     */
     public static void levelViewRotation(Matrix4fc viewRotation) {
+        VIEW_ROTATION.set(viewRotation);
+    }
+
+    /** {@code GameRenderer#renderLevel}, before the level render: the camera rotation without view bobbing. */
+    public static void cleanViewRotation(Matrix4fc viewRotation) {
+        CLEAN_VIEW_ROTATION.set(viewRotation);
         VIEW_ROTATION.set(viewRotation);
     }
 
@@ -108,7 +123,7 @@ public final class OnTopPass {
             return;
         }
         try {
-            draw(SETTLED, PROJECTION, false, false, noFog);
+            draw(SETTLED, PROJECTION, VIEW_ROTATION, false, false, noFog);
         } finally {
             SETTLED.clear();
         }
@@ -133,7 +148,7 @@ public final class OnTopPass {
                 drawBackdrop(closing, OpenBackdrop.closeFactor());
             }
             // With a shader pack the hand is not in this depth buffer, but other leftovers may be.
-            draw(PENDING, PROJECTION, IrisCompat.shaderPackInUse(), true, noFog);
+            draw(PENDING, PROJECTION, VIEW_ROTATION, IrisCompat.shaderPackInUse(), true, noFog);
         } finally {
             PENDING.clear();
         }
@@ -141,12 +156,12 @@ public final class OnTopPass {
 
     /** After the GUI: the openings ({@code flat}: without view bobbing). */
     public static void drawOpenings(List<Entry> entries, boolean flat, GpuBufferSlice noFog) {
-        draw(entries, flat ? CLEAN_PROJECTION : PROJECTION, true, true, noFog);
+        draw(entries, flat ? CLEAN_PROJECTION : PROJECTION, flat ? CLEAN_VIEW_ROTATION : VIEW_ROTATION, true, true, noFog);
     }
 
     /** {@code clearFirst}: depth-tested only among themselves; {@code clearAfter}: the depth as vanilla left it. */
-    private static void draw(List<Entry> entries, Matrix4f projection, boolean clearFirst, boolean clearAfter,
-                             GpuBufferSlice noFog) {
+    private static void draw(List<Entry> entries, Matrix4f projection, Matrix4f viewRotation, boolean clearFirst,
+                             boolean clearAfter, GpuBufferSlice noFog) {
         if (entries.isEmpty()) {
             return;
         }
@@ -170,7 +185,7 @@ public final class OnTopPass {
             RenderSystem.setProjectionMatrix(projectionBuffer.getBuffer(projection), ProjectionType.PERSPECTIVE);
             RenderSystem.setShaderFog(noFog);
             lighting.setupFor(Lighting.Entry.LEVEL);
-            modelView.set(VIEW_ROTATION);
+            modelView.set(viewRotation);
             PoseStack.Pose pose = new PoseStack().last();
             for (Entry entry : entries) {
                 ImmediateDraw.draw(entry.type, pose, entry.geometry);
