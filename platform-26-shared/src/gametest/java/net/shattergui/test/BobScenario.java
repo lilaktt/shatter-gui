@@ -71,6 +71,9 @@ final class BobScenario {
         int columns = config.get(Params.GLASS_COLUMNS);
         int rows = config.get(Params.GLASS_ROWS);
         boolean bobbing = context.computeOnClient(mc -> mc.options.bobView().get());
+        // The game mode to come back to: hurting needs survival, and a test world starts in survival (left in creative, an
+        // InventoryScreen turns into the creative inventory as it opens, and later scenarios see no opening at all).
+        String gameMode = context.computeOnClient(mc -> mc.gameMode.getPlayerMode().getName());
         BlockPos feet = context.computeOnClient(mc -> mc.player.blockPosition());
         SettleScenario.command(singleplayer, "gamerule random_tick_speed 0");
         // The same light in every frame: the sun stands still at noon.
@@ -183,7 +186,7 @@ final class BobScenario {
                 context.waitTicks(2);
                 SettleScenario.command(singleplayer, "damage @p 1");
                 drive(context, run + "_hurt", 10, 0f, false, frames);
-                SettleScenario.command(singleplayer, "gamemode creative @p");
+                SettleScenario.command(singleplayer, "gamemode %s @p", gameMode);
                 SettleScenario.command(singleplayer, "effect give @p minecraft:instant_health 1 5 true");
                 // The bobbing settles and the view comes back to rest before the next run.
                 context.waitTicks(30);
@@ -224,7 +227,7 @@ final class BobScenario {
                 SettleScenario.command(singleplayer, "fill %d %d %d %d %d %d minecraft:air", platform.getX(), platform.getY(),
                         platform.getZ(), platform.getX(), platform.getY() + 3, platform.getZ());
             }
-            SettleScenario.command(singleplayer, "gamemode creative @p");
+            SettleScenario.command(singleplayer, "gamemode %s @p", gameMode);
             SettleScenario.tp(singleplayer, feet.getX(), feet.getY(), feet.getZ(), 0, 0);
             SettleScenario.command(singleplayer, "gamerule random_tick_speed 3");
             SettleScenario.command(singleplayer, "gamerule advance_time true");

@@ -290,6 +290,9 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
                 if (chosen.contains("bob")) {
                     BobScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
                 }
+                if (chosen.contains("edge")) {
+                    new EffectScenarios(context, this::check, context::takeScreenshot).edgeFlights(spatial ? "spatial_edge" : "edge");
+                }
                 if (chosen.contains("choose")) {
                     ChooseScenario.run(context, this::check, context::takeScreenshot, prefix + "choose");
                 }

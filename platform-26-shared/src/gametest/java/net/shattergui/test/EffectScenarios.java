@@ -47,6 +47,11 @@ final class EffectScenarios {
                 config.set(Params.FLY_EDGE_DIRECTION, direction);
                 String run = name + "_" + direction + "_" + context.computeOnClient(mc -> ShatterProfiler.openCount());
                 int opens = context.computeOnClient(mc -> ShatterProfiler.openCount());
+                String before = context.computeOnClient(mc -> "screen " + Mc26.screen() + ", health " + mc.player.getHealth()
+                        + ", dead " + mc.player.isDeadOrDying() + ", enabled " + ShatterConfig.get().enabled + ", effect "
+                        + ShatterConfig.get().effect + ", open " + ShatterConfig.get().openEffect + ", apply "
+                        + ShatterConfig.get().applyTo + ", waves " + ShardManager.waveCount());
+                net.shattergui.ShatterGuiClient.LOGGER.info("[ShatterTest] {}: before opening: {}", run, before);
                 context.setScreen(() -> new InventoryScreen(Minecraft.getInstance().player));
                 shot.accept(run + "_open_t0");
                 boolean flying = context.computeOnClient(mc -> FlyOpen.isAnimating(Mc26.screen()));
