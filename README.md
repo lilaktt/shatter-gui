@@ -77,6 +77,10 @@ the mod: General tab → About.
 - With "Draw over blocks" switched off and a shader pack, a close is drawn over the world while the darkened background
   fades (about 0.5 s) and in the world after that, where the pack lights and colours it: its colour changes at that
   moment. Openings are always drawn over the world, unlit, like the interface they become.
+- Minecraft 26.3 on Vulkan sometimes crashes (`0xC0000005`, no `hs_err` file) while it loads resources at start, before
+  the title screen, with or without the mod: on an NVIDIA RTX 3050 with driver 610.62, 3 of 20 starts with the mod and 2
+  of 20 without it (Fabric API only), at the same moment. It is not caused by the mod; start the game again or use
+  OpenGL.
 - Validation messages of the effect format (with JSON paths) are in English.
 - "Darken" overlays are drawn as normal blending with shader packs.
 - With a shader pack, the pieces drawn over blocks are also drawn over the player's hand (the pack draws the hand
