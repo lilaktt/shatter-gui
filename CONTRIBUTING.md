@@ -30,7 +30,7 @@ English and Ukrainian are written by hand, the other languages are machine-assis
    `docs/i18n/GLOSSARY.md` (if a term itself is wrong, change it there too).
 2. Run `./gradlew test`: it fails if a key is missing or extra, or if placeholders differ from English.
 3. Optionally check long labels in game: `./gradlew runClientGameTest -PtestOnly=lang -Plang=<code>` fails if a label
-   is cut at GUI scales 1–4 (screenshots in `platform-26/build/run/clientGameTest/screenshots`).
+   is cut at GUI scales 1–4 (screenshots in `platform-26/build/run/clientGameTest/screenshots`; `docs/VERSIONS.md` lists the versions, `./gradlew runVersionMatrix --no-daemon` tests them all).
 4. Open a pull request. Without git, an issue with the key, the current text and your text works too.
 
 ## Building

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Minecraft 26.2 and 26.3: separate jars from the same code (`shatter-gui-<version>+mc26.2-fabric.jar`, `+mc26.3`), with
+  Spatial GUI 1.10.1 and Iris + Sodium on each. On 26.3 both OpenGL and Vulkan work (one native crash in eight Vulkan
+  test runs, cause unknown; see `docs/TEST_MATRIX.md`).
 - One jar for every Minecraft 26.1.x: 26.1, 26.1.1 and 26.1.2 (`shatter-gui-<version>+mc26.1-fabric.jar`).
 - The darkened world behind a chest, furnace, crafting table or inventory now fades in with the opening effect and
   out with the close effect instead of appearing at the end of the opening and vanishing at the start of the close

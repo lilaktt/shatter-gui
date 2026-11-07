@@ -1,6 +1,6 @@
 # Shatter GUI (beta 0.1)
 
-Клієнтський Fabric-мод для Minecraft 26.1.x (26.1, 26.1.1, 26.1.2). Коли ви закриваєте екран у світі (інвентар, скриню, меню паузи, чат…),
+Клієнтський Fabric-мод для Minecraft 26.1.x, 26.2 і 26.3. Коли ви закриваєте екран у світі (інвентар, скриню, меню паузи, чат…),
 його останній кадр розпадається на уламки — склом, вогнем, розчиненням, вихором або відлітає назад у блок, з якого його
 відкрили. Уламки існують у світових координатах: обертаються, падають, відскакують від блоків і плавно зникають.
 
@@ -10,16 +10,18 @@
 
 ## Вимоги
 
-- Minecraft 26.1, 26.1.1 або 26.1.2 (один jar), Fabric Loader ≥ 0.19.3, Fabric API, Java 25.
+- Minecraft 26.1, 26.1.1 або 26.1.2 (один jar, `+mc26.1`), 26.2 (`+mc26.2`) або 26.3 (`+mc26.3`), на OpenGL чи Vulkan; Fabric Loader ≥ 0.19.3, Fabric API, Java 25. Spatial GUI 1.10, а також Iris на 26.3, потребують Fabric Loader новішого за 0.19.3 (0.20.1 працює).
 
 ## Збірка
 
 ```
 ./gradlew build              # build/libs/shatter-gui-0.1.0-beta+mc26.1-fabric.jar
+./gradlew build -Pmc=26.2    # те саме для 26.2 (або 26.3)
 ./gradlew runClient          # dev-клієнт
 ./gradlew runClientGameTest  # автотест: відкриває/закриває екрани у справжньому клієнті, робить скріншоти
-./gradlew runClientGameTest -PspatialGui=1.8   # те саме зі Spatial GUI 1.8 (або 1.9), береться з Modrinth Maven
+./gradlew runClientGameTest -PspatialGui=1.10.1   # те саме зі Spatial GUI, береться з Modrinth Maven
 ./gradlew runClientGameTest -Pshaders -PshaderPack=C:/path/to/Pack.zip   # знімки з Iris і шейдерпаком
+./gradlew runVersionMatrix --no-daemon -PshaderPack=C:/path/to/Pack.zip   # скорочений набір на всіх версіях, на ніч
 ```
 
 У PowerShell аргументи з крапками треба брати в лапки: `"-PspatialGui=1.8"`.

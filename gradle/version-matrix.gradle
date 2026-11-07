@@ -1,0 +1,368 @@
+// ./gradlew runVersionMatrix: the short set of game tests on every supported version, for the night.
+// Results: docs/TEST_MATRIX.md (rewritten after every row), screenshot sheets and logs in build/version-matrix.
+//
+//   -PmatrixOnly=26.2,26.3            only these versions (the other rows keep their last result)
+//   -PmatrixModes=plain,spatial       only these modes (plain, spatial, shaders, vulkan)
+//   -PshaderPack=C:/path/Pack.zip     the pack of the "shaders" mode; without it that mode is SKIPPED
+//   -PmatrixTimeoutMinutes=40         a run that takes longer is killed and its row is FAIL
+//   -PmatrixMinFreeMb=3000            free memory required before a run; waits up to 10 minutes, then SKIPPED
+//   -PmatrixParallel=2                games at once (1 for a weak machine); never two of one module, they share a run folder
+//   -PmatrixResume                    keep the rows that finished and run the rest (after a power cut, a killed run...)
+//
+// Every run is its own Gradle with --no-daemon and, with two at once, its own cache folder: that is "--stop between versions"
+// (./gradlew --stop from here would stop this build too). Add --no-daemon to runVersionMatrix itself and nothing stays in
+// memory at the end.
+import java.awt.Color
+import java.awt.Font
+import java.awt.RenderingHints
+import java.awt.image.BufferedImage
+import java.lang.management.ManagementFactory
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
+import javax.imageio.ImageIO
+
+// The columns; the same list is in MatrixScenario.
+def STEPS = ['startup', 'glass_chest', 'glass_inventory', 'open_effect', 'fly_container', 'esc', 'ontop', 'crawler_main']
+def TITLES = [startup: 'Start', glass_chest: 'Glass: chest', glass_inventory: 'Glass: inventory', open_effect: 'Opening effect',
+              fly_container: 'Fly to container', esc: 'Esc', ontop: 'Over blocks', crawler_main: 'Crawler']
+// Sodium since 0.8.10 names 26.1.2 alone, so 26.1 and 26.1.1 need this older pair (the Sodium is the one this Iris requires).
+def OLD_SHADERS = ['-Piris_version=1.10.9+26.1-fabric', '-Psodium_version=mc26.1.1-0.8.9-fabric']
+// Every supported version: which module builds it and which game it runs on. The list of what exists is in docs/VERSIONS.md.
+def VERSIONS = [
+        [mc: '26.1', module: 'platform-26', args: ['-Pminecraft_version=26.1'], shaderArgs: OLD_SHADERS],
+        [mc: '26.1.1', module: 'platform-26', args: ['-Pminecraft_version=26.1.1'], shaderArgs: OLD_SHADERS],
+        [mc: '26.1.2', module: 'platform-26', args: []],
+        [mc: '26.2', module: 'platform-26.2', args: []],
+        [mc: '26.3', module: 'platform-26.3', args: []],
+]
+
+def moduleProperties = { String module ->
+    def props = new Properties()
+    file("${module}/gradle.properties").withInputStream { props.load(it) }
+    props
+}
+
+/** Screenshots of a run in the order of the sheet: prefix -> caption. */
+def SHEET = [['matrix_glass_chest', 'Glass: chest'], ['matrix_glass_inventory', 'Glass: inventory'],
+             ['matrix_open_effect', 'Opening'], ['matrix_open_effect_end', 'Opened'],
+             ['matrix_fly_chest_open_t2', 'Fly out'], ['matrix_fly_chest_close_t3', 'Fly back'],
+             ['ontop_', 'Over blocks'], ['matrix_crawler_general', 'Settings'],
+             ['matrix_crawler_effects', 'Effects tab'], ['matrix_crawler_screens', 'Screens tab']]
+
+def makeSheet = { File shots, File sheet, String title ->
+    System.setProperty('java.awt.headless', 'true')
+    def picked = []
+    SHEET.each { entry ->
+        // Fabric's takeScreenshot numbers its files: 0001_name.png.
+        def shortName = { File f -> f.name.replaceFirst(/^\d+_/, '') }
+        def matches = (shots.listFiles() ?: []).findAll { shortName(it).startsWith(entry[0]) && it.name.endsWith('.png') }.sort { shortName(it) }
+        // "ontop_": the frame with the pieces over the wall.
+        def found = entry[0] == 'ontop_' ? matches.find { it.name.contains('_on_fly_t15') } :
+                matches.find { shortName(it) == entry[0] + '.png' } ?: matches.find { !it.name.contains('_aim') }
+        if (found != null) {
+            picked << [found, entry[1]]
+        }
+    }
+    if (picked.isEmpty()) {
+        return false
+    }
+    int w = 384, h = 216, cols = 5, head = 24, label = 18
+    int rows = (int) Math.ceil(picked.size() / (double) cols)
+    def image = new BufferedImage(cols * w, head + rows * (h + label), BufferedImage.TYPE_INT_RGB)
+    def g = image.createGraphics()
+    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+    g.setColor(new Color(24, 24, 28))
+    g.fillRect(0, 0, image.width, image.height)
+    g.setColor(Color.WHITE)
+    g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15))
+    g.drawString(title, 8, 17)
+    g.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13))
+    picked.eachWithIndex { item, i ->
+        int x = (i % cols) * w
+        int y = head + (i / cols as int) * (h + label)
+        def shot = ImageIO.read(item[0])
+        g.drawImage(shot, x, y + label, w - 2, h - 2, null)
+        g.setColor(Color.WHITE)
+        g.drawString(item[1], x + 6, y + 14)
+    }
+    g.dispose()
+    sheet.parentFile.mkdirs()
+    ImageIO.write(image, 'png', sheet)
+    return true
+}
+
+/** The last lines of a run's log that say why it stopped. */
+def whyStopped = { File log ->
+    def lines = log.exists() ? log.readLines('UTF-8') : []
+    def hits = lines.findAll { it =~ /requires version|Incompatible mods|Mixin apply|InjectionError|InvalidInjection|Exception in thread|Caused by: |Game crashed|Failed to start|hs_err|OutOfMemory|non-zero exit value/ }
+    (hits ? hits.last() : (lines ? lines.findAll { it.trim() }.takeRight(1)[0] : 'no log')).replaceAll(/[A-Za-z]:[\\\/][^\s]+/, '<path>').trim().take(220)
+}
+
+def writeTable = { File out, File dir, File doc, String started ->
+    def rows = (dir.listFiles() ?: []).findAll { it.name.endsWith('.row') }.sort { a, b ->
+        def order = { it.name.replace('.row', '').split('_')[0].tokenize('.').collect { p -> p as int } }
+        def x = order(a)
+        def y = order(b)
+        for (int i = 0; i < Math.max(x.size(), y.size()); i++) {
+            int c = (i < x.size() ? x[i] : -1) <=> (i < y.size() ? y[i] : -1)
+            if (c != 0) {
+                return c
+            }
+        }
+        a.name <=> b.name
+    }
+    def text = new StringBuilder()
+    text << '# Test matrix\n\n'
+    text << 'Written by `./gradlew runVersionMatrix` (`gradle/version-matrix.gradle`, scenarios in `MatrixScenario`). '
+    text << "Last run started ${started}. Each row is one game started by Gradle with the mod built for that version.\n\n"
+    text << '| Version | Mode | ' + STEPS.collect { TITLES[it] }.join(' | ') + ' | Time | Sheet |\n'
+    text << '|---|---|' + STEPS.collect { '---' }.join('|') + '|---|---|\n'
+    def notes = []
+    rows.each { row ->
+        def p = new groovy.json.JsonSlurper().parse(row)
+        def cells = STEPS.collect { p.results[it]?.status ?: 'FAIL' }
+        text << "| ${p.mc} | ${p.mode} | " + cells.join(' | ') + " | ${p.minutes} min | ${p.sheet ? "[sheet](../build/version-matrix/${p.sheet})" : '-'} |\n"
+        // One line for the steps that share a reason: a game that never started is one fact, not eight.
+        def reasons = [:]
+        STEPS.each { s ->
+            def r = p.results[s]
+            if (r == null) {
+                reasons.computeIfAbsent("FAIL, no result: ${p.reason ?: 'the run stopped before this step'}".toString()) { [] } << s
+            } else if (r.status != 'OK' && r.detail) {
+                reasons.computeIfAbsent("${r.status}, ${r.detail}".toString()) { [] } << s
+            }
+        }
+        reasons.each { reason, steps ->
+            def where = steps.size() == STEPS.size() ? 'every step' : steps.collect { TITLES[it] }.join(', ')
+            notes << "- ${p.mc} ${p.mode}, ${where}: ${reason}"
+        }
+    }
+    rows.collect { new groovy.json.JsonSlurper().parse(it) }.findAll { it.restarts }.each {
+        notes << "- ${it.mc} ${it.mode}: the game was restarted ${it.restarts} time(s) after a native crash before its first result"
+    }
+    if (notes) {
+        text << '\n## Not OK\n\n' << notes.unique().join('\n') << '\n'
+    }
+    def info = rows.collect { new groovy.json.JsonSlurper().parse(it) }.findAll { it.info }
+    if (info) {
+        text << '\n## What ran\n\n'
+        info.each { text << "- ${it.mc} ${it.mode}: ${it.info}\n" }
+    }
+    doc.setText(text.toString(), 'UTF-8')
+}
+
+tasks.register('runVersionMatrix') {
+    group = 'verification'
+    description = 'Runs the short game test set on every supported version. See gradle/version-matrix.gradle.'
+    // Results depend on the game, not on inputs Gradle can see.
+    outputs.upToDateWhen { false }
+    doLast {
+        def root = rootProject.projectDir
+        def out = new File(root, 'build/version-matrix')
+        def doc = new File(root, 'docs/TEST_MATRIX.md')
+        def only = project.findProperty('matrixOnly')?.toString()?.split(',')*.trim()
+        def modes = (project.findProperty('matrixModes') ?: 'plain,spatial,shaders,vulkan').toString().split(',')*.trim()
+        def timeout = (project.findProperty('matrixTimeoutMinutes') ?: '40') as long
+        def minFree = (project.findProperty('matrixMinFreeMb') ?: '3000') as long
+        def pack = project.findProperty('shaderPack')?.toString()
+        int parallel = (project.findProperty('matrixParallel') ?: '2') as int
+        boolean resume = project.hasProperty('matrixResume')
+        def started = LocalDateTime.now().format(DateTimeFormatter.ofPattern('yyyy-MM-dd HH:mm'))
+        if (only == null && modes.size() == 4 && !resume) {
+            out.deleteDir()
+        }
+        out.mkdirs()
+        def gradlew = new File(root, System.getProperty('os.name').toLowerCase().contains('win') ? 'gradlew.bat' : 'gradlew').path
+        def os = ManagementFactory.operatingSystemMXBean
+
+        def lock = new Object()
+        def saveRow = { Map row ->
+            synchronized (lock) {
+                new File(out, "${row.mc}_${row.mode}.row").setText(groovy.json.JsonOutput.toJson(row), 'UTF-8')
+                writeTable(out, out, doc, started)
+            }
+        }
+        def skipRow = { String mc, String mode, String reason ->
+            def results = STEPS.collectEntries { [(it): [status: 'SKIPPED', detail: reason]] }
+            saveRow([mc: mc, mode: mode, results: results, minutes: 0, sheet: null, reason: reason, info: null])
+            println "matrix: ${mc} ${mode}: SKIPPED, ${reason}"
+        }
+
+        // A released 26.x without a module is a row too, not silence.
+        try {
+            def known = VERSIONS*.mc
+            def meta = new groovy.json.JsonSlurper().parse(new URL('https://meta.fabricmc.net/v2/versions/game').newInputStream())
+            meta.findAll { it.stable && it.version.startsWith('26.') && !known.contains(it.version) }.each {
+                skipRow(it.version, 'plain', 'released, no module builds it yet (docs/VERSIONS.md)')
+            }
+        } catch (Exception e) {
+            println "matrix: could not check Fabric meta for new versions: ${e}"
+        }
+
+        // A finished row is one whose game got through every step, whatever each step's result (a resume keeps it).
+        def finishedRow = { String mc, String mode ->
+            def file = new File(out, "${mc}_${mode}.row")
+            if (!file.exists()) {
+                return false
+            }
+            def results = new groovy.json.JsonSlurper().parse(file).results
+            return STEPS.every { results[it] != null && results[it].status != 'SKIPPED' }
+        }
+
+        def jobs = []
+        VERSIONS.each { v ->
+            if (only != null && !only.contains(v.mc)) {
+                return
+            }
+            def props = moduleProperties(v.module)
+            modes.each { mode ->
+                if (resume && finishedRow(v.mc, mode)) {
+                    println "matrix: ${v.mc} ${mode}: kept from the last run"
+                    return
+                }
+                def args = [":${v.module}:runClientGameTest".toString(), "-Pmc=${v.mc}".toString(), '--no-daemon', '--console=plain',
+                            '-Dorg.gradle.jvmargs=-Xmx1536m', '-PtestOnly=matrix', parallel > 1 ? '-PgameHeap=2500m' : '-PgameHeap=3G'] + v.args
+                if (mode == 'spatial') {
+                    def spatial = props.getProperty('spatial_test')
+                    if (!spatial) {
+                        skipRow(v.mc, mode, 'no Spatial GUI for this version')
+                        return
+                    }
+                    args << "-PspatialGui=${spatial}".toString()
+                } else if (mode == 'shaders') {
+                    if (!props.getProperty('iris_version') || !props.getProperty('sodium_version')) {
+                        skipRow(v.mc, mode, 'no Iris or Sodium for this version')
+                        return
+                    }
+                    if (pack == null) {
+                        skipRow(v.mc, mode, 'no shader pack given (-PshaderPack=...)')
+                        return
+                    }
+                    args << '-Pshaders' << "-PshaderPack=${pack}".toString()
+                    args.addAll(v.shaderArgs ?: [])
+                } else if (mode == 'vulkan') {
+                    if (props.getProperty('vulkan') != 'true') {
+                        skipRow(v.mc, mode, 'this version has no Vulkan backend')
+                        return
+                    }
+                    args << '-PgraphicsBackend=vulkan'
+                }
+                jobs << [v: v, mode: mode, args: args]
+            }
+        }
+
+        def runRow = { Map job, int worker ->
+            def v = job.v
+            def mode = job.mode
+            def args = job.args + ["--project-cache-dir=${new File(out, "cache/${worker}").path}".toString()]
+            // Enough memory for one more game, or the row says so.
+            long free = os.freeMemorySize / (1024 * 1024) as long
+            for (int i = 0; i < 20 && free < minFree; i++) {
+                println "matrix: ${free} MB free, waiting for ${minFree}"
+                Thread.sleep(30000)
+                free = os.freeMemorySize / (1024 * 1024) as long
+            }
+            if (free < minFree) {
+                skipRow(v.mc, mode, "only ${free} MB of memory free, ${minFree} needed")
+                return
+            }
+            def log = new File(out, "${v.mc}_${mode}.log")
+            def run = new File(root, "${v.module}/build/run/clientGameTest")
+            def tsv = new File(run, 'matrix-results.tsv')
+            long begin = System.currentTimeMillis()
+            boolean finished = false
+            boolean refused = false
+            int restarts = 0
+            while (true) {
+                // Loom clears the run folder when the game starts, so a run that fails before that (no network for a mod, a
+                // compile error) would read the last row's results and screenshots as its own.
+                tsv.delete()
+                new File(run, 'screenshots').deleteDir()
+                println "matrix: ${v.mc} ${mode}: started at ${LocalDateTime.now().format(DateTimeFormatter.ofPattern('HH:mm'))}"
+                def process = new ProcessBuilder([gradlew] + args).directory(root).redirectErrorStream(true).redirectOutput(log).start()
+                // Fabric Loader's refusal opens a window that waits for a person: the log says so, no need to wait for the timeout.
+                long deadline = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(timeout)
+                refused = false
+                while (process.isAlive() && System.currentTimeMillis() < deadline && !refused) {
+                    process.waitFor(5, TimeUnit.SECONDS)
+                    refused = log.exists() && log.getText('UTF-8').contains('Incompatible mods found!')
+                }
+                finished = !process.isAlive()
+                if (!finished) {
+                    process.descendants().forEach { it.destroyForcibly() }
+                    process.destroyForcibly()
+                    process.waitFor(1, TimeUnit.MINUTES)
+                }
+                // 26.3 on OpenGL with some drivers dies while the shaders load, with or without this mod (about one start in
+                // six on an Intel GPU, NOTES.md). A game that never got to its first result tells nothing about the mod: again,
+                // and the table says so. A crash after the first result is a result.
+                boolean gotResult = tsv.exists() && tsv.getText('UTF-8').contains('startup\t')
+                if (finished && !gotResult && restarts < 3 && log.getText('UTF-8') =~ /-10737(41819|40791)/) {
+                    restarts++
+                    println "matrix: ${v.mc} ${mode}: native crash before the first result, restart ${restarts}"
+                    continue
+                }
+                break
+            }
+            int minutes = Math.round((System.currentTimeMillis() - begin) / 60000d) as int
+            def results = [:]
+            def info = [:]
+            if (tsv.exists()) {
+                tsv.readLines('UTF-8').each { line ->
+                    def parts = line.split('\t', 3)
+                    if (parts[0] == 'info') {
+                        info[parts[1]] = parts.size() > 2 ? parts[2] : ''
+                    } else {
+                        results[parts[0]] = [status: parts[1], detail: parts.size() > 2 ? parts[2] : '']
+                    }
+                }
+            }
+            def sheetName = "${v.mc}_${mode}.png".toString()
+            def sheet = makeSheet(new File(run, 'screenshots'), new File(out, sheetName), "Shatter GUI on ${v.mc} (${mode})")
+            def reason = refused ? 'Fabric Loader refused to start: ' + whyStopped(log) : !finished ? "timed out after ${timeout} minutes" : whyStopped(log)
+            saveRow([mc: v.mc, mode: mode, results: results, minutes: minutes, sheet: sheet ? sheetName : null, reason: reason, restarts: restarts,
+                     info: info.collect { k, val -> "${k}: ${val}" }.join(', ')])
+            def bad = STEPS.findAll { results[it]?.status != 'OK' }
+            println "matrix: ${v.mc} ${mode}: ${bad ? 'not OK: ' + bad.join(', ') : 'all OK'} (${minutes} min)"
+        }
+
+        def busy = new HashSet()
+        def workers = (1..parallel).collect { int worker ->
+            Thread.start {
+                // A second game starts a little later: both load their shaders at the start.
+                Thread.sleep((worker - 1) * 30000L)
+                while (true) {
+                    def job = null
+                    boolean left = false
+                    synchronized (lock) {
+                        job = jobs.find { !busy.contains(it.v.module) }
+                        if (job != null) {
+                            jobs.remove(job)
+                            busy.add(job.v.module)
+                        }
+                        left = !jobs.isEmpty()
+                    }
+                    if (job == null) {
+                        if (!left) {
+                            break
+                        }
+                        Thread.sleep(5000)
+                        continue
+                    }
+                    try {
+                        runRow(job, worker)
+                    } catch (Throwable t) {
+                        println "matrix: ${job.v.mc} ${job.mode}: ${t}"
+                    } finally {
+                        synchronized (lock) {
+                            busy.remove(job.v.module)
+                        }
+                    }
+                }
+            }
+        }
+        workers*.join()
+        println "matrix: results in ${doc}, sheets and logs in ${out}"
+    }
+}

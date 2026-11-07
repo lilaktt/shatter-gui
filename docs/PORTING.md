@@ -12,7 +12,10 @@ core/              чиста логіка: без Minecraft, без заван�
   src/main/resources assets/shatter_gui: мови, ефекти, шаблони, приклади, themes.json, іконка
   src/contract/java  контракт PlatformScreen: компілюється лише з core, у jar не потрапляє
   src/test/java      юніт-тести (усі 85 колишніх)
-platform-26/       Minecraft 26.1.x + Fabric (один jar для 26.1, 26.1.1, 26.1.2; компілюється проти 26.1.2): усе, що залежить від гри; game tests (src/gametest)
+platform-26-shared/ спільний код усіх 26.x: усе, що залежить від гри, але не від епохи; game tests (src/gametest). Не модуль
+platform-26/       Minecraft 26.1.x + Fabric (один jar для 26.1, 26.1.1, 26.1.2; компілюється проти 26.1.2): адаптери
+platform-26.2/     Minecraft 26.2 + Fabric: адаптери, source-renames.txt
+platform-26.3/     Minecraft 26.3 + Fabric: адаптери, source-renames.txt
 platform-1.21.1/   Minecraft 1.21.1 + Fabric: порт у роботі; тести — власний харнес (src/gametest)
 ```
 
@@ -40,8 +43,12 @@ Core не має власного jar: кожен platform-модуль комп
 ```
 ./gradlew build                      # core (+ юніт-тести, checkNoMinecraft) і 26.1.x: build/libs/shatter-gui-0.1.0-beta+mc26.1-fabric.jar
 ./gradlew build -Pmc=1.21.1          # core і заготовка 1.21.1:          build/libs/shatter-gui-0.1.0-beta+mc1.21.1-fabric.jar
+./gradlew build -Pmc=26.2             # 26.2:                             build/libs/shatter-gui-0.1.0-beta+mc26.2-fabric.jar
+./gradlew build -Pmc=26.3             # 26.3:                             build/libs/shatter-gui-0.1.0-beta+mc26.3-fabric.jar
 ./gradlew build -Pmc=all             # усі по черзі (на слабкій машині — краще по одній)
-./gradlew :platform-26:runClientGameTest [-PspatialGui=1.8] [-Pshaders -PshaderPack=…] [-PtestOnly=…]
+./gradlew :platform-26:runClientGameTest [-PspatialGui=1.10.1] [-Pshaders -PshaderPack=…] [-PtestOnly=…]
+./gradlew :platform-26.3:runClientGameTest -Pmc=26.3 [-PgraphicsBackend=vulkan]
+./gradlew runVersionMatrix --no-daemon [-PshaderPack=…]    # скорочений набір на всіх версіях, docs/TEST_MATRIX.md
 ```
 
 `settings.gradle` підключає лише вибрані platform-модулі (`-Pmc`, типово 26.1; `26.1.1` і `26.1.2` — той самий модуль), тож Loom ніколи не налаштовує дві
@@ -85,7 +92,7 @@ Core не має власного jar: кожен platform-модуль комп
 | `platform` | інтерфейси (нижче) | Межа з грою |
 | ресурси | `assets/shatter_gui/lang/*.json` (12 мов), `effects/*.json` (27), `editor/templates`, `examples`, `themes.json`, `icon.png` | Переклади й дані однакові для всіх версій |
 
-## (b) Залежить від версії — `platform-26`
+## (b) Залежить від версії — `platform-26-shared` і `platform-26*`
 
 Позначки: **R** рендер (blaze3d, `RenderType`, `RenderPipeline`, `SubmitNodeCollector`), **G** малювання GUI
 (`GuiGraphicsExtractor`, `GuiRenderState`), **C** захоплення екрана (GPU-копії), **M** mixin, **I** введення
@@ -210,12 +217,50 @@ Core не має власного jar: кожен platform-модуль комп
 
 ## 26.2 і 26.3
 
-Опублікований jar на них не запускається: `"minecraft": "~26.1.2"` зупиняє Fabric Loader, а з примусовим
-перевизначенням залежності гра падає на старті (`MinecraftMixin`: поля `Minecraft#screen` уже немає). Core
-компілюється проти 26.2 і 26.3 без змін; `platform-26` — ні (56 і 119 помилок): екран переїхав у `Minecraft#gui`,
-головний таргет і камера — у `GameRenderer#mainRenderTarget()/mainCamera()`, у 26.3 GPU-API — у
-`com.mojang.renderpearl.api.*`. Тож кожна з них — свій модуль `platform-26.2`, `platform-26.3` (копія `platform-26` з
-точковими правками) з тим самим core. Подробиці й таблиця змін — у NOTES.md («26.2 і 26.3»).
+Версії, епохи, те, що їх розділяє, і рейтинг 1.20.x/1.21.x — у [VERSIONS.md](VERSIONS.md). Як це зібрано:
+
+- `platform-26-shared/src/{main,gametest}` — увесь код 26.x, що не залежить від епохи. Як і `core`, він не модуль: кожен
+  `platform-26*` компілює його ще раз (`gradle/platform-26x.gradle`).
+- У самому `platform-26`, `platform-26.2`, `platform-26.3` лише адаптери: `platform.impl.Mc26` (те, що переїхало; однакові
+  методи в кожному модулі, як `PlatformScreen`), `render.ImmediateDraw`, `mixin.ScreenChangeMixin`, `mixin.GameRendererMixin`,
+  у 26.2+ `mixin.ScreenEventsMixin`, у тестах `test.McTest`. Їхній список mixin-ів — `shatter_gui.version.mixins.json`.
+  Логіка цих mixin-ів — у спільних `ScreenTransition` і `render.FrameHooks`.
+- `source-renames.txt`: класи, що лише змінили ім'я чи пакет (`old -> new`). Спільний код пишеться іменами 26.1, а перед
+  компіляцією `Sync` із фільтром кладе перейменовану копію в `build/generated/shared` (цілі слова, крапки в коді й слеші в рядках
+  mixin). Так перехід `com.mojang.blaze3d` → `com.mojang.renderpearl.api` у 26.3 коштує 16 рядків, а не копії файлів.
+  IDE бачить спільний код проти 26.1; правильність для 26.2 і 26.3 перевіряє збірка.
+- У 26.3 гра перейшла з GLFW на SDL: коди клавіш стали скан-кодами, кнопки миші 1/2/3 замість 0/1/2. `core` лишається з кодами
+  GLFW (`Keys`), переклад на межі: `Mc26.uiKey`, `Mc26.uiMouseButton`. Клавіші, яких core не знає, — `-1`, бо скан-код 32 (цифра 3)
+  збігся б із `KEY_SPACE`. У тестах лише константи `InputConstants`, не числа.
+- Компілювати лише проти мінімального Loader (`loader_version`). У новому Mixin `@Redirect#at` — масив, і javac записує його так
+  у клас; на старому Loader MixinExtras падає на старті. Dev-запуски цього не показують, це виявив запуск jar-а поза Gradle.
+
+Нова версія тієї самої епохи — новий рядок у `settings.gradle`, `VERSIONS` у `gradle/version-matrix.gradle` і, якщо треба,
+властивості. Нова епоха — копія найближчого модуля (це 100–200 рядків адаптерів), далі компілятор показує, що змінилось.
+Але компілятор бачить не все: reversed-Z у 26.2 і SDL у 26.3 — це ті самі типи з іншим значенням, тож після компіляції
+обов'язково запускати ігрові тести.
+
+## Матриця версій
+
+`./gradlew runVersionMatrix` — скорочений набір (`MatrixScenario`) на кожній версії, у режимах `plain`, `spatial`, `shaders`,
+`vulkan`, до двох ігор одночасно. Результат — `docs/TEST_MATRIX.md`, що переписується після кожного рядка; аркуші скріншотів і логи —
+у `build/version-matrix`. Параметри — на початку `gradle/version-matrix.gradle`. Для ночі:
+
+```
+./gradlew runVersionMatrix --no-daemon -PshaderPack=C:/path/to/Pack.zip
+```
+
+Кожна гра — окремий Gradle з `--no-daemon` і власним `--project-cache-dir` (це і є `--stop` між версіями: `./gradlew --stop` звідси
+зупинив би й сам запуск, і сусідню гру). `-PmatrixParallel=1` — по одній грі, для слабкої машини. Дві гри одного модуля разом не
+йдуть ніколи: у них спільна тека запуску. Перед кожною грою перевіряється вільна пам'ять, а купа гри обмежена 2.5 ГБ (3 ГБ, якщо гра
+одна). Зависання вбивається за тайм-аутом, відмова Fabric Loader розпізнається в лозі. Гра, що впала нативно до першого результату,
+запускається знову (до трьох разів) і це записується в таблицю: див. NOTES.md про збій 26.3 на Intel, що є і без мода.
+
+Після обриву (вимкнули світло, вбитий процес) `-PmatrixResume` лишає завершені рядки й проганяє решту. Завершений — той, де гра
+дійшла до кінця всіх сценаріїв, навіть із `FAIL`; перервані й пропущені рядки запускаються знову.
+
+`./gradlew --stop` з іншого вікна чи проєкту з тією самою версією Gradle зупиняє й запуски з `--no-daemon`: у лозі `stop command received`,
+рядок стане `FAIL`, а `-PmatrixResume` його поверне. На ніч не запускати поруч інших збірок.
 
 ## Перевірка рефакторингу (26.1.2)
 

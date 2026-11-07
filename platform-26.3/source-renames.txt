@@ -1,0 +1,18 @@
+# Classes that only changed their name or package since 26.1 (old -> new, whole words). Made from the 26.3 client jar's
+# class list: in 26.3 the GPU API moved to com.mojang.renderpearl.api. See gradle/platform-26x.gradle.
+com.mojang.blaze3d.buffers.GpuBufferSlice -> com.mojang.renderpearl.api.buffers.GpuBufferSlice
+com.mojang.blaze3d.pipeline.BlendFunction -> com.mojang.renderpearl.api.pipeline.BlendFunction
+com.mojang.blaze3d.pipeline.ColorTargetState -> com.mojang.renderpearl.api.pipeline.ColorTargetState
+com.mojang.blaze3d.pipeline.DepthStencilState -> com.mojang.renderpearl.api.pipeline.DepthStencilState
+com.mojang.blaze3d.pipeline.RenderPipeline -> com.mojang.renderpearl.api.pipeline.RenderPipeline
+com.mojang.blaze3d.platform.DestFactor -> com.mojang.renderpearl.api.pipeline.BlendFactor
+com.mojang.blaze3d.platform.SourceFactor -> com.mojang.renderpearl.api.pipeline.BlendFactor
+com.mojang.blaze3d.systems.CommandEncoder -> com.mojang.renderpearl.api.commands.CommandEncoder
+com.mojang.blaze3d.systems.GpuDevice -> com.mojang.renderpearl.api.device.GpuDevice
+com.mojang.blaze3d.textures.FilterMode -> com.mojang.renderpearl.api.textures.FilterMode
+com.mojang.blaze3d.textures.GpuTexture -> com.mojang.renderpearl.api.textures.GpuTexture
+com.mojang.blaze3d.textures.TextureFormat -> com.mojang.renderpearl.api.GpuFormat
+TextureFormat -> GpuFormat
+SourceFactor -> BlendFactor
+DestFactor -> BlendFactor
+InputConstants.Type.KEYSYM -> InputConstants.Type.KEYBOARD

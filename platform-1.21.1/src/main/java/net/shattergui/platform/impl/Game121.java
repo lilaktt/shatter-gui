@@ -89,7 +89,7 @@ final class Game121 implements GameInfo, Desktop {
         String spatial = version("spatial_gui");
         out.put("Spatial GUI", spatial.equals("not installed") ? version("spatial-gui") : spatial);
         out.put("GPU", com.mojang.blaze3d.platform.GlUtil.getRenderer());
-        out.put("Driver (OpenGL)", com.mojang.blaze3d.platform.GlUtil.getOpenGLVersion());
+        out.put("Driver", com.mojang.blaze3d.platform.GlUtil.getOpenGLVersion());
         out.put("GPU vendor", com.mojang.blaze3d.platform.GlUtil.getVendor());
         // The pack's name is not part of Iris's public API; this port does not reach into Iris itself yet.
         out.put("Shader pack", !FabricLoader.getInstance().isModLoaded("iris") ? "Iris not installed"

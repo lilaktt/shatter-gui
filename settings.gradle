@@ -25,6 +25,8 @@ def platforms = [
         '26.1': 'platform-26',       // active: the published version, one jar for 26.1, 26.1.1 and 26.1.2
         '26.1.1': 'platform-26',
         '26.1.2': 'platform-26',
+        '26.2': 'platform-26.2',
+        '26.3': 'platform-26.3',
         '1.21.1': 'platform-1.21.1', // the port in progress
 ]
 def active = '26.1'

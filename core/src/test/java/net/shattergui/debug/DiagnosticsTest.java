@@ -42,12 +42,12 @@ class DiagnosticsTest {
     void everyFieldIsThere() {
         Map<String, String> env = new LinkedHashMap<>();
         for (String key : List.of("Shatter GUI", "Minecraft", "Fabric Loader", "Fabric API", "Iris", "Sodium",
-                "Spatial GUI", "GPU", "Driver (OpenGL)", "Shader pack")) {
+                "Spatial GUI", "GPU", "Driver", "Shader pack")) {
             env.put(key, "x");
         }
         String text = Diagnostics.build(env, "fly_from_block", "glass", true, List.of("WARN something at " + HOME + "\\a"));
         for (String key : List.of("Shatter GUI:", "Minecraft:", "Fabric Loader:", "Fabric API:", "Iris:", "Sodium:",
-                "Spatial GUI:", "GPU:", "Driver (OpenGL):", "Shader pack:", "Open effect: fly_from_block",
+                "Spatial GUI:", "GPU:", "Driver:", "Shader pack:", "Open effect: fly_from_block",
                 "Close effect: glass", "Thematic mode: on", "Recent warnings:")) {
             assertTrue(text.contains(key), key + " in\n" + text);
         }

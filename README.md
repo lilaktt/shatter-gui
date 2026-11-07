@@ -1,6 +1,6 @@
 # Shatter GUI
 
-A client-side Fabric mod for Minecraft 26.1.x (26.1, 26.1.1, 26.1.2). When you close an interface (chest, furnace, inventory, pause menu…)
+A client-side Fabric mod for Minecraft 26.1.x, 26.2 and 26.3. When you close an interface (chest, furnace, inventory, pause menu…)
 its last frame breaks into pieces that live in the world: glass shards, fire, ice, sand, confetti, a portal vortex…
 Effects can also play backwards when you open an interface, so it gathers from its pieces.
 
@@ -34,7 +34,7 @@ effect editor.
 
 ## Requirements
 
-Minecraft 26.1, 26.1.1 or 26.1.2 (one jar), Fabric Loader ≥ 0.19.3, Fabric API, Java 25. Optional: Mod Menu, Spatial GUI, Iris + Sodium.
+Minecraft 26.1, 26.1.1 or 26.1.2 (one jar, `+mc26.1`), 26.2 (`+mc26.2`) or 26.3 (`+mc26.3`), on OpenGL or Vulkan. Fabric Loader ≥ 0.19.3, Fabric API, Java 25. Optional: Mod Menu, Spatial GUI, Iris + Sodium (Spatial GUI 1.10, and Iris on 26.3, need a Fabric Loader newer than 0.19.3; 0.20.1 works).
 
 ## Configuration
 
@@ -79,15 +79,18 @@ the mod: General tab → About.
 
 ```
 ./gradlew build                 # build/libs/shatter-gui-<version>+mc26.1-fabric.jar, runs unit tests
+./gradlew build -Pmc=26.2       # the same for 26.2 (or 26.3)
 ./gradlew runClientGameTest     # automated tests in a real client (screenshots in platform-26/build/run/clientGameTest)
-./gradlew runClientGameTest -PspatialGui=1.8 -PmodMenu
+./gradlew runClientGameTest -PspatialGui=1.10.1 -PmodMenu
 ./gradlew runClientGameTest -Pshaders -PshaderPack=C:/path/to/Pack.zip
 ./gradlew runClientGameTest -PtestOnly=lang -Plang=ja_jp   # one language at GUI scales 1–4, screenshots lang_ja_…
 ./gradlew build -Pmc=1.21.1     # the 1.21.1 port (a stub so far)
+./gradlew runVersionMatrix --no-daemon -PshaderPack=C:/path/to/Pack.zip   # a short test set on every version, for the night
 ```
 
-The shared code (`core`, no Minecraft) and one module per Minecraft version (`platform-*`) are described in
-`docs/PORTING.md`.
+The shared code (`core`, no Minecraft; `platform-26-shared`, all of 26.x) and one module per Minecraft version
+(`platform-*`) are described in `docs/PORTING.md`, the versions in `docs/VERSIONS.md`, the last results in
+`docs/TEST_MATRIX.md`.
 
 Author and links are in `gradle.properties` (`mod_author`, `mod_sources`, `mod_issues`, `mod_modrinth`,
 `mod_curseforge`).

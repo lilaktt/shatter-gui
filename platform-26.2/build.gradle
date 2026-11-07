@@ -1,0 +1,6 @@
+// Minecraft 26.2, Fabric. See gradle/platform-26x.gradle.
+plugins {
+    id 'net.fabricmc.fabric-loom'
+}
+
+apply from: rootProject.file('gradle/platform-26x.gradle')
