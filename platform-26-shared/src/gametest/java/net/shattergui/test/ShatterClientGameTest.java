@@ -47,6 +47,8 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
 
         // Every wave breaks and flies the same way in every run (scenarios that check where pieces go seed again).
         context.runOnClient(mc -> ShardManager.seedForTests(OnTopScenario.TEST_SEED));
+        // No scenario asks the real Modrinth or GitHub: every page answers "up" unless LinksScenario says otherwise.
+        LinksScenario.everyPageUp();
         ShatterConfig config = ShatterConfig.get();
         // The [ShatterProfile] lines are part of what a test run leaves for reading (off by default for players).
         config.profiling = true;
@@ -279,6 +281,9 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
                         OnTopScenario.run(context, singleplayer, this::check, "flat");
                     }
                 }
+                if (chosen.contains("links")) {
+                    LinksScenario.run(context, this::check, spatial ? "spatial_links" : "links");
+                }
                 if (chosen.contains("settle")) {
                     SettleScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
                 }
@@ -354,6 +359,7 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
         EditorScenario.run(context, this::check, context::takeScreenshot, prefix + "editor");
         RealPreviewScenario.run(context, singleplayer, this::check, context::takeScreenshot, prefix + "real_preview");
         TooltipScenario.run(context, this::check, context::takeScreenshot, prefix + "tooltips");
+        LinksScenario.run(context, this::check, prefix + "links");
         DiagnosticsScenario.run(context, this::check);
         VortexScenario.run(context, singleplayer, this::check, context::takeScreenshot, prefix + "vortex",
                 ShatterClientGameTest::furnace);

@@ -22,6 +22,13 @@ word for word.
 Shatter GUI calls only the public API of Iris (`net.irisshaders.iris.api.v0.IrisApi`) when Iris is installed; no code
 from Iris is copied or included in the jar.
 
+## Platform names and logos
+
+Modrinth, CurseForge and GitHub, their names and logos, belong to their owners. The mod ships none of their logos: the
+page buttons in "About" draw simple icons of the mod's own (an arrow out of a square, brackets, a marker). Pictures put
+into `assets/shatter_gui/textures/gui/links/` (`modrinth.png`, `curseforge.png`, `github.png`, `bug.png`) are drawn
+instead; whoever adds them must have the right to use them (e.g. the platforms' brand guidelines).
+
 ## Development-only dependencies (not in the mod's jar, not in the repository)
 
 Downloaded by Gradle from the Modrinth Maven (`build.gradle`):

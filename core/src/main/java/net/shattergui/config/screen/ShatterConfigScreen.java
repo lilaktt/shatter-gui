@@ -43,6 +43,8 @@ import net.shattergui.ui.Segmented;
 import net.shattergui.ui.Slider;
 import net.shattergui.ui.Swatch;
 import net.shattergui.ui.TabNav;
+import net.shattergui.links.LinkStatus;
+import net.shattergui.ui.links.LinkButton;
 import net.shattergui.ui.TextField;
 import net.shattergui.ui.Theme;
 import net.shattergui.ui.Toggle;
@@ -782,18 +784,25 @@ public final class ShatterConfigScreen extends UiScreen {
         if (link != null) {
             about.add(new Label(tr("ui.shatter_gui.about.link", link), Label.Style.DIM));
         }
-        // The pages of the mod (fabric.mod.json "contact"), each opened through the game's own "open this link?" screen.
+        // The pages of the mod (fabric.mod.json "contact"), each opened through the game's own "open this link?" screen. Each
+        // fills with its platform's colour on hover and focus; a dot says whether the page is up (LinkStatus: checked
+        // off the render thread, once per session, only while this section is drawn and the setting allows it).
+        about.add(new SettingRow(tr("ui.shatter_gui.link_status_check"), tr("ui.shatter_gui.link_status_check.desc"), false,
+                new Toggle(() -> work.linkStatusCheck, v -> work.linkStatusCheck = v), () -> !work.linkStatusCheck,
+                () -> work.linkStatusCheck = true));
         List<Button> pages = new ArrayList<>();
-        for (String[] page : new String[][]{{"modrinth", "modrinth"}, {"curseforge", "curseforge"}, {"sources", "github"},
-                {"issues", "report_bug"}}) {
-            String url = meta.contact(page[0]).orElse(null);
+        Object[][] pageLinks = {{"modrinth", "modrinth", LinkButton.Brand.MODRINTH},
+                {"curseforge", "curseforge", LinkButton.Brand.CURSEFORGE}, {"sources", "github", LinkButton.Brand.GITHUB},
+                {"issues", "report_bug", LinkButton.Brand.BUG}};
+        for (Object[] page : pageLinks) {
+            String url = meta.contact((String) page[0]).orElse(null);
             if (url == null) {
                 continue;
             }
             String key = "ui.shatter_gui.about." + page[1];
-            Button open = new Button(tr(key), page[0].equals("issues") ? Icon.INFO : Icon.GLOBE, Button.Kind.SECONDARY,
-                    () -> confirmLink(url)).leavesScreen(true);
-            open.tooltip(tr(key), tr(key + ".tooltip"));
+            LinkButton open = new LinkButton((LinkButton.Brand) page[2], tr(key), tr(key + ".tooltip"),
+                    () -> work.linkStatusCheck, meta.version());
+            open.action(() -> openPage(open, url)).leavesScreen(true);
             pages.add(open);
         }
         // Everything a bug report needs, as text for the issue form (no user name, paths or e-mail addresses).
@@ -806,6 +815,20 @@ public final class ShatterConfigScreen extends UiScreen {
         pages.forEach(links::add);
         about.add(new Hint(tr("ui.shatter_gui.about.translations")));
         about.add(new Hint(tr("ui.shatter_gui.about.third_party")));
+    }
+
+    /**
+     * Opens a page of the mod. One that answered "not found" (not published yet or in moderation) first says so; then
+     * the game's own "open this link?" screen.
+     */
+    private void openPage(LinkButton button, String url) {
+        if (button.state() == LinkStatus.State.NOT_PUBLISHED) {
+            ConfirmDialog.open(tr("ui.shatter_gui.about.not_published.title"),
+                    tr("ui.shatter_gui.about.not_published.message"), tr("ui.shatter_gui.about.not_published.open"), false,
+                    () -> confirmLink(url));
+            return;
+        }
+        confirmLink(url);
     }
 
     /** Thumbnail; next to it the chosen option's name and description, and the drop-down to change it. */

@@ -140,6 +140,11 @@ public final class ShatterConfig implements ParamStore {
      * false: inside the world, hidden by blocks in front of them. Vanilla particles are part of the world either way.
      */
     public boolean alwaysOnTop = true;
+    /**
+     * "About": ask Modrinth and GitHub whether the mod's pages are up (one GET each per session, only while "About" is
+     * open, nothing sent but the request), shown as a dot by each page button. False: no request at all.
+     */
+    public boolean linkStatusCheck = true;
     /** Accent colour of the settings editor: "violet", "blue", "teal", "green", "amber" or "rose". */
     public String uiAccent = "violet";
     /** Settings editor: replay the live preview whenever a setting changes. */

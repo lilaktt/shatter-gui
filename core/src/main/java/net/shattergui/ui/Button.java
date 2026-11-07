@@ -22,6 +22,18 @@ public class Button extends Widget {
     private final Anim press = new Anim(0f, Theme.SPEED_PRESS);
     private boolean down;
     private boolean selected;
+    /** A platform's colour that fills the button on hover and keyboard focus (0: none). */
+    private int brand;
+    /** Draws the icon instead of {@link #icon} (a picture or one of the caller's). */
+    private IconPainter painter;
+
+    /** An icon the caller draws: at x, y ({@link Icon#SIZE} square), {@code fill} 0–1 how filled the button is. */
+    public interface IconPainter {
+        void paint(Ui ui, int x, int y, int color, float fill);
+    }
+
+    /** How much of the platform's colour a fully hovered or focused button takes (all of it). */
+    private static final float BRAND_FILL = 1f;
 
     public Button(Text text, Icon icon, Kind kind, Runnable action) {
         this.text = text;
@@ -67,6 +79,42 @@ public class Button extends Widget {
         return leavesScreen;
     }
 
+    /**
+     * A secondary button that fills with {@code argb} on hover and keyboard focus, smoothly; its text switches to whichever
+     * colour stays readable on the fill (see {@link #brandColors}).
+     */
+    public Button brand(int argb) {
+        brand = argb;
+        return this;
+    }
+
+    public int brand() {
+        return brand;
+    }
+
+    public Button iconPainter(IconPainter value) {
+        painter = value;
+        return this;
+    }
+
+    /** How far the platform's colour fills the button now, 0–1 (hover or keyboard focus). */
+    public float brandFill() {
+        return brand == 0 ? 0f : Math.max(hover.value(), focus.value());
+    }
+
+    /**
+     * Fill, text and border colour of a secondary button with platform colour {@code brand} at {@code hover} and
+     * {@code focus} (0–1) and {@code press} (0–1). The text keeps the theme's colour while it is readable (4.5:1) on the
+     * fill, then takes white or near-black, whichever reads better.
+     */
+    public static int[] brandColors(int brand, float hover, float focus, float press) {
+        float t = Math.max(hover, focus);
+        int base = Theme.mix(Theme.mix(Theme.RAISED, Theme.RAISED_HOVER, hover), Theme.CARD, press);
+        int fill = Theme.mix(base, brand, t * BRAND_FILL);
+        int border = Theme.mix(Theme.BORDER_STRONG, brand, t);
+        return new int[]{fill, Contrast.readableOn(fill, Theme.TEXT), border};
+    }
+
     /** Drawn as pressed-in (a toggled tool button). */
     public Button selected(boolean value) {
         selected = value;
@@ -81,11 +129,12 @@ public class Button extends Widget {
     public int naturalWidth() {
         var font = Platform.get().texts().font();
         int width = 12;
-        if (icon != null) {
+        boolean hasIcon = icon != null || painter != null;
+        if (hasIcon) {
             width += Icon.SIZE;
         }
         if (text != null) {
-            width += font.width(text) + (icon != null ? 4 : 0);
+            width += font.width(text) + (hasIcon ? 4 : 0);
         }
         return text == null ? Theme.CONTROL_HEIGHT : width;
     }
@@ -126,9 +175,16 @@ public class Button extends Widget {
                 textColor = Theme.mix(selected ? Theme.TEXT : Theme.TEXT_DIM, Theme.TEXT, hv);
             }
             default -> {
-                fill = Theme.mix(Theme.mix(Theme.RAISED, Theme.RAISED_HOVER, hv), Theme.CARD, p);
-                border = Theme.mix(Theme.BORDER_STRONG, Theme.accentAlpha(0xC0), Math.max(hv * 0.5f, 0));
-                textColor = Theme.TEXT;
+                if (brand != 0) {
+                    int[] colors = brandColors(brand, Math.max(hv, 0f), focus.value(), p);
+                    fill = colors[0];
+                    textColor = colors[1];
+                    border = colors[2];
+                } else {
+                    fill = Theme.mix(Theme.mix(Theme.RAISED, Theme.RAISED_HOVER, hv), Theme.CARD, p);
+                    border = Theme.mix(Theme.BORDER_STRONG, Theme.accentAlpha(0xC0), Math.max(hv * 0.5f, 0));
+                    textColor = Theme.TEXT;
+                }
             }
         }
         if (!enabled) {
@@ -145,10 +201,14 @@ public class Button extends Widget {
         if (focus.value() > 0.05f) {
             Draw.roundOutline(ui, x - 1, y - 1, w + 2, h + 2, Theme.RADIUS_CONTROL + 1, Theme.accentAlpha(Math.round(200 * focus.value())));
         }
-        int contentW = (icon != null ? Icon.SIZE : 0) + (text != null ? ui.font.width(text) + (icon != null ? 4 : 0) : 0);
+        boolean hasIcon = icon != null || painter != null;
+        int contentW = (hasIcon ? Icon.SIZE : 0) + (text != null ? ui.font.width(text) + (hasIcon ? 4 : 0) : 0);
         int cx = x + Math.max(4, (w - contentW) / 2);
         int cy = y + (h - 8) / 2;
-        if (icon != null) {
+        if (painter != null) {
+            painter.paint(ui, cx, y + (h - Icon.SIZE) / 2, textColor, brandFill());
+            cx += Icon.SIZE + 4;
+        } else if (icon != null) {
             Draw.icon(ui, icon, cx, y + (h - Icon.SIZE) / 2, 1, textColor);
             cx += Icon.SIZE + 4;
         }

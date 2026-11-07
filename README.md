@@ -45,6 +45,13 @@ table), Custom (effect editor). The "Next favourite close effect" key (unbound b
 favourites. Effects are drawn over the world by default ("Draw over blocks"): blocks in front never cut into them,
 the player's hand, the HUD and screens stay on top. The config is `config/shatter_gui.json`.
 
+**Page status in About.** By each page button a dot says whether the page is up: green (yes), yellow (not published yet
+or in moderation; the button explains before opening the link), grey (could not check). To know this the mod asks
+`api.modrinth.com` and `api.github.com` once per session, only while the About section is open, off the game's thread,
+for 3 seconds at most, with the User-Agent `lilaktt/shatter-gui/<version>` and nothing else. CurseForge has no public
+API without a key and is not checked. It never blocks the game and does nothing without a network. Turn it off with
+"Check the mod's pages" (`"linkStatusCheck": false`).
+
 ## Custom effects
 
 Effects are JSON files (schema 2) in `config/shatter_gui/effects/`, packages (`.shatterfx`, a ZIP with
@@ -101,6 +108,11 @@ Author and links are in `gradle.properties` (`mod_author`, `mod_sources`, `mod_i
 - CurseForge: https://www.curseforge.com/minecraft/mc-mods/shattergui
 - GitHub: https://github.com/lilaktt/shatter-gui
 - Bug reports: https://github.com/lilaktt/shatter-gui/issues
+
+The names and logos of Modrinth, CurseForge and GitHub belong to their owners. The mod ships no logos: the page buttons
+show simple icons of its own, or pictures put into `assets/shatter_gui/textures/gui/links/` (`modrinth.png`,
+`curseforge.png`, `github.png`, `bug.png`, 16×16, and `_32` versions at 32×32 for large GUI scales), which need no code
+change.
 
 ## Author
 
