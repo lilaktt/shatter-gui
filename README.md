@@ -42,8 +42,9 @@ In game: Mod Menu → Shatter GUI, or the "Shatter GUI settings" key. Tabs: Gene
 style, playback, performance — effect quality and how many effects play at once —, reduce motion), Effects (settings per effect; under the selected card "For opening / For closing /
 For both / Remove", a double click uses a card for both, ★ marks favourites), Screens (per-screen effects, thematic
 table), Custom (effect editor). The "Next favourite close effect" key (unbound by default) switches between the
-favourites. Effects are drawn over the world by default ("Draw over blocks"): blocks in front never cut into them,
-the player's hand, the HUD and screens stay on top. The config is `config/shatter_gui.json`.
+favourites. Pieces in flight are drawn over the world by default ("Draw over blocks"): blocks in front never cut into
+them; a piece that has settled on the ground is hidden by blocks like the rest of the world. The player's hand, the HUD
+and screens stay on top. The config is `config/shatter_gui.json`.
 
 **Page status in About.** By each page button a dot says whether the page is up: green (yes), yellow (not published yet
 or in moderation; the button explains before opening the link), grey (could not check). To know this the mod asks
@@ -83,8 +84,8 @@ the mod: General tab → About.
   OpenGL.
 - Validation messages of the effect format (with JSON paths) are in English.
 - "Darken" overlays are drawn as normal blending with shader packs.
-- With a shader pack, the pieces drawn over blocks are also drawn over the player's hand (the pack draws the hand
-  inside its own pass).
+- With a shader pack, the pieces in flight are also drawn over the player's hand (the pack draws the hand inside its
+  own pass); settled pieces are under it.
 
 ## Building
 

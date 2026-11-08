@@ -2,9 +2,20 @@
 
 ## Unreleased
 
+- "Draw over blocks" now applies to pieces in motion only: a piece that has settled on the ground (or is older than 5
+  seconds) is hidden by walls and the block above it like the rest of the world, and the switch shows nothing on screen.
+  The same for the overlays and particles of data effects. Off: unchanged.
+- Glass shards land on their lowest corner and fall over onto a face, so they lie flat on the ground instead of half in it.
+- With a shader pack, pieces on the ground now bob with the world while walking, sprinting and when hurt (they stood
+  still while the world moved).
+- About: the Modrinth, CurseForge, GitHub and "Report a bug" buttons fill with their platform's colour on hover and keyboard
+  focus (the text stays readable), have small icons (the mod's own; platform logos can be put into
+  `assets/shatter_gui/textures/gui/links/`) and a dot saying whether the page is up: green, yellow (not published yet or in
+  moderation; the button explains before opening it), grey (could not check). It asks Modrinth and GitHub once per session,
+  only while About is open; "Check the mod's pages" (`linkStatusCheck`) turns it off.
 - Minecraft 26.2 and 26.3: separate jars from the same code (`shatter-gui-<version>+mc26.2-fabric.jar`, `+mc26.3`), with
-  Spatial GUI 1.10.1 and Iris + Sodium on each. On 26.3 both OpenGL and Vulkan work (one native crash in eight Vulkan
-  test runs, cause unknown; see `docs/TEST_MATRIX.md`).
+  Spatial GUI 1.10.1 and Iris + Sodium on each. On 26.3 both OpenGL and Vulkan work. Known: 26.3 on Vulkan sometimes
+  crashes while loading resources at start, with or without the mod (3 of 20 starts with it, 2 of 20 without).
 - One jar for every Minecraft 26.1.x: 26.1, 26.1.1 and 26.1.2 (`shatter-gui-<version>+mc26.1-fabric.jar`).
 - The darkened world behind a chest, furnace, crafting table or inventory now fades in with the opening effect and
   out with the close effect instead of appearing at the end of the opening and vanishing at the start of the close
