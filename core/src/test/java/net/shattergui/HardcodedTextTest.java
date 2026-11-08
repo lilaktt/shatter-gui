@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -33,7 +34,10 @@ class HardcodedTextTest {
             "LOGGER\\.|Exception\\(|ShatterProfiler|describe|assert|getResource|@Inject|@Mixin|addProperty|\\.has\\(|"
                     + "\\.get\\(\"|\\.str\\(|\\.num\\(|getAs|Identifier|FxDoc\\.|doc\\.|\\.path|case \"|equals\\(\"|"
                     + "\\.json|\\.png|\\.shatterfx|startsWith|endsWith|replace|matches|split\\(|String\\.format\\(Locale\\.ROOT|"
-                    + "guard\\(|reportScreen|UiFailures\\.report|DynamicTexture|FxProblems|problems\\.(error|warn)|// not shown");
+                    + "guard\\(|reportScreen|UiFailures\\.report|DynamicTexture|FxProblems|problems\\.(error|warn)");
+    private static final Set<String> NOT_SHOWN_TEXT = Set.of("error: ", "warning: ", "the textures are over ", " KB together",
+            " (in ", "assets/", "/textures/gui/links/", "shatter_gui link icon ", " no-stage", "shatter_gui editor sample ",
+            "shatter_gui editor sample fallback");
 
     @Test
     void interfaceTextComesFromTheLanguageFiles() throws IOException {
@@ -58,7 +62,7 @@ class HardcodedTextTest {
                         Matcher m = LITERAL.matcher(line.replaceAll("//.*$", ""));
                         while (m.find()) {
                             String text = m.group(1);
-                            if (WORDS.matcher(text).find() && !ID_LIKE.matcher(text).matches()
+                            if (!NOT_SHOWN_TEXT.contains(text) && WORDS.matcher(text).find() && !ID_LIKE.matcher(text).matches()
                                     && !CODE_LIKE.matcher(text).matches()) {
                                 found.add(dir.relativize(file) + ":" + (i + 1) + " \"" + text + "\"");
                             }
