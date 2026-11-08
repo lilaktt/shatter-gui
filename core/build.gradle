@@ -12,6 +12,7 @@ sourceSets {
     main {
         java.srcDir 'src/contract/java'
     }
+    commentCheck
 }
 
 dependencies {
@@ -23,6 +24,8 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.13.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    commentCheckImplementation 'org.apache.groovy:groovy:4.0.28'
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -51,3 +54,36 @@ tasks.register('checkNoMinecraft') {
     }
 }
 check.dependsOn checkNoMinecraft
+
+def javacInternals = ['--add-exports', 'jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED',
+                      '--add-exports', 'jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED']
+
+tasks.named('compileCommentCheckJava') {
+    options.release.set((Integer) null)
+    options.compilerArgs.addAll(javacInternals)
+}
+
+tasks.register('checkNoComments', JavaExec) {
+    group = 'verification'
+    description = 'Fails if a comment appears in the Java, Gradle or .properties files of the project.'
+    def sources = rootProject.fileTree(rootProject.projectDir) {
+        include '**/*.java', '**/*.gradle', '**/*.properties'
+        exclude '**/build/**', '**/run/**', '**/.gradle/**', 'libs/**', 'dist/**'
+    }
+    def list = layout.buildDirectory.file('commentCheck/files.txt')
+    def done = layout.buildDirectory.file('commentCheck/ok')
+    inputs.files(sources)
+    outputs.file(done)
+    classpath = sourceSets.commentCheck.runtimeClasspath
+    mainClass = 'net.shattergui.tools.CommentCheck'
+    jvmArgs javacInternals
+    args list.get().asFile.path
+    doFirst {
+        list.get().asFile.parentFile.mkdirs()
+        list.get().asFile.setText(sources.files*.path.sort().join('\n'), 'UTF-8')
+    }
+    doLast {
+        done.get().asFile.text = 'ok'
+    }
+}
+check.dependsOn checkNoComments
