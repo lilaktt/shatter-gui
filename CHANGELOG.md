@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Pieces never cover the player's hand, with or without a shader pack, on 26.1.x, 26.2 and 26.3. Before, pieces close to
+  the camera (the first moments of a close, pieces lying a block or two away) showed over the hand, and with a shader
+  pack every piece in flight did.
+- Settled pieces no longer flicker at their edges: a piece at rest was turned by a slightly different amount every frame.
+- Release jars come from `./gradlew dist` only (`dist/`, with `SHA256SUMS.txt`); each jar names its commit and build time
+  in the game log at start, in Settings → About and in "Copy diagnostics".
 - "Draw over blocks" now applies to pieces in motion only: a piece that has settled on the ground (or is older than 5
   seconds) is hidden by walls and the block above it like the rest of the world, and the switch shows nothing on screen.
   The same for the overlays and particles of data effects. Off: unchanged.
