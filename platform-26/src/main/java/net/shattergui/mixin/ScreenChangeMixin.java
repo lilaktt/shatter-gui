@@ -14,7 +14,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** 26.1: the screen lives in {@code Minecraft}. The logic is in {@link ScreenTransition}. */
 @Mixin(Minecraft.class)
 public abstract class ScreenChangeMixin {
     @Shadow
@@ -24,7 +23,6 @@ public abstract class ScreenChangeMixin {
     @Shadow
     public LocalPlayer player;
 
-    /** A screen made for the editor's real preview must not open anything (it is never shown). */
     @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
     private void shatterGui$blockFromPreview(Screen newScreen, CallbackInfo ci) {
         if (RealPreview.blocksSetScreen(newScreen)) {

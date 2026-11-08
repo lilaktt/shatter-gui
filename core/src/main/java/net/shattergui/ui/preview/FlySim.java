@@ -3,11 +3,6 @@ package net.shattergui.ui.preview;
 import net.shattergui.params.ParamValues;
 import net.shattergui.params.Params;
 
-/**
- * Fly: the whole sample flies into the chest (shrinking to a speck, with a small puff), or — without a source — out
- * through an edge (shrinking and fading), or fades in place where edge flights are not allowed. Also the open effect
- * ({@link #open}): out of the chest, growing into place.
- */
 final class FlySim extends Sim {
     enum Mode {
         INTO_SOURCE, THROUGH_EDGE, IN_PLACE, OPEN

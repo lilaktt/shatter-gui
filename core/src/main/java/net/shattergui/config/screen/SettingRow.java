@@ -11,11 +11,6 @@ import net.shattergui.ui.Widget;
 
 import java.util.function.BooleanSupplier;
 
-/**
- * One setting: its name (with an ⓘ that shows what it does), optionally a short explanation under it, the control on
- * the right and a "back to default" button that is active only when the value differs. On narrow widths the control
- * goes under the name.
- */
 final class SettingRow extends Container {
     private final Name name;
     private final Widget control;
@@ -25,7 +20,6 @@ final class SettingRow extends Container {
     SettingRow(Text title, Text help, boolean showHelp, Widget control, BooleanSupplier changed, Runnable onReset) {
         this.name = add(new Name(title, help, showHelp));
         this.control = add(control);
-        // The control explains itself with the setting's name and help (UiScreen#tooltipOwner).
         tooltip(title, help);
         this.changed = changed;
         if (onReset != null) {
@@ -74,7 +68,6 @@ final class SettingRow extends Container {
         super.draw(ui);
     }
 
-    /** The name, an ⓘ when there is help (hover for the tooltip), and the help as a dim line if asked for. */
     private static final class Name extends Widget {
         private final Text title;
         private final Text help;

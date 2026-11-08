@@ -9,14 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-/**
- * A 2D stand-in for one effect, played on the sample interface inside a preview box. It reads the same parameters as
- * the real effect (durations, forces, counts, reduceMotion, preset, particle density), so changing a setting changes
- * the preview. Time is in ticks (1/20 s), advanced from frame time. Coordinates are box-local pixels; the sample
- * occupies {@link Stage#sx}..{@link Stage#sw} × {@link Stage#sy}..{@link Stage#sh}.
- */
 public abstract class Sim {
-    /** The box: sample placement, source point (the chest), floor, and how many pixels one block is. */
     public record Stage(float w, float h, float sx, float sy, float sw, float sh, float sourceX, float sourceY,
                         float floor, boolean hasSource, boolean small, SampleImage.Kind sample) {
         public float blockPx() {
@@ -32,7 +25,6 @@ public abstract class Sim {
         }
     }
 
-    /** A textured triangle of the sample. Corners are relative to its centre (cx, cy), uv in 0..1. */
     protected static final class Piece {
         final float[] lx = new float[3];
         final float[] ly = new float[3];
@@ -48,31 +40,22 @@ public abstract class Sim {
         float flipSpeed;
         float scale = 1f;
         float alpha = 1f;
-        /** Multiplied with the texture (white = unchanged). */
         int tint = 0xFFFFFF;
-        /** Painted over it (glow, colour shift), ARGB. */
         int overlay;
         float age;
         float life = Float.MAX_VALUE;
         float delay;
-        /** Effect-specific numbers. */
         float a;
         float b;
         float c;
         float d;
-        /** World offset from the sample centre at the sample's depth (pixels), for effects with perspective. */
         float wx;
         float wy;
         boolean dead;
-        /**
-         * The corners already projected (box pixels), or null: then they are placed from the centre, angle, flip and
-         * scale. Effects that turn in 3D set these, so a turn shows perspective, not a squeeze.
-         */
         float[] sx;
         float[] sy;
     }
 
-    /** A square particle (flame, smoke, puff). */
     protected static final class Particle {
         float x;
         float y;
@@ -103,9 +86,7 @@ public abstract class Sim {
         this.random = new Random(seed);
     }
 
-    /** Advances by {@code ticks} (fractional). */
     public final void advance(float ticks) {
-        // Fixed small steps keep the physics stable at low frame rates.
         while (ticks > 0) {
             float step = Math.min(ticks, 0.5f);
             time += step;
@@ -128,19 +109,12 @@ public abstract class Sim {
 
     protected abstract void step(float dt);
 
-    /** True once nothing is left to show. */
     public abstract boolean done();
 
     public float time() {
         return time;
     }
 
-    // --- building ---
-
-    /**
-     * Cuts the sample into a jittered grid of {@code cols}×{@code rows} cells, two triangles each (random diagonal).
-     * Returns the pieces, each centred on its own centroid.
-     */
     protected List<Piece> shatter(int cols, int rows, float jitter) {
         float[][] gx = new float[cols + 1][rows + 1];
         float[][] gy = new float[cols + 1][rows + 1];
@@ -175,7 +149,6 @@ public abstract class Sim {
         return out;
     }
 
-    /** Squares of the sample, {@code cols}×{@code rows}, each two triangles sharing one centre (stored in a, b). */
     protected List<Piece> squares(int cols, int rows) {
         List<Piece> out = new ArrayList<>();
         for (int i = 0; i < cols; i++) {
@@ -195,7 +168,6 @@ public abstract class Sim {
         return out;
     }
 
-    /** The whole sample as two triangles around the sample centre (moving and scaling it as one). */
     protected List<Piece> whole() {
         Piece p1 = triangle(0, 0, 1, 0, 1, 1);
         Piece p2 = triangle(0, 0, 1, 1, 0, 1);
@@ -204,7 +176,6 @@ public abstract class Sim {
         return List.of(p1, p2);
     }
 
-    /** A triangle from sample fractions; centred on its centroid. */
     private Piece triangle(float x0, float y0, float x1, float y1, float x2, float y2) {
         Piece p = new Piece();
         float[] fx = {x0, x1, x2};
@@ -219,7 +190,6 @@ public abstract class Sim {
         return p;
     }
 
-    /** Puts the piece's centre at the sample fraction (fx, fy); corners become relative to it. */
     private void recenter(Piece p, float fx, float fy) {
         p.cx = stage.sx + fx * stage.sw;
         p.cy = stage.sy + fy * stage.sh;
@@ -247,16 +217,12 @@ public abstract class Sim {
         return p;
     }
 
-    /** Particle count for a per-tick rate (fractional rates spawn sometimes). */
     protected int count(float perTick, float dt) {
         float n = perTick * dt;
         int whole = (int) n;
         return whole + (random.nextFloat() < n - whole ? 1 : 0);
     }
 
-    // --- drawing ---
-
-    /** Draws the pieces (textured, then their overlays) and particles at box origin (ox, oy). */
     public void render(Ui ui, float ox, float oy) {
         int live = 0;
         for (Piece p : pieces) {
@@ -332,7 +298,6 @@ public abstract class Sim {
         return t * t * (3 - 2 * t);
     }
 
-    /** Smooth value noise in 0..1. */
     protected static float noise(float x, float y, int seed) {
         int xi = (int) Math.floor(x);
         int yi = (int) Math.floor(y);

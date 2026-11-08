@@ -28,11 +28,8 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Map;
 
-/** The game as 26.3 offers it: see the 26.1 class of this name. GPU classes are under {@code com.mojang.renderpearl}. */
 public final class Mc26 {
-    /** The depth buffer's clear value (far plane): reversed-Z. */
     public static final double DEPTH_FAR = 0.0;
-    /** The depth test of a pipeline drawn in the world. */
     public static final CompareOp DEPTH_TEST = CompareOp.GREATER_THAN_OR_EQUAL;
 
     private Mc26() {
@@ -62,7 +59,6 @@ public final class Mc26 {
         encoder.clearColorTexture(color, new Vector4f(0f, 0f, 0f, 0f));
     }
 
-    /** The second sampler of an entity pipeline: the overlay texture. */
     public static RenderPipeline.Builder withSampler1(RenderPipeline.Builder builder) {
         return builder.withBindGroupLayout(BindGroupLayouts.SAMPLER1);
     }
@@ -83,10 +79,6 @@ public final class Mc26 {
         ConfirmLinkScreen.confirmLinkNow(parent, URI.create(url));
     }
 
-    /**
-     * A key code of the game as core's {@code Keys} has it. 26.3 runs on SDL: its key codes are scancodes, not GLFW's.
-     * Keys core does not know are -1, not passed on: scancode 32 is the digit 3, and 32 is Space in core's codes.
-     */
     public static int uiKey(int gameKey) {
         return switch (gameKey) {
             case InputConstants.KEY_SPACE -> Keys.KEY_SPACE;
@@ -110,7 +102,6 @@ public final class Mc26 {
         };
     }
 
-    /** A mouse button of the game as core has it (0 left, 1 right, 2 middle). SDL: 1 left, 2 middle, 3 right. */
     public static int uiMouseButton(int gameButton) {
         return switch (gameButton) {
             case InputConstants.MOUSE_BUTTON_LEFT -> 0;
@@ -120,7 +111,6 @@ public final class Mc26 {
         };
     }
 
-    /** What {@code debug/Diagnostics} reports about the graphics card. */
     public static void gpuInfo(Map<String, String> out) {
         DeviceInfo info = RenderSystem.getDevice().getDeviceInfo();
         out.put("GPU", info.name());

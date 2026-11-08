@@ -10,24 +10,15 @@ import org.joml.Vector3f;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Splits the GUI area of a captured image into jittered-grid triangles placed on a {@link ShardPlane}. Only geometry:
- * the effect gives the shards their motion.
- */
 public final class ShardMesh {
     private static final float JITTER = 0.35f;
 
-    /**
-     * @param center       world position of the middle of the GUI area
-     * @param halfDiagonal half the world-space diagonal of the GUI area
-     */
     public record Layout(List<ShardInstance> shards, Vector3d center, double halfDiagonal) {
     }
 
     private ShardMesh() {
     }
 
-    /** A grid of roughly {@code cells} cells, following the world aspect ratio of the GUI area. */
     public static Layout build(ShardSource source, int cells) {
         RandomSource random = source.random();
         ShardPlane plane = source.plane();
@@ -46,7 +37,6 @@ public final class ShardMesh {
             for (int j = 0; j <= rows; j++) {
                 double x = bounds.x0() + i * cellW;
                 double y = bounds.y0() + j * cellH;
-                // Border vertices stay put so the outline remains straight.
                 if (i > 0 && i < cols) {
                     x += (random.nextFloat() * 2 - 1) * JITTER * cellW;
                 }
@@ -70,11 +60,9 @@ public final class ShardMesh {
                 double[] b = {vx[i + 1][j], vy[i + 1][j]};
                 double[] c = {vx[i + 1][j + 1], vy[i + 1][j + 1]};
                 double[] d = {vx[i][j + 1], vy[i][j + 1]};
-                // Alternate the diagonal so the cracks do not all run the same way.
                 double[][][] tris = random.nextBoolean()
                         ? new double[][][]{{a, b, c}, {a, c, d}}
                         : new double[][][]{{a, b, d}, {b, c, d}};
-                // No CPU copy of the image, so fully transparent triangles are kept; they draw nothing.
                 for (double[][] tri : tris) {
                     shards.add(createShard(tri, plane, source));
                 }
@@ -84,10 +72,6 @@ public final class ShardMesh {
         return new Layout(shards, center, halfDiagonal);
     }
 
-    /**
-     * A regular grid of {@code cols x rows} squares over the GUI area, without jitter. Each square is two triangles,
-     * next to each other in the list (square k = shards 2k and 2k+1), so an effect can move them as one.
-     */
     public static Layout buildSquares(ShardSource source, int cols, int rows) {
         ShardPlane plane = source.plane();
         ImageRect bounds = source.bounds();
@@ -113,7 +97,6 @@ public final class ShardMesh {
         return new Layout(shards, center, halfDiagonal);
     }
 
-    /** One triangle given in image fractions ({x, y} per corner), for effects that cut the image themselves. */
     public static ShardInstance triangle(double[][] tri, ShardSource source) {
         return createShard(tri, source.plane(), source);
     }
@@ -136,7 +119,6 @@ public final class ShardMesh {
                     (float) (world[k].z - centroid.z));
         }
 
-        // Default lifetime and fade are the glass settings; effects with their own timing set the lifetime themselves.
         RandomSource random = source.random();
         ParamValues params = source.params();
         int lifetime = Math.max(1, Math.round(params.i(Params.GLASS_LIFETIME) * params.durationScale()

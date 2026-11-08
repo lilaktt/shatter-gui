@@ -27,11 +27,6 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-/**
- * Every control the player can use has a tooltip — its own or its row's (what {@link UiScreen#tooltipOwner} shows):
- * on every settings tab and in the full-screen editor with the effect, its look, each module's layer, an emitter and a
- * sound selected, and in the help.
- */
 final class TooltipScenario {
     private TooltipScenario() {
     }
@@ -48,8 +43,6 @@ final class TooltipScenario {
             collect(context, missing, seen, tab.name());
             ShatterGuiClient.LOGGER.info("[ShatterTest] {}: tab {} has {} controls", name, tab, seen[0] - before);
         }
-        // The About section closes the General tab: its link buttons are there and explained, and each opens the
-        // game's own "open this link?" screen with the page from fabric.mod.json; "No" comes back to the settings.
         context.runOnClient(mc -> EditorScenario.editor(mc).selectTab(ShatterConfigScreen.Tab.GENERAL));
         context.waitTicks(3);
         java.util.Map<String, String> pages = new java.util.LinkedHashMap<>();
@@ -81,14 +74,12 @@ final class TooltipScenario {
                 });
                 check.accept(shown.contains(page.getValue()), name + ": the " + page.getKey() + " confirmation must show "
                         + page.getValue() + ", shows: " + shown);
-                // Esc answers "No", as the No button does.
                 context.getInput().pressKey(com.mojang.blaze3d.platform.InputConstants.KEY_ESCAPE);
                 context.waitTicks(2);
                 check.accept(context.computeOnClient(mc -> Mc26.screen() instanceof ShatterConfigScreen),
                         name + ": closing the link confirmation must come back to the settings");
             }
         }
-        // fabric.mod.json: the homepage is Modrinth, Mod Menu gets Modrinth and CurseForge links.
         var meta = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("shatter_gui").orElseThrow().getMetadata();
         check.accept(pages.get("modrinth").equals(meta.getContact().get("homepage").orElse(null))
                 && pages.get("github").equals(meta.getContact().get("sources").orElse(null))
@@ -113,7 +104,6 @@ final class TooltipScenario {
             context.waitTicks(3);
             collect(context, missing, seen, "editor " + s);
         }
-        // Each module in turn on layer 0.
         for (FxDef.Module module : FxDef.Module.values()) {
             context.runOnClient(mc -> {
                 FxEditor e = editor(mc);
@@ -170,7 +160,6 @@ final class TooltipScenario {
         missing.addAll(found);
     }
 
-    /** Something the player clicks, drags, types into or tabs to. */
     private static boolean control(Widget w) {
         return w instanceof Button || w instanceof Toggle || w instanceof Slider || w instanceof Dropdown<?>
                 || w instanceof TextField || w instanceof Swatch || w instanceof TabNav || w.focusable();

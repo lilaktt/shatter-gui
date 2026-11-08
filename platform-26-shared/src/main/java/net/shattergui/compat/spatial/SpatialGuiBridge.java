@@ -25,41 +25,22 @@ import org.tastytrash.spatialGUI.util.RenderUtil;
 
 import java.util.Locale;
 
-/**
- * The only class that links against Spatial GUI. Reached through {@link SpatialGuiCompat} only, which catches anything
- * thrown here. Uses public members that exist with the same signatures in 1.8 and 1.9, plus
- * {@link InventoryRendererAccessor} for the close-animation state.
- *
- * <p>Two steps: {@link #queue} when the screen closes (during the tick), {@link #complete} in the next frame after the
- * level is drawn. By then Spatial GUI has drawn its plane for that frame, so the plane and camera read there are
- * exactly what is on screen, and the texture copy runs inside the frame like every other GPU copy (a copy issued
- * during the tick stalled ~12 ms waiting for the GPU). Spatial GUI keeps drawing its first closing frame, and the shards
- * replace it from the next frame on.
- */
 final class SpatialGuiBridge {
-    /** Give up if the frame never comes; Spatial GUI then just plays its own animation. */
     private static final int MAX_WAIT_FRAMES = 5;
 
     private record Pending(Screen screen, ImageRect bounds, ShatterEffect effect, FlyTarget target, ParamValues params,
                            boolean preview) {
     }
 
-    /** Far enough back that Spatial GUI's open animation (scale and fade, a few hundred ms) counts as finished. */
     private static final long OPEN_ANIMATION_SKIP_MS = 60_000;
 
     private static Pending pending;
     private static int waitedFrames;
 
-    /** A screen that opens by gathering on the plane. */
     private record PendingOpen(Screen screen, ImageRect bounds, ShatterEffect effect, FlyTarget target,
                                ParamValues params) {
     }
 
-    /**
-     * The frame (after opening) whose texture the pieces are cut from. Spatial GUI prepares its target at the start of
-     * a frame and may draw the very first one without the screen; the plane is hidden meanwhile, so waiting costs
-     * nothing visible but a frame of empty world.
-     */
     private static final int OPEN_CAPTURE_FRAME = 2;
     private static PendingOpen pendingOpen;
     private static int openFrames;
@@ -72,11 +53,6 @@ final class SpatialGuiBridge {
         return renderer != null && SpatialGUIClient.isEnabled() && renderer.getHookedScreen() == screen;
     }
 
-    /** Right after {@code Minecraft#setScreen(null)}. Returns false if Spatial GUI has nothing to shatter. */
-    /**
-     * Its open animation runs on {@code currentTimeMillis() - screenOpenTime}, set when it hooks the screen (Fabric
-     * {@code ScreenEvents.BEFORE_INIT}, i.e. inside {@code setScreen}). Moving the open time back makes it finished.
-     */
     static boolean cancelOpenAnimation() {
         SpatialGUIRenderer renderer = SpatialGUIClient.renderer();
         if (renderer == null) {
@@ -91,17 +67,10 @@ final class SpatialGuiBridge {
         pendingOpen = null;
     }
 
-    /** The screen being opened closed or was replaced: its gathering is not started. */
     static void cancelPendingOpen() {
         pendingOpen = null;
     }
 
-    /**
-     * Right after {@code Minecraft#setScreen(screen)} (Spatial GUI has hooked it): its open animation is skipped (the
-     * plane is at full size from the first frame), and in a frame soon after its texture is copied and the pieces are
-     * laid on its plane ({@link #completeOpen}). Until they have landed the plane is drawn transparent
-     * ({@code OpenAssemble.spatialAlpha}).
-     */
     static boolean queueOpen(Screen screen, ShatterEffect effect, FlyTarget target, ParamValues params) {
         long start = ShatterProfiler.now();
         if (!isShowing(screen) || !cancelOpenAnimation()) {
@@ -115,10 +84,6 @@ final class SpatialGuiBridge {
         return true;
     }
 
-    /**
-     * After the GUI is drawn in a frame: by then Spatial GUI has drawn this frame's screen into its texture (in its own
-     * hook before {@code GuiRenderer#render}). Copies it and spawns the gathering wave on the plane as it is now.
-     */
     static boolean completeOpen() {
         PendingOpen job = pendingOpen;
         if (job == null) {
@@ -156,8 +121,6 @@ final class SpatialGuiBridge {
         }
         RenderSystem.getDevice().createCommandEncoder()
                 .copyTextureToTexture(color, slot.getTexture(), 0, 0, 0, 0, 0, target.width, target.height);
-        // The plane hangs in front of Spatial GUI's camera (which may still move out to the third person): the pieces
-        // are placed relative to it in every frame and land where it appears.
         net.shattergui.shatter.PlaneBasis captured = basis(basis, camera.position());
         ShardManager.spawn(slot, plane, job.bounds(), new Vector3f(camera.forwardVector()), job.effect(), job.target(),
                 job.params(), false, new ShardManager.OpenAnchor(captured, SpatialGuiBridge::planeNow, true), job.screen());
@@ -168,7 +131,6 @@ final class SpatialGuiBridge {
         return true;
     }
 
-    /** A {@code QuadBasis} as a {@link net.shattergui.shatter.PlaneBasis}, its centre moved by {@code origin}. */
     private static net.shattergui.shatter.PlaneBasis basis(RenderUtil.QuadBasis quad, net.minecraft.world.phys.Vec3 origin) {
         Vector3f c = quad.centerOffset();
         Vector3f forward = new Vector3f(quad.normal()).normalize();
@@ -180,10 +142,6 @@ final class SpatialGuiBridge {
                 quad.halfHeight());
     }
 
-    /**
-     * Where the plane of the screen on display is in this frame, centre relative to the camera; null if Spatial GUI does
-     * not show one. Read when the gathering pieces are drawn, after Spatial GUI has placed its plane for this frame.
-     */
     static net.shattergui.shatter.PlaneBasis planeNow() {
         try {
             SpatialGUIRenderer renderer = SpatialGUIClient.renderer();
@@ -196,7 +154,6 @@ final class SpatialGuiBridge {
             }
             return basis(quad, net.minecraft.world.phys.Vec3.ZERO);
         } catch (Throwable t) {
-            // Drawn where the plane was when the picture was taken instead (as before the pieces followed it).
             return null;
         }
     }
@@ -225,7 +182,6 @@ final class SpatialGuiBridge {
         return true;
     }
 
-    /** In the frame after the close, after the level (and Spatial GUI's plane) is drawn. */
     static void complete() {
         Pending job = pending;
         if (job == null) {
@@ -255,7 +211,6 @@ final class SpatialGuiBridge {
             return;
         }
 
-        // The plane is relative to this frame's camera; freeze it in world space.
         Camera camera = Mc26.camera();
         boolean curved = closingBasis.curved();
         SpatialPlane plane = new SpatialPlane(camera.position(), basis.centerOffset(), basis.right(), basis.up(),
@@ -285,12 +240,6 @@ final class SpatialGuiBridge {
         ShatterProfiler.step("spatial.complete total", start);
     }
 
-    /**
-     * Spatial GUI's plane of the screen that just closed is never drawn again: its close animation is cancelled. From
-     * the next frame on the plane is not drawn; closing stays true, so the third-person camera still eases back and
-     * Spatial GUI cleans up through its own finishClosing(); first person has no camera move to wait for. The one place
-     * that hides it: every way a close takes the plane over ends here, also when it falls back to the flat copy.
-     */
     static void hideClosingPlane() {
         SpatialGUIRenderer renderer = SpatialGUIClient.renderer();
         if (renderer == null) {
@@ -306,7 +255,6 @@ final class SpatialGuiBridge {
         }
     }
 
-    /** The plane could not be taken: it is hidden anyway and the effect plays on a flat copy of the closed screen. */
     private static void giveUp(Pending job, String why) {
         hideClosingPlane();
         ShatterProfiler.value("spatial.fallback to the flat copy", why);
@@ -316,12 +264,6 @@ final class SpatialGuiBridge {
     private record ClosingBasis(RenderUtil.QuadBasis quad, boolean curved) {
     }
 
-    /**
-     * The plane as Spatial GUI draws it while closing. {@code getQuadBasis()} recomputes with
-     * {@code SpatialGUIClient.getEffectiveFirstPersonMode()}, which its camera resets to false as soon as the screen is
-     * gone, while drawing uses the mode the screen was closed in. So the mode is set to that for the computation and then
-     * put back, recomputing again so Spatial GUI's own cached basis matches its state.
-     */
     private static ClosingBasis readClosingBasis(InventoryRenderer inventory, boolean closing, boolean firstPerson) {
         if (!closing) {
             return new ClosingBasis(inventory.getQuadBasis(), inventory.getCylinderBasis() != null);

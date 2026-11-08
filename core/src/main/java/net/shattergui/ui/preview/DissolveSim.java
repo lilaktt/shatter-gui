@@ -3,10 +3,6 @@ package net.shattergui.ui.preview;
 import net.shattergui.params.ParamValues;
 import net.shattergui.params.Params;
 
-/**
- * Dissolve: squares of the configured size come loose in a noisy wave from an edge, a corner or the centre (origin,
- * duration): each glows cold white, drifts up and aside, shrinks and fades.
- */
 final class DissolveSim extends Sim {
     private static final float GLOW = 2f;
     private static final float DRIFT = 12f;
@@ -24,7 +20,6 @@ final class DissolveSim extends Sim {
         if ("random".equals(origin)) {
             origin = random.nextFloat() < 0.2f ? "center" : "edge";
         }
-        // Edge or corner: a direction; centre: radial.
         float ox;
         float oy;
         boolean radial = "center".equals(origin);

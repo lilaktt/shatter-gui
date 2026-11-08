@@ -2,11 +2,6 @@ package net.shattergui.ui;
 
 import java.util.List;
 
-/**
- * A clipped, vertically scrolling view of one content widget. The wheel adds speed that decays over time
- * ({@link Theme#SCROLL_FRICTION}), so scrolling glides; the scrollbar thumb can be dragged; focus moving to a widget
- * inside scrolls it into sight ({@link #reveal}). Soft shadows at the edges show there is more.
- */
 public class ScrollView extends Widget {
     private static final int BAR = 5;
     private final Widget content;
@@ -31,7 +26,6 @@ public class ScrollView extends Widget {
         velocity = 0;
     }
 
-    /** Jumps to the end (clamped at the next layout). */
     public void scrollToEnd() {
         offset = Float.MAX_VALUE / 4;
         velocity = 0;
@@ -63,7 +57,6 @@ public class ScrollView extends Widget {
         }
         ui.pushClip(x, y, w, h);
         content.render(ui);
-        // Fades at the edges when there is more above or below.
         if (offset > 1) {
             ui.g.fillGradient(x, y, x + w - BAR - 2, y + 8, 0x60000000, 0x00000000);
         }
@@ -120,7 +113,6 @@ public class ScrollView extends Widget {
             int barH = Math.max(14, h * h / Math.max(1, content.h));
             int barY = y + Math.round((h - barH) * (offset / maxScroll()));
             if (my < barY || my > barY + barH) {
-                // Jump so the thumb is centred under the mouse.
                 offset = (float) Math.clamp((my - y - barH / 2.0) / Math.max(1, h - barH) * maxScroll(), 0, maxScroll());
                 dragStartOffset = offset;
             }
@@ -143,7 +135,6 @@ public class ScrollView extends Widget {
         draggingBar = false;
     }
 
-    /** Scrolls so the widget is fully visible. */
     public void reveal(Widget widget) {
         if (widget.y < y + 2) {
             offset -= (y + 2) - widget.y;

@@ -14,12 +14,6 @@ import net.shattergui.shatter.ShardManager;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-/**
- * No texture leaks ({@code -PtestOnly=leak}): 100 quick opens and closes in a row (inventory and furnace, an opening
- * that gathers and close effects that take a capture each), with both policies of effects at once. While it runs the
- * texture pool stays within {@link CapturePool#MAX_SLOTS} + backup; once every effect is over at most the backup and
- * one idle slot keep memory, no wave is left and nothing waits to be drawn over the world.
- */
 final class LeakScenario {
     private static final int CYCLES = 100;
 

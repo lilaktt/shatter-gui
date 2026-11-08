@@ -11,11 +11,6 @@ import net.shattergui.ui.Ui;
 
 import java.util.List;
 
-/**
- * The editor's top bar: the effects menu (shows the effect's id), its name, Save (with a dot while unsaved),
- * Undo/Redo, then Test in the world, Export, Import, Open folder, the classic (format 1) effects, Help and full screen.
- * When narrow, the secondary buttons show icons only (their tooltips name them).
- */
 final class TopBar extends Container {
     private final FxEditor editor;
     private final Button effects;
@@ -90,7 +85,6 @@ final class TopBar extends Container {
         undo.enabled = editor.doc.canUndo();
         redo.enabled = editor.doc.canRedo();
         List<Button> secondary = List.of(test, export, importButton, folder, classic);
-        // Full labels when they fit, else icons only.
         int fixed = 18 * 4 + 6 * 2 + 3;
         int labelled = 0;
         for (Button b : secondary) {
@@ -133,7 +127,6 @@ final class TopBar extends Container {
         effects.setBounds(x, by, effectsW, bh);
         int nameX = x + effectsW + 4;
         name.setBounds(nameX, by, Math.max(20, cx - 6 - nameX), bh);
-        // Show the effect's name unless the player is typing in the field.
         if (net.shattergui.ui.UiScreen.active() == null || net.shattergui.ui.UiScreen.active().focused() != name) {
             String docName = editor.doc.str("name", "");
             if (!docName.equals(name.value())) {

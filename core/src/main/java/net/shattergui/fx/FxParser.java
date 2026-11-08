@@ -11,12 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-/**
- * Reads a schema-2 effect (see {@code docs/EFFECT_FORMAT.md}). Pure Java (Gson only), so it is unit-tested without the
- * game. Problems carry the path of the field; an error rejects the effect, a warning clamps or skips one thing.
- * Particle and sound ids are only checked for their form here; whether the game knows them is checked when the effect
- * is loaded.
- */
 public final class FxParser {
     public record Result(FxDef def, FxProblems problems) {
         public boolean ok() {
@@ -59,7 +53,6 @@ public final class FxParser {
             if (!reduced.isJsonObject()) {
                 problems.error("reduced", "must be an object with the fields to change for reduce motion");
             } else {
-                // The same effect with these fields replaced (objects merged, everything else swapped).
                 JsonObject merged = merge(root.getAsJsonObject().deepCopy(), reduced.getAsJsonObject());
                 merged.remove("reduced");
                 FxProblems sub = new FxProblems();
@@ -69,7 +62,6 @@ public final class FxParser {
                     if (p.error()) {
                         problems.error(path, p.message());
                     } else if (!reduced.getAsJsonObject().has(p.path().split("[.\\[]")[0])) {
-                        // Warnings of fields it did not change were already reported for the effect itself.
                         continue;
                     } else {
                         problems.warn(path, p.message());
@@ -81,7 +73,6 @@ public final class FxParser {
         return new Result(problems.hasErrors() ? null : def, problems);
     }
 
-    /** {@code over} merged into {@code base}: objects field by field, anything else replaced. */
     private static JsonObject merge(JsonObject base, JsonObject over) {
         for (Map.Entry<String, JsonElement> entry : over.entrySet()) {
             JsonElement old = base.get(entry.getKey());
@@ -94,7 +85,6 @@ public final class FxParser {
         return base;
     }
 
-    /** The "schema" of a JSON text (1 if missing or unreadable), to pick the reader. */
     public static int schemaOf(String json) {
         try {
             JsonElement root = JsonParser.parseString(json);
@@ -103,7 +93,6 @@ public final class FxParser {
                 return root.getAsJsonObject().get("schema").getAsInt();
             }
         } catch (RuntimeException e) {
-            // Unreadable: the schema-1 reader reports it.
         }
         return 1;
     }
@@ -124,9 +113,7 @@ public final class FxParser {
         String description = clean(root.str("description", ""), MAX_DESCRIPTION);
         int duration = root.integer("duration", 40, FxLimits.MIN_DURATION, FxLimits.MAX_DURATION);
         boolean openable = root.bool("open", false);
-        // Absent: the default of the role the effect plays (openings follow the camera, closes do not).
         Boolean followCamera = root.has("followCamera") ? root.bool("followCamera", false) : null;
-        // Read (checked) by parse(): only marked as known here.
         root.get("reduced");
         Map<String, FxDef.TextureRole> textures = new LinkedHashMap<>();
 
@@ -174,8 +161,6 @@ public final class FxParser {
         return new FxDef(id, name.isEmpty() ? String.valueOf(id) : name, description, duration, fracture, trigger,
                 List.copyOf(layers), appearance, List.copyOf(emitters), List.copyOf(sounds), edge, textures, json, openable, followCamera);
     }
-
-    // --- sections ---
 
     private static FxDef.Fracture readFracture(Node n) {
         if (n.missing()) {
@@ -296,7 +281,6 @@ public final class FxParser {
                         FxSchema.Field f = FxSchema.field("spin.axis");
                         axis = params.num("axis", f.def(), f.min(), f.max());
                     }
-                    // An exact tumble angle over the window instead of a speed: ends edge-on exactly.
                     if (params.has("turn")) {
                         FxSchema.Field f = FxSchema.field("spin.turn");
                         values.put("turn", Value.read(params.get("turn"), f.def(), f.min(), f.max()));
@@ -508,7 +492,6 @@ public final class FxParser {
         return sound == null || !enabled ? null : new FxDef.Sound(sound, volume, pitch, at, time);
     }
 
-    /** The editor's name for a layer, emitter or sound ("name", up to 32 characters; only shown in the editor). */
     private static void readLabel(Node n) {
         String label = n.str("name", "");
         if (label.length() > MAX_LABEL) {
@@ -533,8 +516,6 @@ public final class FxParser {
         }
         return new FxDef.Edge(direction, enter, exit, distance, enterTime, exitStart, curve);
     }
-
-    // --- small things ---
 
     static FxDef.Point readPoint(Node n, FxDef.Point def) {
         if (n.missing()) {
@@ -602,7 +583,6 @@ public final class FxParser {
             n.problems().error(n.path(), "not a valid texture name \"" + name + "\" (a-z, 0-9, _ . - /, optional namespace:)");
             return null;
         }
-        // The strictest size limit wins when a texture has several roles.
         FxDef.TextureRole old = textures.get(name);
         if (old == null || role.ordinal() < old.ordinal()) {
             textures.put(name, role);

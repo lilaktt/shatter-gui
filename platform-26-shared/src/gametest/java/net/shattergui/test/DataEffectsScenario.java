@@ -23,12 +23,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * Schema-2 effects in the game: the four examples (one as the package written on first start, three from the test's
- * resource pack) and a test package run on a furnace with screenshots across each effect; a broken file is ignored
- * with a message naming the field; F3+T picks up a new effect with a config texture; a corrupt PNG is only a warning;
- * export as a code and import back; spam protection; every own particle is released afterwards.
- */
 final class DataEffectsScenario {
     private static final List<String> EXAMPLES = List.of("mask_spiral", "mask_burn", "sprite_rain", "layer_combo", "packaged_rain");
 
@@ -47,7 +41,6 @@ final class DataEffectsScenario {
         Path badPng = FxEffects.TEXTURES.resolve("test_bad.png");
         Path imported = FxEffects.EFFECTS.resolve("layer_combo.json");
         try {
-            // A package dropped into the folder, then the editor's reload.
             Files.createDirectories(FxEffects.PACKAGES);
             try (InputStream in = DataEffectsScenario.class.getResourceAsStream("/test_packages/packaged_rain.shatterfx")) {
                 Files.write(pkg, in.readAllBytes());
@@ -72,7 +65,6 @@ final class DataEffectsScenario {
                 playOnce(context, check, shot, name + "_" + id, id, furnace, config);
             }
 
-            // F3+T: a new effect in the config folder with a texture from the config textures folder.
             Files.createDirectories(FxEffects.TEXTURES);
             try (InputStream in = DataEffectsScenario.class.getResourceAsStream(
                     "/assets/shatter_gui_test/shatter_gui/textures/burn_mask.png")) {
@@ -101,7 +93,6 @@ final class DataEffectsScenario {
                     name + ": a corrupt PNG is a warning, the effect still loads (mask falls back to noise)");
             playOnce(context, check, shot, name + "_test_badtex_fx", "test_badtex_fx", furnace, config);
 
-            // Export as a code (no textures) and import it back (saved to the config folder, wins over the pack).
             context.setScreen(() -> new ShatterConfigScreen(null));
             context.waitTicks(3);
             String code = context.computeOnClient(mc -> ((ShatterConfigScreen) Mc26.screen()).exportData("layer_combo"));
@@ -128,7 +119,6 @@ final class DataEffectsScenario {
             context.runOnClient(mc -> Mc26.setScreen(null));
             context.waitTicks(3);
 
-            // Spam: many rains at once stay bounded and leave nothing behind.
             config.effect = "sprite_rain";
             for (int i = 0; i < 8; i++) {
                 context.setScreen(furnace);
@@ -136,7 +126,6 @@ final class DataEffectsScenario {
                 context.runOnClient(mc -> Mc26.setScreen(null));
                 context.waitTicks(2);
             }
-            // Hurried waves fade out within 6 ticks; then at most 4 run at once.
             context.waitTicks(7);
             int waves = context.computeOnClient(mc -> ShardManager.waveCount());
             int sprites = context.computeOnClient(mc -> FxSimulation.liveSpritesTotal());
@@ -154,14 +143,12 @@ final class DataEffectsScenario {
                 try {
                     Files.deleteIfExists(file);
                 } catch (IOException ignored) {
-                    // Left over in the test run folder only.
                 }
             }
             context.runOnClient(mc -> FxEffects.reloadAll());
         }
     }
 
-    /** Waits until no wave is left (true) or the time is up (false). */
     private static boolean waitUntilClear(ClientGameTestContext context, int ticks) {
         for (int i = 0; i < ticks; i++) {
             if (context.computeOnClient(mc -> ShardManager.waveCount() == 0)) {
@@ -172,7 +159,6 @@ final class DataEffectsScenario {
         return false;
     }
 
-    /** Closes a furnace with the effect; screenshots across it; checks it ran and ended cleanly. */
     private static void playOnce(ClientGameTestContext context, BiConsumer<Boolean, String> check, Consumer<String> shot,
                                  String name, String id, Supplier<Screen> furnace, ShatterConfig config) {
         config.effect = id;

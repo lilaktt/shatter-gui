@@ -6,7 +6,6 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.shattergui.platform.Text;
 
-/** Core's {@link Text} as the game's {@link Component}. */
 public final class ComponentText implements Text {
     private final MutableComponent component;
 
@@ -14,12 +13,10 @@ public final class ComponentText implements Text {
         this.component = component;
     }
 
-    /** Wraps a component of the game (a copy if it cannot be changed, so appending never touches the original). */
     public static ComponentText of(Component component) {
         return new ComponentText(component instanceof MutableComponent m ? m : component.copy());
     }
 
-    /** The game's component of core's text (null stays null). */
     public static Component unwrap(Text text) {
         return text == null ? null : ((ComponentText) text).component;
     }

@@ -5,12 +5,7 @@ import net.shattergui.config.ShatterConfig;
 
 import java.util.Locale;
 
-/**
- * Timing log for the close → capture → spawn → first render pipeline. Enabled by {@code "profiling": true} in the
- * config. Every line starts with {@code [ShatterProfile]} and the number of the close in this session.
- */
 public final class ShatterProfiler {
-    /** How many frames after a close get their total render time and frame interval logged. */
     private static final int FRAMES_TO_LOG = 8;
 
     private static int closeNumber;
@@ -19,9 +14,7 @@ public final class ShatterProfiler {
     private static int frameIndex;
     private static long frameStart;
     private static long lastFrameStart;
-    /** When the screen of the current close was asked to close (HEAD of {@code setScreen(null)}), 0 once logged. */
     private static long closeRequested;
-    /** Milliseconds from the last close request to the first frame of its effect, or -1. */
     private static double lastCloseLatencyMs = -1;
 
     private ShatterProfiler() {
@@ -35,7 +28,6 @@ public final class ShatterProfiler {
         return System.nanoTime();
     }
 
-    /** A screen is closing and will shatter. Starts a new numbered close. */
     public static void beginClose(String screenKey, String effect, long requestedNanos) {
         closeNumber++;
         framesLeft = FRAMES_TO_LOG;
@@ -48,7 +40,6 @@ public final class ShatterProfiler {
         }
     }
 
-    /** A screen is opening with an open effect. Starts a new numbered open (its lines read "open #n"). */
     public static void beginOpen(String screenKey, String effect, String source) {
         openNumber++;
         if (enabled()) {
@@ -57,7 +48,6 @@ public final class ShatterProfiler {
         }
     }
 
-    /** How many screens have started an open effect (fly-in) in this session. */
     public static int openCount() {
         return openNumber;
     }
@@ -74,12 +64,10 @@ public final class ShatterProfiler {
         }
     }
 
-    /** How many screens have shattered in this session. */
     public static int closeCount() {
         return closeNumber;
     }
 
-    /** Logs the time since {@code startNanos} for one step of the current close. */
     public static void step(String name, long startNanos) {
         if (enabled()) {
             ShatterMod.LOGGER.info("[ShatterProfile] close #{} {}: {} ms", closeNumber, name, ms(now() - startNanos));
@@ -92,10 +80,6 @@ public final class ShatterProfiler {
         }
     }
 
-    /**
-     * The first frame of a close effect was drawn: logs the time since the screen was asked to close (for Esc, the key
-     * press, which closes the screen in the same call).
-     */
     public static void closeEffectDrawn() {
         if (closeRequested == 0) {
             return;
@@ -108,16 +92,13 @@ public final class ShatterProfiler {
         }
     }
 
-    /** Milliseconds from the last close request to the first frame of its effect, or -1 if not drawn yet. */
     public static double lastCloseLatencyMs() {
         return lastCloseLatencyMs;
     }
 
-    /** HEAD of {@code GameRenderer#render}. */
     public static void frameStart() {
         long t = now();
         if (framesLeft > 0 && enabled() && lastFrameStart != 0) {
-            // Interval = everything between two frames: ticks, input, buffer swap, driver waits.
             ShatterMod.LOGGER.info("[ShatterProfile] close #{} frame +{} interval: {} ms",
                     closeNumber, frameIndex, ms(t - lastFrameStart));
         }
@@ -125,7 +106,6 @@ public final class ShatterProfiler {
         lastFrameStart = t;
     }
 
-    /** RETURN of {@code GameRenderer#render}. */
     public static void frameEnd() {
         if (framesLeft <= 0) {
             return;

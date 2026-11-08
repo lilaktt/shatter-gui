@@ -24,38 +24,25 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-/**
- * The editor's files: effects in {@code effects/<id>.json}, textures in {@code textures/<name>.png}, exported packages
- * in {@code exports/}. Every write is atomic ({@link FxPackage#writeAtomic}). Importing a package checks it like the
- * loader does (the parser, PNG headers, size limits) before anything is written; a texture whose name is taken by a
- * different picture is saved under a free name and the effect's references are changed to it.
- */
 public final class EffectFiles {
-    /** What an import did: the effect id it was saved as (null if nothing was saved) and what to tell the player. */
     public record ImportResult(String id, List<Note> notes) {
         public boolean ok() {
             return id != null;
         }
 
-        /** The notes in plain (English) words, for the log and tests. */
         public List<String> messages() {
             return notes.stream().map(Note::toString).toList();
         }
 
-        /** The first error, or null. */
         public Note firstError() {
             return notes.stream().filter(Note::error).findFirst().orElse(null);
         }
     }
 
-    /**
-     * One thing to tell the player: translated by {@code ui.shatter_gui.fx.import.note.<key>} with {@code args}. A
-     * problem the format reader found ({@code "problem"}) is passed on as the reader wrote it.
-     */
     public record Note(boolean error, String key, Object... args) {
         @Override
         public String toString() {
-            return (error ? "error: " : "warning: ") + key + " " + Arrays.toString(args); // not shown: log and tests
+            return (error ? "error: " : "warning: ") + key + " " + Arrays.toString(args);
         }
     }
 
@@ -77,7 +64,6 @@ public final class EffectFiles {
         return effects.resolve(id + ".json");
     }
 
-    /** Ids of the schema-2 effects in the effects folder (by file name), sorted. */
     public List<String> ids() {
         List<String> out = new ArrayList<>();
         if (!Files.isDirectory(effects)) {
@@ -94,7 +80,6 @@ public final class EffectFiles {
                         out.add(name.substring(0, name.length() - 5));
                     }
                 } catch (IOException | RuntimeException e) {
-                    // Unreadable files are reported by the loader.
                 }
             }
         } catch (IOException e) {
@@ -104,10 +89,6 @@ public final class EffectFiles {
         return out;
     }
 
-    /**
-     * What went wrong, for a note: the exception itself when it can be translated ({@link net.shattergui.fx.FxIOException},
-     * turned into the player's language where it is shown), else its message.
-     */
     static Object reason(IOException e) {
         return e instanceof net.shattergui.fx.FxIOException ? e : String.valueOf(e.getMessage());
     }
@@ -125,10 +106,6 @@ public final class EffectFiles {
         return Files.readString(file, StandardCharsets.UTF_8);
     }
 
-    /**
-     * Saves an effect as {@code effects/<id>.json} (atomically). If it was saved before under another id
-     * ({@code oldId}), that file is removed after the new one is written (a rename).
-     */
     public void save(String id, String json, String oldId) throws IOException {
         if (json.getBytes(StandardCharsets.UTF_8).length > FxLimits.MAX_JSON_BYTES) {
             throw new net.shattergui.fx.FxIOException("json_too_big", "the effect is over " + FxLimits.MAX_JSON_BYTES / 1024 + " KB",
@@ -144,7 +121,6 @@ public final class EffectFiles {
         return Files.deleteIfExists(file(id));
     }
 
-    /** Names (without ".png") of the PNG files in the textures folder, sorted. */
     public List<String> textureNames() {
         List<String> out = new ArrayList<>();
         if (!Files.isDirectory(textures)) {
@@ -162,10 +138,6 @@ public final class EffectFiles {
         return out;
     }
 
-    /**
-     * Writes {@code exports/<id>.shatterfx} with the effect and those of its textures found in the textures folder.
-     * Returns the file; {@code missing} receives the names of textures that were not there.
-     */
     public Path export(String id, String json, Set<String> textureNames, List<String> missing) throws IOException {
         Map<String, byte[]> files = new LinkedHashMap<>();
         long total = 0;
@@ -179,7 +151,7 @@ public final class EffectFiles {
             total += bytes.length;
             if (total > FxLimits.MAX_TEXTURE_BYTES) {
                 throw new net.shattergui.fx.FxIOException("textures_too_big",
-                        "the textures are over " + FxLimits.MAX_TEXTURE_BYTES / 1024 + " KB together", FxLimits.MAX_TEXTURE_BYTES / 1024); // not shown: the log text
+                        "the textures are over " + FxLimits.MAX_TEXTURE_BYTES / 1024 + " KB together", FxLimits.MAX_TEXTURE_BYTES / 1024);
             }
             files.put(name, bytes);
         }
@@ -188,7 +160,6 @@ public final class EffectFiles {
         return out;
     }
 
-    /** Packages that can be imported: those in the exports and packages folders, newest first. */
     public List<Path> importable() {
         List<Path> out = new ArrayList<>();
         for (Path dir : new Path[]{exports, packages}) {
@@ -198,7 +169,6 @@ public final class EffectFiles {
             try (DirectoryStream<Path> files = Files.newDirectoryStream(dir, "*.shatterfx")) {
                 files.forEach(out::add);
             } catch (IOException e) {
-                // Nothing to offer from this folder.
             }
         }
         out.sort((a, b) -> {
@@ -211,11 +181,6 @@ public final class EffectFiles {
         return out;
     }
 
-    /**
-     * Imports a package into the effects and textures folders. Checked first (the parser, every PNG header against
-     * its role's size limit, the 2 MB total); nothing is written if it fails. Taken ids get a free one
-     * ({@code taken} also covers built-in effects); clashing textures get a free name.
-     */
     public ImportResult importPackage(Path file, Predicate<String> taken) {
         List<Note> messages = new ArrayList<>();
         Map<String, byte[]> entries;
@@ -239,7 +204,6 @@ public final class EffectFiles {
             return new ImportResult(null, messages);
         }
         JsonObject root = JsonParser.parseString(json).getAsJsonObject();
-        // Textures: checked, then renamed when the name is taken by a different file.
         Map<String, byte[]> toWrite = new LinkedHashMap<>();
         Map<String, String> renames = new LinkedHashMap<>();
         long total = 0;
@@ -314,7 +278,6 @@ public final class EffectFiles {
         return new ImportResult(id, messages);
     }
 
-    /** Changes texture references ("texture", "sprite" fields) from old to new names, anywhere in the tree. */
     static void renameTextures(JsonElement element, Map<String, String> renames) {
         if (element.isJsonObject()) {
             JsonObject obj = element.getAsJsonObject();
@@ -335,7 +298,6 @@ public final class EffectFiles {
         }
     }
 
-    /** {@code wanted} made a valid id, with _2, _3, … until it is free. */
     public static String freeId(String wanted, Predicate<String> taken) {
         String base = (wanted == null ? "" : wanted).toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_]", "_");
         if (base.isEmpty()) {

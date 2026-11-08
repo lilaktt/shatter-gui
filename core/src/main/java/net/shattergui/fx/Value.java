@@ -4,24 +4,9 @@ import net.shattergui.platform.Keys;
 
 import java.util.List;
 
-/**
- * A number that may change over time and differ per shard: a constant, a random range, an easing curve, a cubic Bézier
- * or keyframes. {@code t} is the time base (0..1, the shard's own progress or the whole effect's) and {@code rnd} a
- * random number fixed per shard (0..1). Every result is clamped to the range given when it was read.
- *
- * <pre>
- *   0.5
- *   {"random": [0.2, 0.6]}
- *   {"curve": "easeOutCubic", "from": 0, "to": 1}
- *   {"bezier": [0.25, 0.1, 0.25, 1.0], "from": 1, "to": 0}
- *   {"keys": [[0, 0], [0.3, 1], [1, 0]], "ease": "smooth"}
- *   any object form + {"jitter": 0.2}: per-shard ×(1 ± 0.2)
- * </pre>
- */
 public abstract class Value {
     final float min;
     final float max;
-    /** Per-shard multiplier spread, 0..1. */
     final float jitter;
 
     Value(float min, float max, float jitter) {
@@ -30,11 +15,9 @@ public abstract class Value {
         this.jitter = jitter;
     }
 
-    /** The value at time {@code t} for a shard with random {@code rnd}. */
     public final float at(float t, float rnd) {
         float v = raw(Math.clamp(t, 0f, 1f), rnd);
         if (jitter > 0) {
-            // A second, independent random from the same seed.
             float r2 = fract(rnd * 7.31f + 0.37f);
             v *= 1f + (r2 * 2f - 1f) * jitter;
         }
@@ -43,7 +26,6 @@ public abstract class Value {
 
     abstract float raw(float t, float rnd);
 
-    /** True if the value never changes (constants), so callers can skip per-tick work. */
     public boolean isConstant() {
         return false;
     }
@@ -55,8 +37,6 @@ public abstract class Value {
     static float fract(float x) {
         return x - (float) Math.floor(x);
     }
-
-    // --- forms ---
 
     static final class Const extends Value {
         final float value;
@@ -111,7 +91,6 @@ public abstract class Value {
         }
     }
 
-    /** CSS-style cubic-bezier(x1, y1, x2, y2) from (0,0) to (1,1); x is time, y the progress. */
     static final class Bezier extends Value {
         final float x1;
         final float y1;
@@ -135,7 +114,6 @@ public abstract class Value {
             return 3 * u * u * s * a + 3 * u * s * s * b + s * s * s;
         }
 
-        /** y for x = t (bisection on the monotonic x(s), x1 and x2 being in 0..1). */
         static float solve(float x1, float y1, float x2, float y2, float t) {
             float lo = 0;
             float hi = 1;
@@ -158,7 +136,6 @@ public abstract class Value {
         }
     }
 
-    /** Keyframes (time ascending), eased between neighbours. */
     static final class Keys extends Value {
         final float[] times;
         final float[] values;
@@ -191,7 +168,6 @@ public abstract class Value {
         }
     }
 
-    /** Reads a value from JSON for showing it (curve drawing): anything unreadable gives the default. */
     public static Value fromJson(com.google.gson.JsonElement json, float def, float min, float max) {
         try {
             return read(new Node(json, "", new FxProblems()), def, min, max);
@@ -200,12 +176,6 @@ public abstract class Value {
         }
     }
 
-    // --- reading ---
-
-    /**
-     * Reads a value at {@code node}: missing → {@code def}; a number; or one of the object forms. {@code min}/{@code max}
-     * bound every result (numbers outside are clamped with a warning).
-     */
     static Value read(Node node, float def, float min, float max) {
         if (node.missing()) {
             return constant(def, min, max);
@@ -274,7 +244,6 @@ public abstract class Value {
         float[] values = new float[keys.size()];
         float last = -1;
         for (int i = 0; i < keys.size(); i++) {
-            // Read unclamped: time and value are checked below with clear messages.
             float[] pair = keys.get(i).numbers(2, -Float.MAX_VALUE, Float.MAX_VALUE);
             if (pair == null) {
                 if (!keys.get(i).isArray()) {

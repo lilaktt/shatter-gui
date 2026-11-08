@@ -15,11 +15,6 @@ import net.shattergui.ui.Widget;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
-/**
- * One field of the inspector: its human name on top (with a help tooltip and, when the value is not the default, a
- * "back to default" button), the control below, and under it what the checks say about this field — errors in red,
- * warnings in amber, each with the reason. Problems are found by the field's path ({@link FxEditor#problemsAt}).
- */
 final class FieldRow extends Container {
     private static final int LABEL_H = 11;
     private final FxEditor editor;
@@ -32,11 +27,6 @@ final class FieldRow extends Container {
     private List<FxProblems.Problem> shown = List.of();
     private List<TextLine> labelLines = List.of();
 
-    /**
-     * @param path    the field's path in the effect (problems under it are shown), or null for none
-     * @param reset   puts the default back (null: no reset button)
-     * @param changed true when the value differs from the default (shows the reset button)
-     */
     FieldRow(FxEditor editor, Text label, Text help, String path, Widget control, Runnable reset,
              BooleanSupplier changed) {
         this(editor, label, help, path, false, control, reset, changed);
@@ -61,7 +51,6 @@ final class FieldRow extends Container {
     protected int measure(int width) {
         shown = path == null ? List.of() : editor.problemsAt(path, exact);
         var labelFont = Platform.get().texts().font();
-        // The name wraps (never cut off); the reset button sits at the end of its first line.
         labelLines = labelFont.split(label, Math.max(20, width - (reset != null ? 14 : 0)));
         int cy = y + Math.max(1, labelLines.size()) * Theme.LINE + 1;
         control.layout(x, cy, width);

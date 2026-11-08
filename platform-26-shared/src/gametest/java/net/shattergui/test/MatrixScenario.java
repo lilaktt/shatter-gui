@@ -26,13 +26,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-/**
- * The short set of {@code ./gradlew runVersionMatrix} ({@code -PtestOnly=matrix}): every step gets its own result, a step
- * that fails or throws does not stop the next. The results go line by line into {@code matrix-results.tsv} in the run
- * folder, so a game that dies leaves what it had; the steps missing there are the ones the crash took.
- */
 final class MatrixScenario {
-    /** The columns of docs/TEST_MATRIX.md, in order; gradle/version-matrix.gradle has the same list. */
     static final List<String> STEPS = List.of("startup", "glass_chest", "glass_inventory", "open_effect", "fly_container",
             "esc", "ontop", "crawler_main");
 
@@ -49,7 +43,6 @@ final class MatrixScenario {
         this.mode = mode;
     }
 
-    /** The result of the start-up, which every run goes through before the scenarios. */
     static void startup(ClientGameTestContext context, List<String> failures) {
         Map<String, String> info = new LinkedHashMap<>();
         context.runOnClient(mc -> {
@@ -83,7 +76,6 @@ final class MatrixScenario {
         }
     }
 
-    /** Runs a step; what it reports and what it throws is the step's result, and the next one starts from no screen. */
     private void step(String id, Consumer<BiConsumer<Boolean, String>> body) {
         List<String> failed = new ArrayList<>();
         BiConsumer<Boolean, String> local = (ok, message) -> {
@@ -141,7 +133,6 @@ final class MatrixScenario {
         close(c, "matrix_glass_inventory", "inventory");
     }
 
-    /** Closes the open screen; the pieces must appear, be seen and go away. */
     private void close(BiConsumer<Boolean, String> c, String shot, String what) {
         int closes = context.computeOnClient(mc -> ShatterProfiler.closeCount());
         context.runOnClient(mc -> Mc26.setScreen(null));
@@ -190,7 +181,6 @@ final class MatrixScenario {
         context.waitTicks(3);
     }
 
-    /** One line, no tabs, no folders: the table goes into docs/TEST_MATRIX.md. */
     private static String clean(String text) {
         String line = text == null ? "" : text.replaceAll("[\\t\\r\\n]+", " ");
         return net.shattergui.debug.Diagnostics.sanitize(line);

@@ -17,28 +17,16 @@ import net.shattergui.platform.impl.Mc26;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * The captured GUI was drawn onto a transparent target, so its colors are premultiplied by alpha. Shards use a copy of
- * the vanilla {@code entity_translucent} pipeline (same shader, lightmap, alpha cutout, no culling) with premultiplied
- * blending ({@code ONE, ONE_MINUS_SRC_ALPHA}) instead of un-premultiplying on the CPU, and without the shader's diffuse
- * shading. Vertex colors must therefore be shaded and premultiplied, see {@link #premultiply}.
- */
 public final class ShardRenderTypes {
     public static final RenderPipeline SHARD_PIPELINE = RenderPipelinesAccessor.shatterGui$register(
             Mc26.withSampler1(RenderPipeline.builder(RenderPipelinesAccessor.shatterGui$entitySnippet()))
                     .withLocation(Identifier.fromNamespaceAndPath(ShatterGuiClient.MOD_ID, "pipeline/shard"))
                     .withShaderDefine("ALPHA_CUTOUT", 0.1f)
-                    // Diffuse shading is computed per shard on the CPU (ShardRenderer), so the first frame can match
-                    // the unlit GUI exactly; PER_FACE_LIGHTING would also depend on triangle winding.
                     .withShaderDefine("NO_CARDINAL_LIGHTING")
                     .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT_PREMULTIPLIED_ALPHA))
                     .withCull(false)
                     .build());
 
-    /**
-     * Multiply overlays of schema-2 effects: result = dst · (texture · a + 1 − texture alpha · a), i.e. the texture
-     * multiplied in with opacity a, when the vertex colour is the tint premultiplied by a (see DecorRenderer).
-     */
     public static final RenderPipeline MULTIPLY_PIPELINE = RenderPipelinesAccessor.shatterGui$register(
             Mc26.withSampler1(RenderPipeline.builder(RenderPipelinesAccessor.shatterGui$entitySnippet()))
                     .withLocation(Identifier.fromNamespaceAndPath(ShatterGuiClient.MOD_ID, "pipeline/fx_multiply"))
@@ -49,11 +37,6 @@ public final class ShardRenderTypes {
                     .withDepthStencilState(new DepthStencilState(Mc26.DEPTH_TEST, false))
                     .build());
 
-    /**
-     * The darkened world behind a closed screen while it fades out: the vanilla GUI fill (position + colour, straight
-     * alpha blending, the same shader and blending as {@code fillGradient}) without depth test or culling, drawn
-     * over the whole window in normalised device coordinates.
-     */
     public static final RenderPipeline BACKDROP_PIPELINE = RenderPipelinesAccessor.shatterGui$register(
             RenderPipeline.builder(net.minecraft.client.renderer.RenderPipelines.GUI_SNIPPET)
                     .withLocation(Identifier.fromNamespaceAndPath(ShatterGuiClient.MOD_ID, "pipeline/backdrop"))
@@ -62,14 +45,12 @@ public final class ShardRenderTypes {
                     .build());
     private static RenderType backdrop;
 
-    /** One render type per capture texture; the texture pool is small, so this stays small. */
     private static final Map<Identifier, RenderType> TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> MULTIPLY_TYPES = new HashMap<>();
 
     private ShardRenderTypes() {
     }
 
-    /** Forces class init so the pipeline is registered before shaders are loaded and gets precompiled. */
     public static void init() {
     }
 
@@ -83,7 +64,6 @@ public final class ShardRenderTypes {
                         .createRenderSetup()));
     }
 
-    /** The fading background ({@link #BACKDROP_PIPELINE}). */
     public static RenderType backdrop() {
         if (backdrop == null) {
             backdrop = RenderTypeAccessor.shatterGui$create("shatter_gui_backdrop",
@@ -92,7 +72,6 @@ public final class ShardRenderTypes {
         return backdrop;
     }
 
-    /** A multiply overlay with this texture (effect textures; one type each). */
     public static RenderType multiply(Identifier texture) {
         return MULTIPLY_TYPES.computeIfAbsent(texture, id -> RenderTypeAccessor.shatterGui$create("shatter_gui_fx_multiply",
                 RenderSetup.builder(MULTIPLY_PIPELINE)
@@ -103,12 +82,10 @@ public final class ShardRenderTypes {
                         .createRenderSetup()));
     }
 
-    /** Drops the cached types of textures that were released. */
     public static void forgetMultiply(Identifier texture) {
         MULTIPLY_TYPES.remove(texture);
     }
 
-    /** ARGB with straight alpha → ARGB with color multiplied by {@code shade} and by alpha. */
     public static int premultiply(int argb, float shade) {
         int a = argb >>> 24;
         float scale = shade * a / 255f;

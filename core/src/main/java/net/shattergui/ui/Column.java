@@ -1,6 +1,5 @@
 package net.shattergui.ui;
 
-/** Children stacked top to bottom at full width, with padding and a gap. Invisible children take no space. */
 public class Column extends Container {
     private final int pad;
     private final int gap;

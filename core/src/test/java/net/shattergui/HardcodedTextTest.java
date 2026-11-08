@@ -14,22 +14,13 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * No text for the player is written into the interface code: the UI library, the effect editor and the settings
- * screen take every word from the language files. Allowed: translation keys, ids, JSON field names, formats without
- * words, and lines that only log, describe for the profile log or throw.
- */
 class HardcodedTextTest {
     private static final List<Path> UI_CODE = List.of(Path.of("core/src/main/java/net/shattergui/ui"),
             Path.of("core/src/main/java/net/shattergui/editor"), Path.of("core/src/main/java/net/shattergui/config/screen"));
     private static final Pattern LITERAL = Pattern.compile("\"((?:[^\"\\\\]|\\\\.)*)\"");
-    /** Something a person would read: two letters in a row of any script, not just an id or a key. */
     private static final Pattern WORDS = Pattern.compile("\\p{L}{2,}");
-    /** Ids, keys and field paths: no spaces, and either lower case first or dots/underscores inside. */
     private static final Pattern ID_LIKE = Pattern.compile("([a-z0-9._][A-Za-z0-9_.\\-:/#%$]*|[A-Za-z0-9]+[._:][A-Za-z0-9_.\\-:/]*)?");
-    /** Class names (screen types matched by name), JSON snippets and paths. */
     private static final Pattern CODE_LIKE = Pattern.compile("[A-Z][A-Za-z]*Screen|.*[\\[\\]{}].*|\\s*[\\[\\](){}.,:]+\\s*");
-    /** Lines that are not shown to the player. */
     private static final Pattern NOT_SHOWN = Pattern.compile(
             "LOGGER\\.|Exception\\(|ShatterProfiler|describe|assert|getResource|@Inject|@Mixin|addProperty|\\.has\\(|"
                     + "\\.get\\(\"|\\.str\\(|\\.num\\(|getAs|Identifier|FxDoc\\.|doc\\.|\\.path|case \"|equals\\(\"|"

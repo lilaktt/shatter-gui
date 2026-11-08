@@ -8,12 +8,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * While a closing screen is drawn into its capture slot, every blend accumulates alpha ({@code ONE,
- * ONE_MINUS_SRC_ALPHA}) instead of whatever the GUI asked for (vanilla's default writes the source alpha over the
- * destination, which would punch holes into the transparent picture where partly transparent sprites lie on the
- * panel). Colours blend as asked. Changed before GlStateManager's own state cache, so the cache stays true to GL.
- */
 @Mixin(GlStateManager.class)
 public abstract class GlStateManagerMixin {
     private static final int GL_ONE = 1;

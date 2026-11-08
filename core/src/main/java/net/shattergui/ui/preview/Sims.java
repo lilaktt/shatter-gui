@@ -1,6 +1,5 @@
 package net.shattergui.ui.preview;
 
-/** Picks the 2D stand-in for a scene's close effect. */
 final class Sims {
     private Sims() {
     }
@@ -19,7 +18,6 @@ final class Sims {
         return sim;
     }
 
-    /** The stand-in of a code effect other than fly (glass for anything unknown). */
     static Sim base(String base, Sim.Stage stage, net.shattergui.params.ParamValues params, long seed) {
         return switch (base) {
             case "burn" -> new BurnSim(stage, params, seed);
@@ -29,10 +27,6 @@ final class Sims {
         };
     }
 
-    /**
-     * The stand-in of an "open:<id>" open effect: the effect played backwards, or null if it has no opening (unknown,
-     * fly, a schema-2 effect that cannot open).
-     */
     static Sim opening(String open, Sim.Stage stage, net.shattergui.params.ParamValues params, long seed) {
         String id = net.shattergui.config.ShatterConfig.openDataId(open);
         net.shattergui.platform.EffectCatalog.Opening fx = id != null

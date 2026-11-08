@@ -14,12 +14,7 @@ import net.shattergui.ui.Widget;
 import java.util.List;
 import java.util.function.Supplier;
 
-/**
- * The short tour on first opening: four steps, each dimming everything but one part of the editor (layers, preview,
- * timeline, inspector) with a few words on it. "Next", "Back", "Skip"; Esc skips. Seen once, then remembered.
- */
 final class Tour extends UiScreen.Overlay {
-    /** One step: the part it points at and its text key. */
     record Step(Supplier<Widget> target, String key) {
     }
 
@@ -34,7 +29,6 @@ final class Tour extends UiScreen.Overlay {
     private int step;
     private boolean placed;
 
-    /** @param alive false once the editor is gone (another tab): the tour then closes itself */
     Tour(List<Step> steps, java.util.function.BooleanSupplier alive, Runnable done) {
         this.steps = steps;
         this.alive = alive;
@@ -73,7 +67,6 @@ final class Tour extends UiScreen.Overlay {
 
     @Override
     public void outsideClick() {
-        // Only the buttons move the tour on.
     }
 
     @Override
@@ -94,7 +87,6 @@ final class Tour extends UiScreen.Overlay {
             rect[i] = placed ? rect[i] + (want[i] - rect[i]) * Math.min(1f, t) : want[i];
         }
         placed = true;
-        // The callout: beside the target where there is room.
         int cw = Math.min(200, screenWidth - 16);
         int ch = calloutHeight(cw);
         int cx;
@@ -138,11 +130,9 @@ final class Tour extends UiScreen.Overlay {
     @Override
     protected void draw(Ui ui) {
         if (!alive.getAsBoolean()) {
-            // Drawn from a copy of the overlay list, so closing here is safe.
             finish();
             return;
         }
-        // Dim around the target (four rectangles), outline it.
         int rx = Math.round(rect[0]);
         int ry = Math.round(rect[1]);
         int rw = Math.round(rect[2]);

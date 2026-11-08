@@ -16,21 +16,12 @@ import net.shattergui.ui.Slider;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * The control for a number that may change over time: a choice of form (number, random range, preset curve, Bézier,
- * keyframes) and the controls of that form — sliders in human units with an exact-value box, the easing presets, the
- * curve editor with keyframes or Bézier handles — plus the spread between pieces and "show on the timeline".
- */
 final class ValueControl extends Column {
     private final FxEditor editor;
     private final String path;
     private final FxSchema.Field field;
     private final JsonElement def;
 
-    /**
-     * @param def      the value used when the field is missing (a number or any curve form), may be null
-     * @param window   path prefix of the layer/emitter whose time window the curve spans on the timeline (null: none)
-     */
     ValueControl(FxEditor editor, String path, FxSchema.Field field, JsonElement def, String window) {
         super(0, 3);
         this.editor = editor;
@@ -134,7 +125,6 @@ final class ValueControl extends Column {
                 v -> EditorUi.format(field.unit(), v), t -> EditorUi.parse(field.unit(), t));
     }
 
-    /** A small caption left of a control. */
     static Row labelled(String key, net.shattergui.ui.Widget control) {
         Row row = new Row(4);
         Text caption = EditorUi.tr(key);
@@ -163,7 +153,6 @@ final class ValueControl extends Column {
         return out;
     }
 
-    /** A tiny picture of an easing for the presets list. */
     static void easingThumb(net.shattergui.ui.Ui ui, Easing easing, int x, int y, int w, int h) {
         net.shattergui.ui.Draw.rect(ui, x, y, w, h, 0xFF0F1014);
         int n = 16;

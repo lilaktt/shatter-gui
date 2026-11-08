@@ -13,7 +13,6 @@ import net.shattergui.platform.ScreenCapture;
 import net.shattergui.ui.preview.RealPreview;
 import net.shattergui.ui.preview.SampleImage;
 
-/** Screen pictures on 1.21.1: the capture of closed screens, the real preview, the editor's in-world preview. */
 final class Capture121 implements ScreenCapture {
     @Override
     public void cancelPending() {
@@ -57,7 +56,6 @@ final class Capture121 implements ScreenCapture {
 
     @Override
     public boolean playInWorld(Object screen, String id, CustomEffectDef custom, ParamValues params) {
-        // A custom effect as edited (unsaved), else the registered one.
         ShatterEffect effect = custom != null ? new CustomEffect(custom, ShatterEffects.builtIn(custom.base()))
                 : ShatterEffects.resolve(id);
         return PreviewRunner.start((Screen) screen, effect, params);

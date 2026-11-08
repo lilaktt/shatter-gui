@@ -14,10 +14,6 @@ import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * A list of ids with a search field (vanilla particles, sounds): only the visible rows are drawn, the wheel scrolls,
- * a click chooses. The chosen id is highlighted and kept in sight when the list opens.
- */
 final class SearchList extends Container {
     private static final int ROW = 11;
     private final Supplier<List<String>> all;

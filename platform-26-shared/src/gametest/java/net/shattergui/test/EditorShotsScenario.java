@@ -13,11 +13,6 @@ import net.shattergui.ui.UiFailures;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-/**
- * Screenshots of every settings tab and every part of the effect editor at GUI scales 1–4 (1920×1080), for comparing
- * the look before and after a change: {@code -PtestOnly=shots -PshotsLabel=before}. Names:
- * {@code <label>_s<scale>_<tab or editor part>}.
- */
 final class EditorShotsScenario {
     private EditorShotsScenario() {
     }
@@ -46,7 +41,6 @@ final class EditorShotsScenario {
                     }
                     shot.accept(label + "_s" + scale + "_" + tab.name().toLowerCase(java.util.Locale.ROOT));
                 }
-                // The editor on the whole screen: each part.
                 context.runOnClient(mc -> EditorScenario.editor(mc).openEditorFullscreen());
                 context.waitFor(mc -> Mc26.screen() instanceof FxEditorScreen, 100);
                 Selection[] parts = {Selection.EFFECT, Selection.APPEARANCE, new Selection(Selection.Kind.LAYER, 1),

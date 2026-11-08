@@ -17,10 +17,6 @@ import net.shattergui.ui.Ui;
 import net.shattergui.ui.UiScreen;
 import net.shattergui.ui.Widget;
 
-/**
- * "Add": the catalogue of what can be added — every module with its icon, name and one sentence on what it does,
- * then particles (vanilla or an own sprite) and a sound. A click adds it with sensible defaults and selects it.
- */
 final class ModuleCatalog extends UiScreen.Overlay {
     private final Column content = new Column(0, 8);
     private final ScrollView scroll = new ScrollView(content);
@@ -67,7 +63,6 @@ final class ModuleCatalog extends UiScreen.Overlay {
         return card;
     }
 
-    /** Icon in a coloured tile, and the name. */
     private static final class CardHead extends Widget {
         private final Icon icon;
         private final int color;

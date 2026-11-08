@@ -23,17 +23,10 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * The translations: every language has every key of en_us (the source of truth; Minecraft falls back to en_us for a
- * missing one, but none should be missing), no keys en_us does not have, the same placeholders, and no key that the
- * code never uses. Names in the shipped effect files have a translation.
- */
 class LangFilesTest {
-    /** Every language the mod ships. en_us first. */
     static final List<String> LANGUAGES = List.of("en_us", "uk_ua", "de_de", "es_es", "fr_fr", "pt_br", "pl_pl", "zh_cn",
             "ru_ru", "ja_jp", "ko_kr", "it_it");
     private static final Pattern PLACEHOLDER = Pattern.compile("%(\\d+\\$)?[sd]");
-    /** The code of core and of every platform module (run from the repository root). */
     private static List<Path> sources() throws IOException {
         try (Stream<Path> modules = Files.list(Path.of("."))) {
             return modules.filter(m -> m.getFileName().toString().equals("core")
@@ -86,7 +79,6 @@ class LangFilesTest {
         }
     }
 
-    /** All string literals of the mod's code. */
     private static Set<String> literals() throws IOException {
         Set<String> out = new HashSet<>();
         Pattern literal = Pattern.compile("\"((?:[^\"\\\\]|\\\\.)*)\"");
@@ -103,11 +95,6 @@ class LangFilesTest {
         return out;
     }
 
-    /**
-     * A key is used if the code names it, or a prefix of it with at least three parts ("ui.shatter_gui.open." + id),
-     * or names it without "ui.shatter_gui.fx." (the editor's tr), or without a .desc/.tooltip/.short ending; built-in
-     * effects and settings are named from data (registry ids).
-     */
     @Test
     void noUnusedKeys() throws IOException {
         Set<String> literals = literals();
@@ -120,7 +107,6 @@ class LangFilesTest {
         }
         List<String> unused = new ArrayList<>();
         for (String key : lang("en_us").keySet()) {
-            // Key mapping categories are named by the game from the category's id (shatter_gui:main).
             if (key.startsWith("key.category.")) {
                 continue;
             }

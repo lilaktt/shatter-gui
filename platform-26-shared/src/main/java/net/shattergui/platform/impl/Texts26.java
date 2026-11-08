@@ -11,9 +11,7 @@ import net.shattergui.platform.UiFont;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Text, translations and the font of the running game (the font is looked up on every call, as the UI always did). */
 final class Texts26 implements Texts, UiFont {
-    /** A wrapped line. */
     record Line(FormattedCharSequence sequence) implements TextLine {
     }
 
@@ -46,8 +44,6 @@ final class Texts26 implements Texts, UiFont {
     public UiFont font() {
         return this;
     }
-
-    // --- the font ---
 
     @Override
     public int width(String text) {

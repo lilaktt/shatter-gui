@@ -32,20 +32,11 @@ import java.util.Optional;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-/**
- * Loads schema-2 effects: {@code config/shatter_gui/effects/*.json} (schema 2), packages
- * {@code config/shatter_gui/packages/*.shatterfx} (a ZIP with {@code effect.json} and {@code textures/*.png}) and
- * resource packs ({@code assets/<ns>/shatter_gui/effects/*.json}, textures in {@code assets/<ns>/shatter_gui/textures}).
- * Textures of loose files come from {@code config/shatter_gui/textures} or resource packs. For the same id a package
- * beats a config file, which beats a resource pack. Reloaded with the resources (F3+T) and from the editor.
- */
 public final class FxEffects {
-    // The folders are core's (FxFiles), named here too for the loading code and the tests.
     public static final Path CONFIG = FxFiles.CONFIG;
     public static final Path EFFECTS = FxFiles.EFFECTS;
     public static final Path TEXTURES = FxFiles.TEXTURES;
     public static final Path PACKAGES = FxFiles.PACKAGES;
-    /** Where the editor writes exported packages (not loaded from there, so an export never doubles an effect). */
     public static final Path EXPORTS = FxFiles.EXPORTS;
     private static final String PACK_EFFECTS = "shatter_gui/effects";
     private static final String PACK_TEXTURES = "shatter_gui/textures";
@@ -58,15 +49,10 @@ public final class FxEffects {
     private FxEffects() {
     }
 
-    /**
-     * Client start: puts the example package in place the first time. Loading waits for the resource reload at game
-     * start (textures need the GPU).
-     */
     public static void init() {
         writeExampleOnce();
     }
 
-    /** Resource reload (F3+T). */
     public static void reload(ResourceManager manager) {
         resources = manager;
         reloadAll();
@@ -80,12 +66,10 @@ public final class FxEffects {
         return LOADED.get(id);
     }
 
-    /** What the last load reported (errors and warnings, one line each), for the editor. */
     public static List<String> messages() {
         return List.copyOf(MESSAGES);
     }
 
-    /** Reads everything again (also the editor's "Reload" button). */
     public static void reloadAll() {
         for (DataEffect effect : LOADED.values()) {
             effect.release();
@@ -108,10 +92,6 @@ public final class FxEffects {
                 FxTextures.loadedTotal());
     }
 
-    /**
-     * An effect made right now from a definition (the editor's "Test"), with textures from the config folder and
-     * resource packs. It is not registered; free it with {@link #release} when it has played.
-     */
     public static DataEffect build(net.shattergui.fx.FxDef def, List<String> warnings) {
         FxTextures textures = FxTextures.load(def, List.of(configTextures(), packTextures(null)));
         warnings.addAll(textures.warnings());
@@ -122,7 +102,6 @@ public final class FxEffects {
         effect.release();
     }
 
-    /** An effect to load: its JSON, where it came from, and where its textures are looked up (in order). */
     private record Candidate(String id, String json, String origin, List<FxTextures.Source> sources) {
     }
 
@@ -152,11 +131,6 @@ public final class FxEffects {
         }
     }
 
-    /**
-     * The effects shipped with the mod ({@code assets/shatter_gui/effects/<id>.json} in the jar, read from the class
-     * path, not through resource packs). They load first and their ids cannot be taken by other files. A problem in
-     * one is logged as an error (the tests check there are none).
-     */
     private static void loadBundled() {
         for (String id : BundledParams.ids()) {
             String path = "/assets/shatter_gui/effects/" + id + ".json";
@@ -188,7 +162,6 @@ public final class FxEffects {
         }
     }
 
-    /** The JSON of a shipped effect (for cloning it into the player's own), or null. */
     public static String bundledJson(String id) {
         DataEffect effect = LOADED.get(id);
         return effect != null && effect.bundled ? effect.def.json : null;
@@ -205,7 +178,6 @@ public final class FxEffects {
         }
     }
 
-    /** The id inside a JSON text without the full check (to apply precedence), or null. */
     private static String idOf(String json) {
         try {
             var root = com.google.gson.JsonParser.parseString(json);
@@ -213,7 +185,6 @@ public final class FxEffects {
                 return root.getAsJsonObject().get("id").getAsString();
             }
         } catch (RuntimeException e) {
-            // Reported by the parser.
         }
         return null;
     }
@@ -222,8 +193,6 @@ public final class FxEffects {
         String id = idOf(json);
         candidates.put(id != null ? id : "?" + origin, new Candidate(id, json, origin, sources));
     }
-
-    // --- sources ---
 
     private static void fromResourcePacks(Map<String, Candidate> candidates) {
         if (resources == null) {
@@ -290,11 +259,6 @@ public final class FxEffects {
         }
     }
 
-    /**
-     * Reads a .shatterfx safely: at most {@link FxLimits#MAX_PACKAGE_ENTRIES} entries and
-     * {@link FxLimits#MAX_PACKAGE_BYTES} unpacked, only {@code effect.json} and {@code textures/*.png}, no paths that
-     * leave the package. Other entries are skipped.
-     */
     static Map<String, byte[]> readPackage(Path file) throws IOException {
         return FxPackage.read(file);
     }
@@ -319,7 +283,6 @@ public final class FxEffects {
         };
     }
 
-    /** Resource-pack textures: "ns:name" exactly, a plain name in {@code preferred} first, then any namespace. */
     private static FxTextures.Source packTextures(String preferred) {
         return name -> {
             if (resources == null) {
@@ -362,8 +325,6 @@ public final class FxEffects {
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
-    // --- example and codes ---
-
     private static void writeExampleOnce() {
         if (Files.exists(PACKAGES)) {
             return;
@@ -378,7 +339,6 @@ public final class FxEffects {
         }
     }
 
-    /** A code (gzip + base64) for an effect without textures, or null if it has textures (share the package instead). */
     public static String toCode(DataEffect effect) {
         if (!effect.def.textures.isEmpty()) {
             return null;
@@ -386,20 +346,14 @@ public final class FxEffects {
         return codeOf(effect.def.json);
     }
 
-    /** A code (gzip + base64) for any effect JSON; null if it cannot be made. */
     public static String codeOf(String json) {
         return FxFiles.codeOf(json);
     }
 
-    /** The JSON inside a code, or null if it is not one (or too large). */
     public static String fromCode(String code) {
         return FxFiles.fromCode(code);
     }
 
-    /**
-     * Saves an imported schema-2 effect (no textures) as {@code effects/<id>.json} and reloads. Returns the problems;
-     * nothing is written when there are errors or the effect needs textures.
-     */
     public static FxProblems importJson(String json) {
         FxParser.Result result = FxParser.parse(json);
         if (!result.ok()) {

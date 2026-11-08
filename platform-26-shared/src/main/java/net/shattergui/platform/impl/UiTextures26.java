@@ -11,9 +11,7 @@ import net.shattergui.platform.UiTextures;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-/** UI textures as the game's dynamic textures, registered in its texture manager. */
 final class UiTextures26 implements UiTextures {
-    /** A decoded picture. */
     private record Image26(NativeImage image) implements Image {
         @Override
         public int width() {
@@ -36,7 +34,6 @@ final class UiTextures26 implements UiTextures {
         }
     }
 
-    /** Painting a picture of the game. */
     private record Canvas26(NativeImage image) implements Canvas {
         @Override
         public int width() {

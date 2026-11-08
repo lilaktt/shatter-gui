@@ -20,11 +20,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * The collide module in the world: an own schema-2 effect with gravity over a stone floor. Every tick every shard's
- * centre must stay above the floor's top face; the pieces must end up lying on it. The same with bounce, where pieces
- * must also fly back up after hitting the floor (and still never go below it).
- */
 final class CollideScenario {
     private static final String LAND = "test_collide_fx";
     private static final String BOUNCE = "test_collide_bounce_fx";
@@ -41,12 +36,10 @@ final class CollideScenario {
         Path bounce = FxEffects.EFFECTS.resolve(BOUNCE + ".json");
         try {
             BlockPos feet = context.computeOnClient(mc -> mc.player.blockPosition());
-            // A flat stone floor under and in front of the player, air above it.
             singleplayer.getServer().runCommand(String.format(Locale.ROOT, "fill %d %d %d %d %d %d minecraft:stone",
                     feet.getX() - 5, feet.getY() - 1, feet.getZ() - 2, feet.getX() + 5, feet.getY() - 1, feet.getZ() + 6));
             singleplayer.getServer().runCommand(String.format(Locale.ROOT, "fill %d %d %d %d %d %d minecraft:air",
                     feet.getX() - 5, feet.getY(), feet.getZ() - 2, feet.getX() + 5, feet.getY() + 4, feet.getZ() + 6));
-            // Looking down, so the floor the pieces land on is in the screenshots (the plane tilts with the camera).
             singleplayer.getServer().runCommand(String.format(Locale.ROOT, "tp @p %d.5 %d %d.5 0 40",
                     feet.getX(), feet.getY(), feet.getZ()));
             context.waitTicks(10);
@@ -83,13 +76,11 @@ final class CollideScenario {
                 Files.deleteIfExists(land);
                 Files.deleteIfExists(bounce);
             } catch (IOException ignored) {
-                // Left over in the test run folder only.
             }
             context.runOnClient(mc -> FxEffects.reloadAll());
         }
     }
 
-    /** Pieces only fall (no push, no spin), so any upward motion is a bounce. */
     private static String effect(String id, float bounce, String rest) {
         return String.format(Locale.ROOT, """
                 {"schema": 2, "id": "%s", "duration": 100,
@@ -106,7 +97,6 @@ final class CollideScenario {
     private record Result(int shards, double lowest, double maxRise, double landedShare) {
     }
 
-    /** Height of the top of the first block with a collision shape at or below {@code pos} (4 blocks down at most). */
     private static double surfaceBelow(net.minecraft.client.multiplayer.ClientLevel level, org.joml.Vector3d pos) {
         net.minecraft.core.BlockPos.MutableBlockPos at = new net.minecraft.core.BlockPos.MutableBlockPos(
                 Math.floor(pos.x), Math.floor(pos.y), Math.floor(pos.z));
@@ -125,7 +115,6 @@ final class CollideScenario {
         config.effect = id;
         context.setScreen(furnace);
         context.waitTicks(15);
-        // The pieces break and fall the same way in every run.
         context.runOnClient(mc -> ShardManager.seedForTests(OnTopScenario.TEST_SEED));
         context.runOnClient(mc -> Mc26.setScreen(null));
         context.waitTicks(1);
@@ -143,9 +132,6 @@ final class CollideScenario {
                     for (ShardInstance shard : batch.shards()) {
                         low = Math.min(low, shard.pos().y);
                         rise = Math.max(rise, shard.pos().y - shard.prevPos().y);
-                        // Lying = within 0.4 of the top of whatever is under it. Measured against the stone floor's
-                        // height alone, a piece that came to rest on any other block counted as not lying, and the
-                        // share depended on how the pieces scattered (spatial_collide_land failed now and then at 77%).
                         near += shard.pos().y < surfaceBelow(mc.level, shard.pos()) + 0.4 ? 1 : 0;
                         count++;
                     }
@@ -153,7 +139,6 @@ final class CollideScenario {
                 return new double[]{low, rise, count == 0 ? 0 : near / (double) count};
             });
             lowest = Math.min(lowest, s[0]);
-            // The first ticks are the spawn (prevPos = spawn point); only motion after that counts.
             if (t > 2) {
                 maxRise = Math.max(maxRise, s[1]);
             }

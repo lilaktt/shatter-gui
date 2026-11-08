@@ -10,13 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * What the editor checks on top of the parser, in the player's language: the id (taken by a built-in effect or by
- * another file), textures (not in the folder, unusable, too large for a sprite, too much together), and particles and
- * sounds the game does not know.
- */
 final class EditorChecks {
-    /** A texture reference: where it is written and what it is for. */
     record TextureRef(String path, String name, boolean sprite) {
     }
 
@@ -34,7 +28,6 @@ final class EditorChecks {
                 out.add(error("id", EditorUi.tr("check.id_taken", id).getString()));
             }
         }
-        // Textures.
         Map<String, Long> used = new LinkedHashMap<>();
         for (TextureRef ref : textureRefs(doc)) {
             if (ref.name().contains(":")) {
@@ -59,7 +52,6 @@ final class EditorChecks {
         if (bytes > FxLimits.MAX_TEXTURE_BYTES) {
             out.add(error("", EditorUi.tr("check.textures_bytes", bytes / 1024, FxLimits.MAX_TEXTURE_BYTES / 1024).getString()));
         }
-        // Particles and sounds the game does not know.
         List<String> particles = Inspector.particles();
         for (int i = 0; i < doc.size("emitters"); i++) {
             String particle = doc.str("emitters[" + i + "].particle", null);
@@ -81,7 +73,6 @@ final class EditorChecks {
         return out;
     }
 
-    /** Every texture the effect refers to, with the path of the reference. */
     static List<TextureRef> textureRefs(FxDoc doc) {
         List<TextureRef> out = new ArrayList<>();
         if ("mask".equals(doc.str("trigger.type", "wave"))) {

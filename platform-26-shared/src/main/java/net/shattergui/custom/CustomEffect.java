@@ -19,11 +19,6 @@ import net.shattergui.shatter.ShardSource;
 
 import java.util.List;
 
-/**
- * A custom effect at run time: the base effect with the custom parameters on top ({@link #prepare}), plus the extra
- * particles and sounds of its definition. Hard caps keep any file from flooding the game: at most
- * {@link #MAX_PER_TICK} extra particles per tick and {@link #MAX_PER_WAVE} per effect.
- */
 public final class CustomEffect implements ShatterEffect {
     private static final int MAX_PER_TICK = 12;
     private static final int MAX_PER_WAVE = 300;
@@ -97,7 +92,6 @@ public final class CustomEffect implements ShatterEffect {
         }
     }
 
-    /** The base wave plus the definition's particles (start, during, end) and end sounds. */
     private final class Extras implements ShatterWave {
         private final ShatterWave inner;
         private final RandomSource random;

@@ -12,19 +12,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * <ul>
- *   <li>While a closing screen is captured, skip the shared in-world background (blur, darkening, menu texture) so only the screen's own panel ends up in the image. Container panels are drawn by
- *       {@code AbstractContainerScreen#renderBackground} after {@code super.renderBackground} and are unaffected.</li>
- *   <li>While a flat screen flies in ({@link FlyOpen}), its GUI is moved and scaled from the container, the shared
- *       background is drawn untransformed, and the mouse is kept off the GUI (nothing hovered, no tooltip).</li>
- * </ul>
- * 1.21.1 draws a screen at once in {@code Screen#renderWithTooltip} ({@code render} + the deferred tooltip); 26.1's
- * counterpart is {@code extractRenderStateWithTooltipAndSubtitles}.
- */
 @Mixin(Screen.class)
 public abstract class ScreenMixin {
-    /** Far outside the screen so nothing is hovered and no tooltip is drawn. */
     @Unique
     private static final int NO_MOUSE = -100_000;
 
@@ -33,7 +22,6 @@ public abstract class ScreenMixin {
     @Unique
     private int shatterGui$backgroundPushed;
 
-    /** While the screen is being gathered by an open effect, the pieces stand in for it: it is not drawn. */
     @Inject(method = "renderWithTooltip", at = @At("HEAD"), cancellable = true)
     private void shatterGui$hideWhileGathering(GuiGraphics graphics, int mouseX, int mouseY, float partialTick,
                                                 CallbackInfo ci) {
@@ -69,7 +57,6 @@ public abstract class ScreenMixin {
         return FlyOpen.isAnimating((Screen) (Object) this) ? NO_MOUSE : mouseY;
     }
 
-    /** The blur draws the world itself blurred over the frame (GameRenderer#processBlurEffect). */
     @Inject(method = "renderBlurredBackground", at = @At("HEAD"), cancellable = true)
     private void shatterGui$blur(float partialTick, CallbackInfo ci) {
         if (ScreenCapture.isExtracting()) {
@@ -87,7 +74,6 @@ public abstract class ScreenMixin {
             return;
         }
         if (shatterGui$flyPushed) {
-            // The darkened world behind the GUI does not fly.
             graphics.pose().pushPose();
             graphics.pose().setIdentity();
             shatterGui$backgroundPushed++;

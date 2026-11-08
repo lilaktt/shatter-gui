@@ -14,9 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Curves, fracture and the simulation, without the game. */
 class FxEngineTest {
-    /** A host without a world: masks are a horizontal gradient, particles and sounds are counted. */
     static final class FakeHost implements FxSimulation.Host {
         int particles;
         final List<String> sounds = new ArrayList<>();
@@ -71,8 +69,6 @@ class FxEngineTest {
         }
         return sim;
     }
-
-    // --- curves ---
 
     private static Value value(String json) {
         FxProblems problems = new FxProblems();
@@ -136,8 +132,6 @@ class FxEngineTest {
         assertEquals(0xFF000000, g.at(0) );
     }
 
-    // --- fracture ---
-
     @Test
     void everyModeCoversTheInterfaceOnce() {
         String[] modes = {
@@ -166,8 +160,6 @@ class FxEngineTest {
         List<Fracture.Piece> rings = Fracture.cut(radial.fracture, 1f, 176, new Random(1));
         assertTrue(rings.stream().mapToInt(Fracture.Piece::triangleCount).sum() <= FxLimits.MAX_TRIANGLES);
     }
-
-    // --- simulation ---
 
     @Test
     void examplesRunToTheEnd() throws IOException {

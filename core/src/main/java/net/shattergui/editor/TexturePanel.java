@@ -13,12 +13,6 @@ import net.shattergui.ui.Ui;
 import java.nio.file.Files;
 import java.util.List;
 
-/**
- * The texture library: thumbnails of the PNGs in the textures folder (a file that cannot be used shows why), the
- * chosen one large — tiled 3×3 if wished, to see how a mask repeats — and what to use it for: the selected emitter's
- * sprite, a new overlay, the trigger mask or the look's mask. "Import" opens the folder (drop PNGs there; the library
- * picks them up by itself), "Refresh" looks at once.
- */
 final class TexturePanel extends Container {
     private static final int CELL = 30;
     private final FxEditor editor;
@@ -90,7 +84,6 @@ final class TexturePanel extends Container {
         int half = (w - 22) / 2;
         importButton.setBounds(x, y, w - 20, buttonH);
         refresh.setBounds(x + w - 18, y, 18, buttonH);
-        // Bottom: the chosen texture and what to do with it.
         TextureLibrary.Entry entry = chosen == null ? null : editor.library.get(chosen);
         boolean show = entry != null && entry.ok();
         int detail = show ? Math.min(h / 2, 64 + 4 * (buttonH + 2)) : 0;

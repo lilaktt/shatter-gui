@@ -20,23 +20,12 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
-/**
- * The page buttons of "About" ({@code -PtestOnly=links}), with a fake HTTP client (no network in tests):
- * <ul>
- *   <li>States: Modrinth 404 → yellow, GitHub 200 → green (and the bug report, which is GitHub), CurseForge none.</li>
- *   <li>Colour: the mouse over Modrinth and keyboard focus on CurseForge fill them with their colour; on screen too.</li>
- *   <li>A yellow page first explains, then opens the game's "open this link?" screen; a green one opens it at once.</li>
- *   <li>Offline (every request fails): grey, never yellow, and the click opens the link at once.</li>
- *   <li>The setting off: no request at all, no dots.</li>
- * </ul>
- */
 final class LinksScenario {
     static final String MODRINTH = "https://modrinth.com/mod/shattergui";
 
     private LinksScenario() {
     }
 
-    /** A client that answers from a table and counts its calls. */
     static LinkStatus.Http fake(Map<String, Object> answers, AtomicInteger calls) {
         return (url, agent, timeout) -> {
             calls.incrementAndGet();
@@ -48,7 +37,6 @@ final class LinksScenario {
         };
     }
 
-    /** For the whole test run: every page "up", so no scenario depends on the network or waits on a dialog. */
     static void everyPageUp() {
         LinkStatus.useForTests(fake(Map.of(), new AtomicInteger()));
     }
@@ -89,7 +77,6 @@ final class LinksScenario {
 
             colours(context, check, name);
 
-            // Yellow: first the explanation, then the game's own "open this link?" screen.
             context.runOnClient(mc -> button(LinkButton.Brand.MODRINTH).press());
             context.waitTicks(3);
             boolean explained = context.computeOnClient(mc -> Mc26.screen() instanceof ShatterConfigScreen screen
@@ -100,7 +87,6 @@ final class LinksScenario {
             check.accept(linkScreenShows(context, MODRINTH), name + ": after the explanation the link confirmation opens");
             context.getInput().pressKey(InputConstants.KEY_ESCAPE);
             context.waitTicks(3);
-            // Green: at once.
             context.runOnClient(mc -> button(LinkButton.Brand.GITHUB).press());
             context.waitTicks(3);
             check.accept(linkScreenShows(context, "https://github.com/lilaktt/shatter-gui"), name
@@ -108,7 +94,6 @@ final class LinksScenario {
             context.getInput().pressKey(InputConstants.KEY_ESCAPE);
             context.waitTicks(3);
 
-            // Offline: grey, never yellow; the click opens the link at once.
             AtomicInteger offlineCalls = new AtomicInteger();
             LinkStatus.useForTests(fake(Map.of(LinkStatus.Page.MODRINTH.api, new java.net.UnknownHostException("api.modrinth.com"),
                     LinkStatus.Page.GITHUB.api, new java.net.http.HttpTimeoutException("timed out")), offlineCalls));
@@ -125,7 +110,6 @@ final class LinksScenario {
             context.getInput().pressKey(InputConstants.KEY_ESCAPE);
             context.waitTicks(3);
 
-            // The setting off: no request, no dot.
             AtomicInteger offCalls = new AtomicInteger();
             LinkStatus.useForTests(fake(Map.of(), offCalls));
             context.runOnClient(mc -> EditorScenario.editor(mc).working().linkStatusCheck = false);
@@ -142,7 +126,6 @@ final class LinksScenario {
         }
     }
 
-    /** Hover (mouse) on Modrinth, keyboard focus on CurseForge: each fills with its colour, on screen too. */
     private static void colours(ClientGameTestContext context, BiConsumer<Boolean, String> check, String name) {
         int scale = context.computeOnClient(mc -> (int) mc.getWindow().getGuiScale());
         int[] at = context.computeOnClient(mc -> {
@@ -182,7 +165,6 @@ final class LinksScenario {
                 && Math.abs(FullFrame.b(a) - FullFrame.b(b)) <= tolerance;
     }
 
-    /** Scrolls the page buttons into sight (twice: the first scroll lays the page out anew, the second settles it). */
     private static void revealAbout(ClientGameTestContext context) {
         for (int pass = 0; pass < 2; pass++) {
             context.runOnClient(mc -> {
@@ -203,7 +185,6 @@ final class LinksScenario {
         ShatterGuiClient.LOGGER.info("[ShatterTest] links: {}", where);
     }
 
-    /** The pixel at GUI coordinates (x, y), or 0 outside the frame. */
     private static int pixel(FullFrame.Image image, int x, int y, int scale) {
         if (image == null) {
             return 0;

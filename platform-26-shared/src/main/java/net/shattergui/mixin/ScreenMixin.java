@@ -17,20 +17,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * <ul>
- *   <li>While a closing screen is captured, skip the shared in-world background (blur, darkening, menu texture) so only
- *       the screen's own panel ends up in the image. Container panels are drawn by subclass overrides and are
- *       unaffected.</li>
- *   <li>While a flat screen flies in ({@link FlyOpen}), its GUI is moved and scaled from the container, the shared
- *       background is drawn untransformed, and the mouse is kept off the GUI (nothing hovered, no tooltip).</li>
- *   <li>While a screen opens with an effect, its background fades in with it ({@link OpenBackdrop}); while it is
- *       gathered only the background is drawn.</li>
- * </ul>
- */
 @Mixin(Screen.class)
 public abstract class ScreenMixin {
-    /** Far outside the screen so nothing is hovered and no tooltip is drawn. */
     @Unique
     private static final int NO_MOUSE = -100_000;
 
@@ -55,17 +43,10 @@ public abstract class ScreenMixin {
     @Unique
     private int shatterGui$backgroundPushed;
 
-    /**
-     * While the screen is being gathered by an open effect, the pieces stand in for it: it is not drawn. Not on a Spatial
-     * GUI plane: Spatial GUI draws its texture from this very call, and hides the plane instead.
-     */
     @Inject(method = "extractRenderStateWithTooltipAndSubtitles", at = @At("HEAD"), cancellable = true)
     private void shatterGui$hideWhileGathering(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick,
                                                 CallbackInfo ci) {
         if (!ScreenCapture.isExtracting() && OpenAssemble.hidesFlat((Screen) (Object) this)) {
-            // Only the darkened/blurred world behind it, fading in with the gathering (OpenBackdrop); the pieces are
-            // drawn after the GUI, over it, where the screen will be. Not extractBackground: container screens
-            // override it to draw their panel too, which the pieces stand in for.
             graphics.nextStratum();
             if (((Screen) (Object) this).isInGameUi()) {
                 ((Screen) (Object) this).extractTransparentBackground(graphics);
@@ -126,7 +107,6 @@ public abstract class ScreenMixin {
         }
     }
 
-    /** The darkening fades with the opening: its alpha × {@link OpenBackdrop#factor} (1 = vanilla). */
     @ModifyArg(method = "extractTransparentBackground", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;fillGradient(IIIIII)V"), index = 4)
     private int shatterGui$fadeGradientTop(int color) {
@@ -139,7 +119,6 @@ public abstract class ScreenMixin {
         return OpenBackdrop.fade(color);
     }
 
-    /** The in-world menu texture fades the same way (drawn white-tinted with the faded alpha). */
     @Redirect(method = "extractMenuBackgroundTexture", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIII)V"))
     private static void shatterGui$fadeMenuTexture(GuiGraphicsExtractor graphics,
@@ -160,7 +139,6 @@ public abstract class ScreenMixin {
             return;
         }
         if (shatterGui$flyPushed) {
-            // The darkened/blurred world behind the GUI does not fly.
             graphics.pose().pushMatrix().identity();
             shatterGui$backgroundPushed++;
         }

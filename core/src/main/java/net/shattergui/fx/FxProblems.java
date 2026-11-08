@@ -3,10 +3,6 @@ package net.shattergui.fx;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Errors and warnings found while reading an effect, each with the path of the field it is about
- * ({@code layers[2].params.strength.keys[1]}). Errors make the effect unusable; warnings only skip or clamp something.
- */
 public final class FxProblems {
     public record Problem(boolean error, String path, String message) {
         @Override
@@ -48,7 +44,6 @@ public final class FxProblems {
         return problems.stream().filter(p -> !p.error()).toList();
     }
 
-    /** The first errors, joined, for a one-line log message. */
     public String errorSummary() {
         List<Problem> errors = errors();
         StringBuilder sb = new StringBuilder();

@@ -67,15 +67,6 @@ import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
-/**
- * The mod's settings, drawn with the mod's own widgets ({@code net.shattergui.ui}). Side navigation on the left
- * (General, Effects, Screens, Custom), the settings in the middle, and on the right a live preview that plays the
- * chosen effect on a sample interface with the current, unsaved values (replayed on every change while "autoplay" is
- * on; "Replay" plays it again; "In the world" plays the real effect).
- *
- * <p>Works on a copy of the config: Save replaces the live config and writes it (custom effects too, if they
- * changed); Cancel or Esc drops the copy, after asking if anything changed. The screen never gets an effect itself.
- */
 public final class ShatterConfigScreen extends UiScreen {
     public enum Tab {
         GENERAL, EFFECTS, SCREENS, CUSTOM
@@ -97,7 +88,6 @@ public final class ShatterConfigScreen extends UiScreen {
     private final String savedAccent;
 
     private Tab tab = Tab.GENERAL;
-    /** Which way the big preview plays the effect selected on the Effects tab. */
     private enum PreviewMode {
         OPEN, CLOSE, BOTH
     }
@@ -106,7 +96,6 @@ public final class ShatterConfigScreen extends UiScreen {
     private String selectedEffect;
     private String selectedCustom;
     private String cloneFrom = "vortex";
-    /** Set by "Copy to my effects": open the editor on the whole screen if it has no room in the tab. */
     private boolean fullscreenIfSmall;
     private String selectedScreen;
     private String modFilter = ALL_MODS;
@@ -117,7 +106,6 @@ public final class ShatterConfigScreen extends UiScreen {
     private int dirtyCountdown;
     private ParamValues frameValues;
 
-    // --- widgets ---
     private final TabNav nav;
     private final Column content = new Column(0, 8);
     private final ScrollView scroll = new ScrollView(content);
@@ -133,13 +121,10 @@ public final class ShatterConfigScreen extends UiScreen {
     private final LiveBox liveBox = new LiveBox();
     private final Segmented previewModes = new Segmented();
     private final Decor decor = new Decor();
-    /** The schema-2 effect editor of the Custom tab (made when first shown). */
     private FxEditor fxEditor;
-    /** The Custom tab shows the classic (format 1) custom effects instead of the editor. */
     private boolean classicCustom;
     private final SmallNotice smallNotice = new SmallNotice();
 
-    // --- layout (set every frame) ---
     private int margin;
     private int headerBottom;
     private int footerTop;
@@ -218,9 +203,6 @@ public final class ShatterConfigScreen extends UiScreen {
         return Text.translatable(key, args);
     }
 
-    // --- public API (tests, other code) ---
-
-    /** The settings being edited. */
     public ShatterConfig working() {
         return work;
     }
@@ -245,14 +227,12 @@ public final class ShatterConfigScreen extends UiScreen {
         return computeDirty();
     }
 
-    /** What every miniature is doing (for tests and debugging). */
     public String describeThumbs() {
         StringBuilder sb = new StringBuilder();
         thumbs.forEach((key, player) -> sb.append(key).append('=').append(player.describe()).append("; "));
         return sb.toString();
     }
 
-    /** What the live preview is doing (for tests). */
     public String describePreview() {
         return live.describe();
     }
@@ -268,7 +248,6 @@ public final class ShatterConfigScreen extends UiScreen {
         rebuild();
     }
 
-    /** Scrolls the settings to the end (tests, screenshots). */
     public void scrollToEnd() {
         scroll.scrollToEnd();
     }
@@ -293,12 +272,10 @@ public final class ShatterConfigScreen extends UiScreen {
         cloneFrom = known(id);
     }
 
-    /** Centre of a navigation tab in GUI coordinates (tests move the mouse there). */
     public int[] tabCenter(Tab target) {
         return nav.center(target.ordinal());
     }
 
-    /** Gives the keyboard focus to the screen search field (tests type into it). */
     public void focusSearch() {
         setFocus(search);
     }
@@ -311,8 +288,6 @@ public final class ShatterConfigScreen extends UiScreen {
         search.value(text);
         rebuildScreenList();
     }
-
-    // --- layout ---
 
     @Override
     protected void layoutRoot(int width, int height) {
@@ -332,18 +307,15 @@ public final class ShatterConfigScreen extends UiScreen {
         previewX = width - margin - 6 - previewW;
         int contentW = previewX - 8 - contentX;
         scroll.setBounds(contentX, bodyTop, contentW, bodyBottom - bodyTop);
-        // Preview panel: title, box, caption, controls.
         int boxX = previewX + 6;
         int boxW = previewW - 12;
         int controlsH = Theme.CONTROL_HEIGHT + 20 + 16;
-        // The Effects tab also chooses which way the preview plays (up to two lines of buttons).
         previewModes.visible = tab == Tab.EFFECTS && !editorMode();
         if (previewModes.visible) {
             controlsH += (Theme.CONTROL_HEIGHT + 3) * 2 + 4;
         }
         int boxH = Math.max(40, Math.min(Math.round(boxW * 0.9f), bodyBottom - bodyTop - 24 - controlsH));
         liveBox.setBounds(boxX, bodyTop + 18, boxW, boxH);
-        // The caption under the preview wraps onto a second line rather than being cut.
         captionLines = Platform.get().texts().font().split(previewCaption(), Math.max(20, boxW)).stream().limit(2).toList();
         int cy = liveBox.y + boxH + 6 + captionLines.size() * Theme.LINE;
         if (previewModes.visible) {
@@ -353,14 +325,12 @@ public final class ShatterConfigScreen extends UiScreen {
         autoplay.setBounds(previewX + previewW - 6 - Toggle.WIDTH, cy, Toggle.WIDTH, 14);
         cy += 20;
         int half = (boxW - 4) / 2;
-        // Narrow panel: icons only (the tooltips still name them).
         boolean iconsOnly = half < 82;
         replay.text(iconsOnly ? null : tr("ui.shatter_gui.replay"));
         inWorld.text(iconsOnly ? null : tr("ui.shatter_gui.in_world"));
         replay.setBounds(boxX, cy, half, Theme.CONTROL_HEIGHT);
         inWorld.setBounds(boxX + half + 4, cy, boxW - half - 4, Theme.CONTROL_HEIGHT);
         inWorld.enabled = inWorld();
-        // Footer.
         int saveW = Math.max(save.naturalWidth(), 72);
         save.setBounds(width - margin - 6 - saveW, footerTop + 4, saveW, Theme.CONTROL_HEIGHT);
         int cancelW = Math.max(cancel.naturalWidth(), 72);
@@ -373,7 +343,6 @@ public final class ShatterConfigScreen extends UiScreen {
         }
     }
 
-    /** The backdrop, window, header, side bar, preview panel and footer text. */
     private final class Decor extends Widget {
         @Override
         protected void draw(Ui ui) {
@@ -386,7 +355,6 @@ public final class ShatterConfigScreen extends UiScreen {
             int wh = h - margin * 2;
             Draw.shadow(ui, wx, wy, ww, wh, 8, 1f);
             Draw.roundBox(ui, wx, wy, ww, wh, 8, Theme.PANEL, Theme.BORDER);
-            // Header: logo, title, subtitle.
             Draw.roundGradient(ui, wx + 8, wy + 5, 16, 16, 4, Theme.accentHover(), Theme.accentPressed());
             Draw.icon(ui, Icon.SPARKLES, wx + 12, wy + 9, 1, 0xFFFFFFFF);
             ui.text(tr("ui.shatter_gui.title"), wx + 30, wy + 6, Theme.TEXT);
@@ -394,9 +362,7 @@ public final class ShatterConfigScreen extends UiScreen {
                 ui.textSmall(tr("ui.shatter_gui.subtitle").getString(), wx + 30, wy + 16, ww / 2, Theme.TEXT_DIM);
             }
             Draw.rect(ui, wx + 1, headerBottom, ww - 2, 1, Theme.BORDER);
-            // Side bar.
             Draw.roundRect(ui, sideX - 3, bodyTop, sideW + 6, bodyBottom - bodyTop, 6, Theme.SIDEBAR);
-            // Preview panel (not with the effect editor, which has its own).
             if (!editorMode()) {
                 Draw.roundBox(ui, previewX, bodyTop, previewW, bodyBottom - bodyTop, 6, Theme.CARD, Theme.BORDER);
                 Draw.icon(ui, Icon.PLAY, previewX + 6, bodyTop + 5, 1, Theme.accentHover());
@@ -408,7 +374,6 @@ public final class ShatterConfigScreen extends UiScreen {
                 }
                 ui.textFit(tr("ui.shatter_gui.autoplay"), previewX + 6, autoplay.y + 3, previewW - 18 - Toggle.WIDTH, Theme.TEXT);
             }
-            // Footer: unsaved changes, status.
             Draw.rect(ui, wx + 1, footerTop, ww - 2, 1, Theme.BORDER);
             int fy = footerTop + 9;
             double since = UiClock.time() - statusTime;
@@ -427,7 +392,6 @@ public final class ShatterConfigScreen extends UiScreen {
         }
     }
 
-    /** The big live preview. */
     private final class LiveBox extends Widget {
         @Override
         protected void draw(Ui ui) {
@@ -435,7 +399,6 @@ public final class ShatterConfigScreen extends UiScreen {
             ui.pushClip(x, y, w, h);
             live.render(ui, x, y, w, h);
             if (tab == Tab.EFFECTS && previewMode == PreviewMode.OPEN && openValue(selectedEffect) == null) {
-                // Nothing to play: say why instead of an empty box.
                 ui.g.fill(x, y, x + w, y + h, 0xC0101218);
                 var lines = ui.font.split(tr("ui.shatter_gui.preview.no_open", effectName(selectedEffect)), Math.max(20, w - 12));
                 int ty = y + Math.max(4, (h - lines.size() * Theme.LINE) / 2);
@@ -448,14 +411,10 @@ public final class ShatterConfigScreen extends UiScreen {
         }
     }
 
-    // --- the effect editor (Custom tab) ---
-
-    /** The Custom tab shows the schema-2 effect editor (not the classic custom effects). */
     private boolean editorMode() {
         return tab == Tab.CUSTOM && !classicCustom;
     }
 
-    /** The effect editor (made on first use). */
     public FxEditor effectEditor() {
         if (fxEditor == null) {
             fxEditor = new FxEditor(new EditorHost(), () -> work.values());
@@ -474,7 +433,6 @@ public final class ShatterConfigScreen extends UiScreen {
         return classicCustom;
     }
 
-    /** Places the editor (or, if there is too little room, a notice with "full screen") in the Custom tab. */
     private void layoutEditor(int contentX, int width) {
         boolean on = editorMode();
         scroll.visible = !on;
@@ -495,7 +453,6 @@ public final class ShatterConfigScreen extends UiScreen {
         int eh = bodyBottom - bodyTop;
         boolean fits = ew >= 440 && eh >= 220;
         if (fullscreenIfSmall) {
-            // A copy was just opened to edit: without room here it opens on the whole screen.
             fullscreenIfSmall = false;
             if (!fits) {
                 runLater(this::openEditorFullscreen);
@@ -510,7 +467,6 @@ public final class ShatterConfigScreen extends UiScreen {
         }
     }
 
-    /** Puts the editor back after full screen. */
     private void reattachEditor() {
         if (fxEditor != null) {
             root.children().remove(fxEditor);
@@ -522,17 +478,14 @@ public final class ShatterConfigScreen extends UiScreen {
         if (fxEditor != null) {
             fxEditor.dispose();
         }
-        // The real screens' pictures are only for this editor: their GPU memory goes back now.
         Platform.get().capture().releaseRealPreview();
     }
 
-    /** The setting (unsaved until Save); the previews follow it at once. */
     private void setRealPreview(boolean value) {
         work.realPreview = value;
         Platform.get().capture().setRealPreviewConfigured(value);
     }
 
-    /** Opens the editor on the whole screen. */
     public void openEditorFullscreen() {
         showScreen(new FxEditorScreen(this, effectEditor(), this::reattachEditor));
     }
@@ -568,7 +521,6 @@ public final class ShatterConfigScreen extends UiScreen {
         }
     }
 
-    /** Too little room for the editor inside the settings: a short note and "full screen". */
     private final class SmallNotice extends net.shattergui.ui.Column {
         SmallNotice() {
             super(12, 8);
@@ -597,8 +549,6 @@ public final class ShatterConfigScreen extends UiScreen {
         }
     }
 
-    // --- content ---
-
     private void rebuild() {
         Widget focused = focused();
         content.clear();
@@ -619,7 +569,6 @@ public final class ShatterConfigScreen extends UiScreen {
         return all.contains(widget);
     }
 
-    /** A card of settings: icon and title in its header (folds, remembered for the session), the explanation as a hint. */
     private Section section(Text title, Text subtitle) {
         String key = title.translationKey() != null ? title.translationKey() : title.getString();
         Section card = new Section("settings." + key, sectionIcon(key), title, false, 7);
@@ -655,14 +604,12 @@ public final class ShatterConfigScreen extends UiScreen {
         master.add(new SettingRow(tr("ui.shatter_gui.enabled"), tr("ui.shatter_gui.enabled.desc"), true,
                 new Toggle(() -> work.enabled, v -> work.enabled = v), () -> !work.enabled, () -> work.enabled = true));
 
-        // When you open an interface.
         Section open = section(tr("ui.shatter_gui.open.title"), tr("ui.shatter_gui.open.desc"));
         open.add(choiceRow(thumb("general-open", () -> openScene(work.openEffect)),
                 () -> openName(work.openEffect), () -> openDescription(work.openEffect),
                 (Widget) new Dropdown<>(this::openOptions, () -> work.openEffect, v -> work.openEffect = v).thumbs(30, 22)
                         .tooltip(tr("ui.shatter_gui.open.title"), tr("ui.shatter_gui.open.desc"))));
 
-        // When you close an interface.
         Section close = section(tr("ui.shatter_gui.close.title"), tr("ui.shatter_gui.close.desc"));
         close.add(choiceRow(thumb("general-close", () -> closeScene(known(work.effect), null, true, true)),
                 () -> effectName(known(work.effect)), () -> effectDescription(known(work.effect)),
@@ -671,11 +618,9 @@ public final class ShatterConfigScreen extends UiScreen {
         close.add(new SettingRow(tr("ui.shatter_gui.thematic"), tr("ui.shatter_gui.thematic.desc"), false,
                 new Toggle(() -> work.thematic, v -> work.thematic = v), () -> work.thematic, () -> work.thematic = false));
 
-        // Presets as cards.
         Section presets = section(tr("ui.shatter_gui.preset.title"), tr("ui.shatter_gui.preset.desc"));
         Grid grid = presets.add(new Grid(92, 6));
         for (Preset preset : Preset.values()) {
-            // A preset brings its quality and number of effects at once (Performance), which can be changed after.
             Card card = new Card(5, 4).onClick(() -> work.applyPreset(preset)).selected(() -> work.preset.equals(preset.id()));
             card.add(new Thumb(thumb("preset-" + preset.id(), () -> {
                 Scene base = closeScene(known(work.effect), null, true, true);
@@ -768,7 +713,6 @@ public final class ShatterConfigScreen extends UiScreen {
         buildAbout();
     }
 
-    /** "About": name, version, author, license, link, the state of the translations, third-party credits. */
     private void buildAbout() {
         GameInfo.ModMeta meta = Platform.get().game().mod(ShatterMod.MOD_ID);
         if (meta == null) {
@@ -785,9 +729,6 @@ public final class ShatterConfigScreen extends UiScreen {
         if (link != null) {
             about.add(new Label(tr("ui.shatter_gui.about.link", link), Label.Style.DIM));
         }
-        // The pages of the mod (fabric.mod.json "contact"), each opened through the game's own "open this link?" screen. Each
-        // fills with its platform's colour on hover and focus; a dot says whether the page is up (LinkStatus: checked
-        // off the render thread, once per session, only while this section is drawn and the setting allows it).
         about.add(new SettingRow(tr("ui.shatter_gui.link_status_check"), tr("ui.shatter_gui.link_status_check.desc"), false,
                 new Toggle(() -> work.linkStatusCheck, v -> work.linkStatusCheck = v), () -> !work.linkStatusCheck,
                 () -> work.linkStatusCheck = true));
@@ -806,22 +747,16 @@ public final class ShatterConfigScreen extends UiScreen {
             open.action(() -> openPage(open, url)).leavesScreen(true);
             pages.add(open);
         }
-        // Everything a bug report needs, as text for the issue form (no user name, paths or e-mail addresses).
         Button diagnostics = new Button(tr("ui.shatter_gui.about.copy_diagnostics"), Icon.COPY, Button.Kind.SECONDARY,
                 this::copyDiagnostics);
         diagnostics.tooltip(tr("ui.shatter_gui.about.copy_diagnostics"), tr("ui.shatter_gui.about.copy_diagnostics.tooltip"));
         pages.add(diagnostics);
-        // Cells as wide as the widest label, so no label is cut (they wrap to more rows instead).
         Grid links = about.add(new Grid(pages.stream().mapToInt(Button::naturalWidth).max().orElse(80), 6));
         pages.forEach(links::add);
         about.add(new Hint(tr("ui.shatter_gui.about.translations")));
         about.add(new Hint(tr("ui.shatter_gui.about.third_party")));
     }
 
-    /**
-     * Opens a page of the mod. One that answered "not found" (not published yet or in moderation) first says so; then
-     * the game's own "open this link?" screen.
-     */
     private void openPage(LinkButton button, String url) {
         if (button.state() == LinkStatus.State.NOT_PUBLISHED) {
             ConfirmDialog.open(tr("ui.shatter_gui.about.not_published.title"),
@@ -832,7 +767,6 @@ public final class ShatterConfigScreen extends UiScreen {
         confirmLink(url);
     }
 
-    /** Thumbnail; next to it the chosen option's name and description, and the drop-down to change it. */
     private Row choiceRow(PreviewPlayer player, Supplier<Text> name, Supplier<Text> description, Widget dropdown) {
         Row row = new Row(8).wrapBelow(200);
         row.fixed(new Thumb(player, 0.62f, 60), 84);
@@ -924,7 +858,6 @@ public final class ShatterConfigScreen extends UiScreen {
         buildThemes();
     }
 
-    /** Thematic mode's rules: which effect each kind of interface closes with (when the mode is on in General). */
     private void buildThemes() {
         Section card = content.add(new Section("screens.themes", Icon.SPARKLES, () -> tr("ui.shatter_gui.themes.title"), false, 7));
         card.add(new Hint(() -> tr(work.thematic ? "ui.shatter_gui.themes.on" : "ui.shatter_gui.themes.off")));
@@ -1011,7 +944,6 @@ public final class ShatterConfigScreen extends UiScreen {
         return card;
     }
 
-    /** A screen's icon (item, mod icon or a window). */
     private static final class IconBox extends Widget {
         private final String key;
         private final String modId;
@@ -1036,7 +968,6 @@ public final class ShatterConfigScreen extends UiScreen {
 
     private void buildCustom() {
         if (!classicCustom) {
-            // The effect editor fills the tab (see layoutEditor).
             return;
         }
         Section back = section(tr("ui.shatter_gui.fx.classic.title"), tr("ui.shatter_gui.fx.classic.desc"));
@@ -1102,9 +1033,6 @@ public final class ShatterConfigScreen extends UiScreen {
         details.add(new Hint(tr("ui.shatter_gui.custom.later")));
     }
 
-    // --- parameter rows ---
-
-    /** A row for a registry parameter: slider/toggle/list, units, help, and back-to-default. */
     private SettingRow paramRow(Param<?> param, ParamStore store) {
         return new SettingRow(tr(param.langKey()), help(param), false, control(param, store),
                 () -> !Objects.equals(store.get(param), param.def()), () -> store.set(param, param.def()));
@@ -1127,7 +1055,6 @@ public final class ShatterConfigScreen extends UiScreen {
         };
     }
 
-    /** What it does, plus range and default in the shown units. */
     private static Text help(Param<?> param) {
         Text range = switch (param) {
             case Param.Float p -> tr("ui.shatter_gui.range", ParamUi.format(p, p.min()), ParamUi.format(p, p.max()),
@@ -1140,10 +1067,6 @@ public final class ShatterConfigScreen extends UiScreen {
         return Text.translatable(param.langKey() + ".tooltip").copy().append("\n").append(range);
     }
 
-    /**
-     * The base effect's parameters for a custom effect: one it does not set shows (and uses) the player's value for
-     * the base effect; changing it makes it the custom effect's own; reset drops it again.
-     */
     private void addCustomParamRows(net.shattergui.ui.Container card, CustomEffectDef def) {
         ParamStore layered = new ParamStore() {
             @Override
@@ -1162,9 +1085,6 @@ public final class ShatterConfigScreen extends UiScreen {
         }
     }
 
-    // --- choosing effects on the Effects tab ---
-
-    /** The open effect that plays {@code id} (fly: out of the block), or null if it has no opening. */
     private static String openValue(String id) {
         boolean fly = Platform.get().effects().isFlyBased(id);
         return ShatterConfig.openValueFor(id, Platform.get().effects().canOpen(id), fly);
@@ -1197,7 +1117,6 @@ public final class ShatterConfigScreen extends UiScreen {
         setStatus(tr("ui.shatter_gui.assign.done.close", effectName(id)), true);
     }
 
-    /** No longer opening (just appears) nor closing (back to glass) with {@code id}. */
     private void stopUsing(String id) {
         if (usedForOpen(id)) {
             work.openEffect = ShatterConfig.OPEN_NONE;
@@ -1208,7 +1127,6 @@ public final class ShatterConfigScreen extends UiScreen {
         setStatus(tr("ui.shatter_gui.assign.done.removed", effectName(id)), true);
     }
 
-    /** Double click on a card: after a question, the effect opens and closes interfaces (or only closes them). */
     private void confirmBoth(String id) {
         boolean opens = openValue(id) != null;
         ConfirmDialog.open(tr("ui.shatter_gui.assign.confirm.title"),
@@ -1228,7 +1146,6 @@ public final class ShatterConfigScreen extends UiScreen {
         }
     }
 
-    /** "Use for opening / closing / both", "Remove": under the selected effect's name. */
     private void addAssignRow(net.shattergui.ui.Container card, String id) {
         boolean opens = openValue(id) != null;
         Button open = new Button(tr("ui.shatter_gui.assign.open"), null, Button.Kind.SECONDARY, () -> useForOpen(id)) {
@@ -1259,14 +1176,11 @@ public final class ShatterConfigScreen extends UiScreen {
             }
         };
         remove.tooltip(tr("ui.shatter_gui.assign.remove"), tr("ui.shatter_gui.assign.remove.tooltip"));
-        // Cells as wide as the widest label: a narrow card (long translations, large GUI scale) wraps to two rows
-        // instead of cutting the labels.
         List<Button> buttons = List.of(open, close, both, remove);
         Grid row = card.add(new Grid(buttons.stream().mapToInt(Button::naturalWidth).max().orElse(60), 4));
         buttons.forEach(row::add);
     }
 
-    /** The star on an effect card: marks a favourite (the cycle key switches between favourites). */
     private final class FavoriteStar extends Widget {
         static final int SIZE = 11;
         private final String id;
@@ -1309,7 +1223,6 @@ public final class ShatterConfigScreen extends UiScreen {
 
         @Override
         public boolean doubleClicked(double mx, double my) {
-            // The second click of a quick double click on the star is a second toggle, not "use for both".
             return mouseDown(mx, my, 0);
         }
 
@@ -1325,7 +1238,6 @@ public final class ShatterConfigScreen extends UiScreen {
         }
     }
 
-    /** "Opening" / "Closing" marks on an effect card: what the effect is used for now. */
     private final class Badges extends Widget {
         private final String id;
 
@@ -1371,12 +1283,9 @@ public final class ShatterConfigScreen extends UiScreen {
         }
     }
 
-    // --- options ---
-
     private List<Dropdown.Option<String>> openOptions() {
         List<Dropdown.Option<String>> options = new ArrayList<>();
         List<String> ids = new ArrayList<>(OPEN_IDS);
-        // Only effects that really play backwards (fly opens by flying out of the block, above).
         for (String id : Platform.get().effects().openIds()) {
             ids.add(ShatterConfig.OPEN_DATA_PREFIX + id);
         }
@@ -1386,10 +1295,8 @@ public final class ShatterConfigScreen extends UiScreen {
         return options;
     }
 
-    /** Effects whose backwards run is something else than gathering, with a name of its own ("from embers"). */
     private static final java.util.Set<String> OWN_OPEN_NAMES = java.util.Set.of(EffectIds.BURN);
 
-    /** Name of an open effect: "none", "fly_from_block" or "open:<effect>" (that effect, gathering). */
     private Text openName(String open) {
         String id = ShatterConfig.openDataId(open);
         if (id != null && OWN_OPEN_NAMES.contains(id)) {
@@ -1410,7 +1317,6 @@ public final class ShatterConfigScreen extends UiScreen {
         return tr("ui.shatter_gui.open." + open + ".desc");
     }
 
-    /** Opens a copy of a shipped effect in the effect editor (Custom tab), unsaved, under a free id. */
     public void cloneBundled(String id) {
         String json = Platform.get().effects().bundledJson(id);
         if (json == null) {
@@ -1461,8 +1367,6 @@ public final class ShatterConfigScreen extends UiScreen {
         return options;
     }
 
-    // --- scenes and thumbnails ---
-
     private PreviewPlayer thumb(String key, Supplier<Scene> scene) {
         return thumbs.computeIfAbsent(key, k -> new PreviewPlayer(scene, false, true));
     }
@@ -1476,7 +1380,6 @@ public final class ShatterConfigScreen extends UiScreen {
         return new Scene(openEffect, null, frameValues, null, true, true);
     }
 
-    /** The close effect {@code id} as a scene (a custom effect: its base, values and particles). */
     private Scene closeScene(String id, String open, boolean hasSource, boolean edgeAllowed) {
         EffectCatalog.Data data = dataEffect(id);
         if (data != null) {
@@ -1492,7 +1395,6 @@ public final class ShatterConfigScreen extends UiScreen {
         return new Scene(open, Platform.get().effects().isBuiltIn(id) ? id : EffectIds.GLASS, frameValues, null, hasSource, edgeAllowed);
     }
 
-    /** What the big preview plays: depends on the tab and the selection there. */
     private Scene liveScene() {
         switch (tab) {
             case EFFECTS -> {
@@ -1547,9 +1449,6 @@ public final class ShatterConfigScreen extends UiScreen {
         };
     }
 
-    // --- screens data ---
-
-    /** Seen screens (with their titles) plus every screen that has a setting. */
     private Map<String, GameInfo.ScreenEntry> allScreens() {
         Map<String, GameInfo.ScreenEntry> screens = new LinkedHashMap<>();
         for (GameInfo.ScreenEntry entry : Platform.get().game().screens()) {
@@ -1567,10 +1466,6 @@ public final class ShatterConfigScreen extends UiScreen {
         return screens;
     }
 
-    /**
-     * The remembered title, else a readable name from the key ("generic_9x3" → "Generic 9x3", "PauseScreen" → "Pause").
-     * The player's inventory is always "Inventory": its screen is titled "Crafting" in vanilla.
-     */
     private static String screenTitle(GameInfo.ScreenEntry entry) {
         if (ScreenKeys.INVENTORY.equals(entry.key())) {
             return Text.translatable("container.inventory").getString();
@@ -1584,7 +1479,6 @@ public final class ShatterConfigScreen extends UiScreen {
         return name.isEmpty() ? key : Character.toUpperCase(name.charAt(0)) + name.substring(1);
     }
 
-    /** {open, close} for a screen key: "default", an effect name, or "off" (close: no effect). */
     private String[] readScreen(String key) {
         String open = DEFAULT;
         String close = DEFAULT;
@@ -1623,9 +1517,6 @@ public final class ShatterConfigScreen extends UiScreen {
         }
     }
 
-    // --- effects data ---
-
-    /** Built-in effects, the player's custom effects being edited, then those only in resource packs. */
     private List<String> effectIds() {
         List<String> ids = new ArrayList<>(Platform.get().effects().builtInIds());
         for (CustomEffectDef def : customs) {
@@ -1644,12 +1535,10 @@ public final class ShatterConfigScreen extends UiScreen {
         return ids;
     }
 
-    /** A loaded schema-2 effect, or null. */
     private static EffectCatalog.Data dataEffect(String id) {
         return Platform.get().effects().data(id);
     }
 
-    /** {@code id} if the editor knows that effect, else glass. */
     private String known(String id) {
         return effectIds().contains(id) ? id : EffectIds.GLASS;
     }
@@ -1706,9 +1595,6 @@ public final class ShatterConfigScreen extends UiScreen {
         return null;
     }
 
-    // --- custom effect actions ---
-
-    /** A new custom effect copied from {@code fromId}: a custom one as it is, a built-in one with the current values. */
     public CustomEffectDef createCustom(String fromId) {
         String from = known(fromId);
         CustomEffectDef source = custom(from);
@@ -1752,10 +1638,6 @@ public final class ShatterConfigScreen extends UiScreen {
         rebuild();
     }
 
-    /**
-     * "Copy diagnostics": versions, graphics, shader pack, the effects in use (as saved) and the mod's last warnings, to
-     * the clipboard; returns the text.
-     */
     public String copyDiagnostics() {
         ShatterConfig saved = ShatterConfig.get();
         String text = net.shattergui.debug.Diagnostics.build(Platform.get().game().diagnostics(), saved.openEffect,
@@ -1765,7 +1647,6 @@ public final class ShatterConfigScreen extends UiScreen {
         return text;
     }
 
-    /** Copies the selected effect's code (compressed JSON) to the clipboard; returns it. */
     public String exportSelected() {
         CustomEffectDef def = custom(selectedCustom);
         if (def == null) {
@@ -1777,12 +1658,10 @@ public final class ShatterConfigScreen extends UiScreen {
         return code;
     }
 
-    /** Reads an effect code from the clipboard, validates it and adds the effect (under a free id if taken). */
     public CustomEffectDef importClipboard() {
         String clipboard = Platform.get().desktop().clipboard();
         String json = FxFiles.fromCode(clipboard);
         if (json != null && FxParser.schemaOf(json) == FxLimits.SCHEMA) {
-            // A schema-2 effect: checked, saved as effects/<id>.json and loaded.
             FxProblems problems = Platform.get().effects().importJson(json);
             if (problems.hasErrors()) {
                 setStatus(tr("ui.shatter_gui.custom.import_failed", problems.errorSummary()), false);
@@ -1806,7 +1685,6 @@ public final class ShatterConfigScreen extends UiScreen {
         }
     }
 
-    /** Reads custom effects (both formats), packages and their textures again from disk and resource packs. */
     public void reloadEffects() {
         Platform.get().effects().reloadCustom();
         Platform.get().effects().reloadAll();
@@ -1816,7 +1694,6 @@ public final class ShatterConfigScreen extends UiScreen {
         rebuild();
     }
 
-    /** Copies a schema-2 effect's code (only effects without textures; others are shared as a package). */
     public String exportData(String id) {
         EffectCatalog.Data data = dataEffect(id);
         String code = data == null ? null : Platform.get().effects().toCode(data);
@@ -1829,7 +1706,6 @@ public final class ShatterConfigScreen extends UiScreen {
         return code;
     }
 
-    /** The schema-2 effects, with where they come from, and the messages of the last load. */
     private void buildDataSection() {
         Section card = section(tr("ui.shatter_gui.data.title"), tr("ui.shatter_gui.data.desc"));
         List<String> ids = new ArrayList<>(Platform.get().effects().dataIds());
@@ -1854,7 +1730,6 @@ public final class ShatterConfigScreen extends UiScreen {
         }
     }
 
-    /** What a schema-2 effect is made of (it is edited as a file; the editor shows and previews it). */
     private void addDataInfo(net.shattergui.ui.Container card, EffectCatalog.Data data) {
         card.add(new Label(tr("ui.shatter_gui.data.info", data.def().fracture.mode(), data.def().trigger.type(),
                 data.def().layers.size(), data.def().emitters.size(), data.def().duration / 20f), Label.Style.DIM));
@@ -1873,7 +1748,6 @@ public final class ShatterConfigScreen extends UiScreen {
         }
     }
 
-    /** {@code wanted} (made a valid id) if free, else with _2, _3, ... */
     private String freeId(String wanted) {
         String base = wanted.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_]", "_");
         if (base.isEmpty()) {
@@ -1894,9 +1768,6 @@ public final class ShatterConfigScreen extends UiScreen {
         statusTime = UiClock.time();
     }
 
-    // --- actions ---
-
-    /** Plays the chosen effect in the world with the unsaved settings on a snapshot of this screen, then comes back. */
     public void preview() {
         String id = switch (tab) {
             case CUSTOM -> selectedCustom != null ? selectedCustom : selectedEffect;
@@ -1937,7 +1808,6 @@ public final class ShatterConfigScreen extends UiScreen {
         showScreen(parent);
     }
 
-    /** Esc and Cancel: asks first if something changed. */
     @Override
     protected void escape() {
         if (computeDirty()) {
@@ -1948,7 +1818,6 @@ public final class ShatterConfigScreen extends UiScreen {
         }
     }
 
-    /** Closes without saving. */
     @Override
     public void onClose() {
         disposeEditor();

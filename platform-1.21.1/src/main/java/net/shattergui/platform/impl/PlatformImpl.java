@@ -54,10 +54,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
-/**
- * Minecraft 1.21.1 with Fabric. Found by core through {@code META-INF/services}. The services only forward to the
- * classes that do the work; nothing here decides anything.
- */
 public final class PlatformImpl implements Platform {
     private final ConfigPaths paths = () -> FabricLoader.getInstance().getConfigDir();
     private final Texts121 texts = new Texts121();
@@ -142,7 +138,6 @@ public final class PlatformImpl implements Platform {
         return game;
     }
 
-    /** 1.21.1's pictures hold ABGR pixels (26.1's take ARGB): the red and blue bytes swap. */
     private static int swapRedBlue(int color) {
         return (color & 0xFF00FF00) | ((color >> 16) & 0xFF) | ((color & 0xFF) << 16);
     }

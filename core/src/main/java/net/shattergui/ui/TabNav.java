@@ -8,10 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntConsumer;
 
-/**
- * Tabs with an animated indicator that glides to the chosen tab: vertical (side navigation, icon + label, or icons
- * only when {@link #compact}) or horizontal. Focused, the arrows move between tabs and Enter/Space opens one.
- */
 public class TabNav extends Widget {
     public record Tab(Icon icon, Text label, Text description) {
     }
@@ -48,7 +44,6 @@ public class TabNav extends Widget {
         return tabs.size();
     }
 
-    /** Opens tab {@code index} (as a click on it). */
     public void activate(int index) {
         if (index >= 0 && index < tabs.size()) {
             choose(index);
@@ -59,12 +54,10 @@ public class TabNav extends Widget {
         return selected;
     }
 
-    /** Centre of tab {@code i} in GUI coordinates. */
     public int[] center(int i) {
         return new int[]{itemX(i) + itemW() / 2, itemY(i) + itemSize / 2};
     }
 
-    /** Icons only (narrow screens). */
     public void compact(boolean value) {
         compact = value;
     }
@@ -104,7 +97,6 @@ public class TabNav extends Widget {
     protected void draw(Ui ui) {
         float pos = indicator.target(selected).tick();
         int iw = itemW();
-        // The moving highlight behind the chosen tab.
         if (vertical) {
             int iy = Math.round(y + pos * itemSize);
             Draw.roundRect(ui, x, iy, iw, itemSize, Theme.RADIUS_CONTROL, Theme.accentAlpha(0x30));
@@ -141,7 +133,6 @@ public class TabNav extends Widget {
             }
         }
         if (tip == null && !tabs.isEmpty()) {
-            // Not over a tab (or focused with the keyboard): the tab in focus, else the open one, explains itself.
             tip = tabs.get(Math.clamp(keyboard >= 0 ? keyboard : selected, 0, tabs.size() - 1));
         }
         if (tip != null) {
@@ -178,7 +169,6 @@ public class TabNav extends Widget {
         boolean prev = vertical ? key == Keys.KEY_UP : key == Keys.KEY_LEFT;
         if (next || prev) {
             keyboard = Math.floorMod(current + (next ? 1 : -1), tabs.size());
-            // Arrows open the tab right away, like most tab bars.
             choose(keyboard);
             return true;
         }

@@ -5,47 +5,25 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-/**
- * Runs a schema-2 effect, tick by tick, on the CPU, in the interface's plane: x right, y up, z towards the camera, in
- * blocks, with the interface centre at 0. Knows nothing about the game: a {@link Host} maps points, masks, particles
- * and sounds. The world adapter turns pieces into shards; the editor's preview draws the same simulation in 2D.
- *
- * <p>Timing: the effect lasts {@code duration} ticks. Each piece starts at {@code trigger · spread · duration} and
- * then runs for {@code duration · (1 − spread)} ticks; its own progress {@code p} goes 0..1 over that time. Layers act
- * during a window of {@code p} (or of the global progress), and their values are curves over that window.
- */
 public final class FxSimulation {
-    /** What the simulation needs from where it runs. */
     public interface Host {
-        /** A point in plane coordinates for SOURCE or PLAYER, or null if there is none. */
         float[] point(FxDef.Point.Kind kind);
 
-        /** Brightness 0..1 of a mask texture at GUI fractions (u right, v down), or NaN if it is not available. */
         float sampleMask(String texture, float u, float v);
 
-        /** Unit vector of world "down" in plane coordinates. */
         float[] gravity();
 
-        /** Whether a sprite texture is loaded (an emitter without it does nothing). */
         boolean hasSprite(String texture);
 
-        /** A vanilla particle, position and velocity in plane coordinates (blocks, blocks/tick). */
         void spawnParticle(FxDef.Emitter emitter, float x, float y, float z, float vx, float vy, float vz, float size);
 
         void playSound(String sound, float volume, float pitch);
 
-        /** Results of {@link #move}. */
         int MOVED = 0;
         int HIT = 1;
         int LANDED = 2;
         int SKIPPED = 3;
 
-        /**
-         * Moves a colliding piece by its velocity against the blocks: {@code s} = {x, y, z, vx, vy, vz} in plane
-         * coordinates, updated in place; {@code radius} — the piece's size (blocks). Returns {@link #MOVED} (nothing hit),
-         * {@link #HIT}, {@link #LANDED} or {@link #SKIPPED} (no checks left this tick: not moved). Without a world the
-         * piece just moves.
-         */
         default int move(float[] s, float radius, float bounce, float friction) {
             s[0] += s[3];
             s[1] += s[4];
@@ -53,25 +31,18 @@ public final class FxSimulation {
             return MOVED;
         }
 
-        /** 1 if the point (plane coordinates) is inside a block, 0 if not, -1 if not checked (no checks left). */
         default int inside(float x, float y, float z) {
             return 0;
         }
     }
 
-    /** Colliding pieces slower than this (blocks/tick) are not checked (nor moved) this tick. */
     static final float CHECK_SPEED = 0.003f;
-    /** A landed piece slower than this goes to sleep: no checks until something pushes it. */
     static final float SLEEP_SPEED = 0.01f;
-    /** A sleeping piece wakes when pushed faster than this (gravity into the ground does not count). */
     static final float WAKE_SPEED = 0.03f;
-    /** Ticks a resting piece fades over with rest "fade". */
     static final int REST_FADE_TICKS = 10;
 
-    /** A piece: where it was cut, when it starts, and its motion state (current and previous tick). */
     public static final class Piece {
         public final int index;
-        /** Centroid in GUI fractions. */
         public final float u;
         public final float v;
         public final boolean inRegion;
@@ -89,7 +60,6 @@ public final class FxSimulation {
         public float angVel;
         public float tilt;
         public float tiltVel;
-        /** The in-plane axis of the tumble (random per piece unless a spin layer fixes it). */
         public float tiltAxis;
         public float scale = 1f;
         public float px;
@@ -99,20 +69,14 @@ public final class FxSimulation {
         public float pTilt;
         public float pScale = 1f;
         public boolean finished;
-        /** Lies still on a block (collide): not moved and not checked until pushed. */
         public boolean asleep;
-        /** Half the piece's size in blocks (the farthest corner from its centre). */
         float radius;
-        /** Within the per-wave limit of colliding pieces. */
         boolean collides;
-        /** 0: not checked yet, 1: started inside a block (no collisions until it is out), 2: outside. */
         byte clip;
-        /** The tick it came to rest with rest "fade", or -1. */
         int restTime = -1;
         float maskValue = Float.NaN;
         private long launched;
         private float[][] pathStart;
-        /** Centre at rest (plane, blocks) and the offset a spin pivot gave it last (see {@code hinge}). */
         private final float restX;
         private final float restY;
         private float hx;
@@ -138,7 +102,6 @@ public final class FxSimulation {
         }
     }
 
-    /** An own sprite particle. */
     public static final class Sprite {
         public final FxDef.Emitter emitter;
         public float x;
@@ -153,7 +116,6 @@ public final class FxSimulation {
         public int age;
         public final int life;
         public final float rnd;
-        /** Ticks it has not moved in a row (see {@code Settle}). */
         public int stillTicks;
 
         Sprite(FxDef.Emitter emitter, float x, float y, float z, float vx, float vy, float vz, int life, float rnd) {
@@ -168,13 +130,11 @@ public final class FxSimulation {
             this.rnd = rnd;
         }
 
-        /** Progress through its life with the frame's partial tick, 0..1. */
         public float progress(float partialTick) {
             return Math.clamp((age - 1 + partialTick) / life, 0f, 1f);
         }
     }
 
-    /** Own sprites alive in all simulations (the global cap). Only touched from the client thread. */
     private static int liveSpritesTotal;
 
     public final FxDef def;
@@ -195,7 +155,6 @@ public final class FxSimulation {
     private final float[] edgeDir;
     private int time;
     private boolean emitting = true;
-    /** Counts towards the global sprite cap (the world); previews do not. */
     private boolean tracked = true;
     private int vanillaSpawned;
     private int spritePeak;
@@ -204,19 +163,9 @@ public final class FxSimulation {
     private float edgeY;
     private float pEdgeX;
     private float pEdgeY;
-    /** Played backwards (opening a screen): the forward run recorded, then shown from its end to its start. */
     private Recording recording;
-    /** Played backwards: the ticks the recorded run is shown in. */
     private int playback;
 
-    /**
-     * @param cut           the pieces from {@link Fracture#cut}
-     * @param width         interface width in blocks
-     * @param height        interface height in blocks
-     * @param durationScale from the settings (effect speed, reduce motion, preset)
-     * @param reduceMotion  calmer: half the pushes, a third of the spin
-     * @param particleScale from the settings (particle density, reduce motion, preset)
-     */
     public FxSimulation(FxDef def, List<Fracture.Piece> cut, float width, float height, Host host, Random random,
                         float durationScale, boolean reduceMotion, float particleScale) {
         this.def = def;
@@ -260,8 +209,6 @@ public final class FxSimulation {
         pEdgeY = edgeY;
     }
 
-    // --- setup ---
-
     private float[] triggerValues(List<Fracture.Piece> cut) {
         FxDef.Trigger trig = def.trigger;
         float[] values = new float[cut.size()];
@@ -285,12 +232,10 @@ public final class FxSimulation {
                     yield m;
                 }
                 case "random" -> random.nextFloat();
-                // Wave: position along the direction (GUI fractions), stretched to 0..1 below.
                 default -> c.cu() * trig.dirU() + c.cv() * trig.dirV();
             };
             values[i] = value;
         }
-        // Wave and radial give distances: stretch them over 0..1. Noise and masks are already 0..1 brightness.
         boolean normalize = switch (trig.type()) {
             case "wave", "radial", "noise" -> true;
             default -> false;
@@ -322,10 +267,6 @@ public final class FxSimulation {
         return values;
     }
 
-    /**
-     * Marks the pieces a collide layer acts on; over {@link FxLimits#MAX_COLLIDING_PIECES}, a random-looking but fixed
-     * choice of them (the rest move through blocks). Also measures each piece's size.
-     */
     private void chooseColliding() {
         List<Piece> candidates = new ArrayList<>();
         for (Piece p : pieces) {
@@ -349,7 +290,6 @@ public final class FxSimulation {
         }
     }
 
-    /** Pieces that collide with blocks (at most {@link FxLimits#MAX_COLLIDING_PIECES}). */
     public int collidingCount() {
         int n = 0;
         for (Piece p : pieces) {
@@ -389,14 +329,10 @@ public final class FxSimulation {
         };
     }
 
-    // --- points ---
-
-    /** GUI fractions of a point (SOURCE and PLAYER are not in the GUI: the centre). */
     private static float[] pointUv(FxDef.Point p) {
         return p.kind() == FxDef.Point.Kind.FIXED ? new float[]{p.u(), p.v()} : new float[]{0.5f, 0.5f};
     }
 
-    /** A point in plane coordinates. */
     public float[] point(FxDef.Point p) {
         switch (p.kind()) {
             case FIXED -> {
@@ -418,8 +354,6 @@ public final class FxSimulation {
             }
         }
     }
-
-    // --- running ---
 
     public int time() {
         return time;
@@ -445,18 +379,14 @@ public final class FxSimulation {
         return spritePeak;
     }
 
-    /** Still something to run or draw. */
     public boolean alive() {
-        // Backwards: one more tick at rest, gathered, before the real screen takes over (no jump).
         return time <= (recording != null ? playback + 1 : duration) || !sprites.isEmpty();
     }
 
-    /** Forward-run time the frame shows (backwards: counting down to 0 as the pieces land). */
     public float shownForward(float partialTick) {
         return shownTime(partialTick);
     }
 
-    /** Too many effects at once: no new particles, the existing ones die within {@code ticks}. */
     public void hurry(int ticks) {
         emitting = false;
         for (Sprite s : sprites) {
@@ -464,12 +394,10 @@ public final class FxSimulation {
         }
     }
 
-    /** For previews: its sprites do not count towards (or block on) the global cap. Call before ticking. */
     public void untracked() {
         tracked = false;
     }
 
-    /** Drops everything (the wave is gone): frees its share of the global sprite cap. */
     public void dispose() {
         if (tracked) {
             liveSpritesTotal = Math.max(0, liveSpritesTotal - sprites.size());
@@ -478,28 +406,14 @@ public final class FxSimulation {
         emitting = false;
     }
 
-    /**
-     * Stronger or calmer motion (a bundled effect's "intensity"): pushes, pulls, forces and drift are multiplied.
-     * Call before ticking.
-     */
     public void strength(float factor) {
         motionScale *= Math.clamp(factor, 0f, 4f);
     }
 
-    /**
-     * Plays the effect backwards: runs it to its end now (no particles, no sounds), recording every piece, and from
-     * then on each tick steps back through that recording, so the pieces gather into the interface. Call before
-     * ticking. The recording keeps at most about a million numbers (longer effects are sampled every few ticks and
-     * blended).
-     */
     public void reverse() {
         reverse(duration);
     }
 
-    /**
-     * As {@link #reverse()}, the recorded run shown in {@code ticks} ticks instead of its own length (an opening is
-     * quicker than the effect: the recording is sampled and blended, the motion stays the same).
-     */
     public void reverse(int ticks) {
         if (recording != null) {
             return;
@@ -530,17 +444,14 @@ public final class FxSimulation {
         return recording != null;
     }
 
-    /** Ticks the run lasts: its duration, or played backwards the length it is shown in plus the tick at rest. */
     public int length() {
         return recording != null ? playback + 1 : duration;
     }
 
-    /** Forward-run time shown at playback time {@code t} (ticks, may be fractional) when played backwards. */
     private float forwardAt(float t) {
         return Math.clamp(duration - t * duration / (float) playback, 0f, duration);
     }
 
-    /** The piece is over and gone (its shards can go); never while played backwards. */
     public boolean gone(Piece p) {
         return recording == null && p.finished && time > p.start + span + 1;
     }
@@ -570,7 +481,6 @@ public final class FxSimulation {
         pEdgeY = edgeY;
         updateEdge();
         float g = Math.clamp((float) time / duration, 0f, 1f);
-        // A different piece goes first each tick, so when block checks run out it is not always the same ones that wait.
         int n = pieces.size();
         int first = n == 0 ? 0 : Math.floorMod(time * 7919, n);
         for (int i = 0; i < n; i++) {
@@ -586,7 +496,6 @@ public final class FxSimulation {
         sounds(g);
     }
 
-    /** Every piece's motion at some ticks of the forward run, for playing it backwards. */
     private static final class Recording {
         private static final int FIELDS = 6;
         private static final int MAX_NUMBERS = 1_000_000;
@@ -605,7 +514,6 @@ public final class FxSimulation {
             edges = new float[size][];
         }
 
-        /** Called with rising ticks: 0 first, the last tick of the run last. */
         void store(int tick, List<Piece> pieces, float ex, float ey) {
             float[] f = new float[pieces.size() * FIELDS];
             for (int i = 0; i < pieces.size(); i++) {
@@ -627,7 +535,6 @@ public final class FxSimulation {
             count++;
         }
 
-        /** The stored frame at or before {@code tick}; {@code blend[0]} is how far towards the next one. */
         private int index(float tick, float[] blend) {
             int i = Math.clamp((int) (tick / stride), 0, count - 1);
             while (i > 0 && ticks[i] > tick) {
@@ -640,7 +547,6 @@ public final class FxSimulation {
             return i;
         }
 
-        /** Sets the pieces' current ({@code previous} false) or previous state to the forward run at {@code tick}. */
         void apply(float tick, List<Piece> pieces, boolean previous) {
             float[] blend = new float[1];
             int i = index(tick, blend);
@@ -756,7 +662,6 @@ public final class FxSimulation {
                     p.angVel = layer.value("speed").at(wt, r) * spinScale;
                     Value turn = layer.value("turn");
                     if (turn != null) {
-                        // An exact angle: a card turned edge-on is at exactly a quarter turn.
                         p.tilt = turn.at(wt, r);
                         p.tiltVel = 0;
                     } else {
@@ -809,10 +714,6 @@ public final class FxSimulation {
 
     private final float[] moveState = new float[6];
 
-    /**
-     * Moves a piece with block collisions. A sleeping piece stays put (gravity only presses it into the ground); a very
-     * slow one holds still without a check; a piece that started inside a block ignores blocks until it is out.
-     */
     private void moveColliding(Piece p, FxDef.Layer layer, float bounce, float friction) {
         if (p.asleep) {
             float[] down = host.gravity();
@@ -844,8 +745,6 @@ public final class FxSimulation {
         }
         float speed2 = p.vx * p.vx + p.vy * p.vy + p.vz * p.vz;
         if (speed2 < CHECK_SPEED * CHECK_SPEED) {
-            // Too slow to be worth a check: it holds still this tick and keeps its speed, so it is checked once it
-            // picks up pace (moving it unchecked could sink it into the ground it lies near).
             return;
         }
         float[] s = moveState;
@@ -908,11 +807,6 @@ public final class FxSimulation {
         p.vz += layer.value("out").at(wt, r) * motionScale;
     }
 
-    /**
-     * A tumble about an axis through a fixed point of the interface (door hinges) instead of the piece's centre: the
-     * centre swings round that axis, by the same rotation the piece itself turns by (spin about the normal after the
-     * tumble, as the renderers do). Kept as an offset so other motion (a path) adds to it.
-     */
     private void hinge(Piece p, float[] pivot) {
         float dx = p.restX - (pivot[0] - 0.5f) * width;
         float dy = p.restY - (0.5f - pivot[1]) * height;
@@ -928,11 +822,6 @@ public final class FxSimulation {
         p.hz = nz;
     }
 
-    /**
-     * A plane vector turned like a piece: tumble by {@code tilt} about the in-plane axis at {@code axis} radians from
-     * "right" towards "up", then spin by {@code angle} about the normal (z, towards the camera). Same as the world's
-     * {@code rotateAxis(angle, normal) · rotateAxis(tilt, axis)}.
-     */
     public static float[] rotate(float x, float y, float z, float axis, float tilt, float angle) {
         if (tilt != 0f) {
             float ax = (float) Math.cos(axis);
@@ -940,7 +829,6 @@ public final class FxSimulation {
             float c = (float) Math.cos(tilt);
             float s = (float) Math.sin(tilt);
             float dot = ax * x + ay * y;
-            // Rodrigues with the axis (ax, ay, 0): v cos + (a × v) sin + a (a · v)(1 − cos).
             float cx = ay * z;
             float cy = -ax * z;
             float cz = ax * y - ay * x;
@@ -962,7 +850,6 @@ public final class FxSimulation {
         return new float[]{x, y, z};
     }
 
-    /** Pull (and swirl) towards the point; returns the absorb scale (1 = none). */
     private float attract(Piece p, FxDef.Layer layer, float wt, float r) {
         float[] to = point(layer.point());
         float dx = to[0] - p.x;
@@ -994,7 +881,6 @@ public final class FxSimulation {
         }
         float progress = layer.value("progress").at(wt, r);
         float[] offset = spline(layer.path(), progress);
-        // Plus a pivot's swing (it is added on top, see hinge).
         float nx = p.pathStart[l][0] + offset[0] * width + p.hx;
         float ny = p.pathStart[l][1] - offset[1] * width + p.hy;
         float nz = p.pathStart[l][2] + offset[2] * width + p.hz;
@@ -1006,7 +892,6 @@ public final class FxSimulation {
         p.z = nz;
     }
 
-    /** Catmull-Rom through (0,0,0) and the given points, t 0..1. */
     static float[] spline(float[][] points, float t) {
         int n = points.length + 1;
         float[][] all = new float[n][];
@@ -1048,12 +933,9 @@ public final class FxSimulation {
         edgeY = edgeDir[1] * distance * f;
     }
 
-    /** The edge modifier's offset with the frame's partial tick: {x, y}. */
     public float[] edgeOffset(float partialTick) {
         return new float[]{pEdgeX + (edgeX - pEdgeX) * partialTick, pEdgeY + (edgeY - pEdgeY) * partialTick};
     }
-
-    // --- particles ---
 
     private void emit(float g) {
         for (int e = 0; e < def.emitters.size(); e++) {
@@ -1230,7 +1112,6 @@ public final class FxSimulation {
                 continue;
             }
             FxDef.Sound sound = def.sounds.get(i);
-            // Backwards, an end sound comes first and a start sound last.
             boolean back = recording != null;
             boolean now = switch (sound.at()) {
                 case "start" -> back ? time >= playback : time == 1;
@@ -1244,15 +1125,11 @@ public final class FxSimulation {
         }
     }
 
-    // --- appearance (with the frame's partial tick) ---
-
-    /** The time the frame shows, in ticks of the forward run (backwards: counting down from the end). */
     private float shownTime(float partialTick) {
         float t = time - 1 + partialTick;
         return recording != null ? forwardAt(t) : t;
     }
 
-    /** The piece's own progress, 0..1 (0 before it starts). */
     public float progress(Piece p, float partialTick) {
         return Math.clamp((shownTime(partialTick) - p.start) / span, 0f, 1f);
     }
@@ -1261,16 +1138,11 @@ public final class FxSimulation {
         return Math.clamp(shownTime(partialTick) / duration, 0f, 1f);
     }
 
-    /**
-     * How far the piece's picture is reduced to the colour at its centre (coarse pixels), 0..1: the mosaic over the
-     * whole effect's time.
-     */
     public float mosaic(float partialTick) {
         Value m = def.appearance.mosaic();
         return m.isConstant() && m.at(0, 0) == 0 ? 0 : m.at(globalProgress(partialTick), 0.5f);
     }
 
-    /** ARGB of the piece this frame (alpha includes the mask); 0 alpha when finished. */
     public int color(Piece p, float partialTick) {
         if (recording == null ? p.finished && time - 1 + partialTick >= p.start + span
                 : shownTime(partialTick) >= p.start + span) {
@@ -1280,7 +1152,6 @@ public final class FxSimulation {
         float progress = progress(p, partialTick);
         int rgb = look.color().at(look.colorGlobal() ? globalProgress(partialTick) : progress);
         if (!look.palette().isEmpty()) {
-            // The piece takes its colour as it starts moving (over the first 15 % of its time), not before.
             int tinted = multiply(rgb, look.palette().get((int) (hash(p.index * 613 + 29) * look.palette().size())));
             rgb = Gradient.lerp(rgb, tinted, Math.clamp(progress / 0.15f, 0f, 1f));
         }
@@ -1297,7 +1168,6 @@ public final class FxSimulation {
         return alpha << 24 | r << 16 | g << 8 | bl;
     }
 
-    /** Glow strength 0..1 and its colour (ARGB). */
     public float emissive(Piece p, float partialTick) {
         return def.appearance.emissive().at(progress(p, partialTick), p.rnd);
     }
@@ -1306,14 +1176,12 @@ public final class FxSimulation {
         return def.appearance.emissiveColor().at(progress(p, partialTick));
     }
 
-    /** Strength 0..1 of overlay {@code k} on this piece. */
     public float overlay(Piece p, int k, float partialTick) {
         float progress = progress(p, partialTick);
         return def.appearance.overlays().get(k).opacity().at(progress, p.rnd) * maskFactor(p, progress)
                 * restFactor(p, partialTick);
     }
 
-    /** 1, or for a piece that came to rest with rest "fade", down to 0 over {@link #REST_FADE_TICKS}. */
     private float restFactor(Piece p, float partialTick) {
         if (p.restTime < 0) {
             return 1f;
@@ -1331,12 +1199,9 @@ public final class FxSimulation {
         return Math.clamp((p.maskValue - th * (1 + s)) / s + 1, 0f, 1f);
     }
 
-    /** Scale with the partial tick. */
     public float scale(Piece p, float partialTick) {
         return p.pScale + (p.scale - p.pScale) * partialTick;
     }
-
-    // --- noise ---
 
     static float hash(int n) {
         int h = n * 0x27d4eb2d;
@@ -1350,7 +1215,6 @@ public final class FxSimulation {
         return hash(x * 73856093 ^ y * 19349663 ^ seed * 83492791);
     }
 
-    /** Smooth 2D value noise, 0..1. */
     static float noise2(float x, float y, int seed) {
         int xi = (int) Math.floor(x);
         int yi = (int) Math.floor(y);
@@ -1369,7 +1233,6 @@ public final class FxSimulation {
         return noise2(x, y, seed) * 0.6f + noise2(x * 2.1f, y * 2.1f, seed + 1) * 0.3f + noise2(x * 4.3f, y * 4.3f, seed + 2) * 0.1f;
     }
 
-    /** Smooth 1D noise, 0..1. */
     static float noise1(float x, int seed) {
         int xi = (int) Math.floor(x);
         float xf = x - xi;
@@ -1377,7 +1240,6 @@ public final class FxSimulation {
         return hash2(xi, seed, 7) + (hash2(xi + 1, seed, 7) - hash2(xi, seed, 7)) * u;
     }
 
-    /** Global count of own sprites (for tests). */
     public static int liveSpritesTotal() {
         return liveSpritesTotal;
     }

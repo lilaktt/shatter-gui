@@ -8,7 +8,6 @@ import com.mojang.blaze3d.vertex.VertexSorting;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
 
-/** Draws one render type's geometry right now (26.1: {@code RenderType#draw}). */
 final class ImmediateDraw {
     private static ByteBufferBuilder buffer;
 
@@ -26,17 +25,14 @@ final class ImmediateDraw {
             return;
         }
         if (type.sortOnUpload()) {
-            // Camera-relative vertices: the camera is the origin.
             mesh.sortQuads(buffer, VertexSorting.DISTANCE_TO_ORIGIN);
         }
         type.draw(mesh);
     }
 
-    /** Once per frame (nothing to do here: the buffer is reused as it is). */
     static void endFrame() {
     }
 
-    /** After a failure while vertices were being written. */
     static void discard() {
         if (buffer != null) {
             buffer.discard();

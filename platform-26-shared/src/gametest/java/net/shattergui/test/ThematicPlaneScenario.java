@@ -26,13 +26,6 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-/**
- * Thematic mode ({@code -PtestOnly=thematic}; with {@code -PspatialGui=1.8} in the first and the third person): furnace,
- * chest, anvil, crafting table, enchanting table and inventory close with their thematic effect, once as shipped
- * (burn, fly, explosion, glass, runes, the general effect) and once with fly and pop for some of them. From the second
- * frame after the close on, Spatial GUI's plane is never drawn — only our effect — and no frame shows the interface
- * twice; the effect runs (draws) and ends.
- */
 final class ThematicPlaneScenario {
     private ThematicPlaneScenario() {
     }
@@ -93,7 +86,6 @@ final class ThematicPlaneScenario {
         long shown = context.computeOnClient(mc -> FrameAudit.next());
         boolean onPlane = context.computeOnClient(mc -> net.shattergui.compat.spatial.SpatialGuiCompat.isShowing(Mc26.screen()));
         context.waitTicks(20);
-        // The count itself works: while the screen is open it is on screen exactly once, as the plane on Spatial GUI.
         for (FrameAudit.Frame f : context.computeOnClient(mc -> FrameAudit.since(shown))) {
             if (f.instances() != 1 || f.planeVisible() != onPlane) {
                 check.accept(false, "thematic " + name + ": open screen counted wrong: " + f + " (on plane " + onPlane + ")");
@@ -113,7 +105,6 @@ final class ThematicPlaneScenario {
         for (int i = 0; i < frames.size(); i++) {
             FrameAudit.Frame f = frames.get(i);
             drawn += f.closes();
-            // Frame 0 and 1: Spatial GUI may still draw its last frame before the shards replace it.
             if (bad == null && (i >= 2 && f.planeVisible() || f.instances() > 1)) {
                 bad = "frame " + i + ": " + f;
             }

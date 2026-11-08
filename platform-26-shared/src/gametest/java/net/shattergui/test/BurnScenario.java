@@ -12,17 +12,10 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * The burn effect over its whole life: screenshots at the start of the fire front, in the middle, when it is almost
- * burnt, during the smoke and after, plus checks that only smoke is left after the burn and nothing after the smoke.
- */
 final class BurnScenario {
     private BurnScenario() {
     }
 
-    /**
-     * @param shot takes a screenshot with the given name (differs with and without Sodium)
-     */
     static void run(ClientGameTestContext context, BiConsumer<Boolean, String> check, Consumer<String> shot,
                     String name, Supplier<Screen> screen) {
         ShatterConfig config = ShatterConfig.get();
@@ -36,7 +29,6 @@ final class BurnScenario {
             shot.accept(name + "_before");
             context.runOnClient(mc -> Mc26.setScreen(null));
 
-            // Fire front: just started, a third, two thirds, nearly done (cells take ~17 ticks to burn out).
             int[] burnShots = {3, burnTicks / 3, burnTicks * 2 / 3, burnTicks + 8};
             int waited = 0;
             int shardsMidway = -1;
@@ -49,7 +41,6 @@ final class BurnScenario {
                 }
             }
 
-            // After every cell has burnt (front + 17 ticks per cell): no shards, only the smoke keeps the wave alive.
             int smokeTick = burnTicks + 30;
             context.waitTicks(smokeTick - waited);
             waited = smokeTick;
@@ -62,7 +53,6 @@ final class BurnScenario {
             waited = lateSmokeTick;
             shot.accept(name + "_smoke_t" + lateSmokeTick);
 
-            // The wave stays alive while any of its particles does, so no wave here also means no smoke left.
             int endTick = burnTicks + 17 + smokeTicks + 5;
             context.waitTicks(endTick - waited);
             int wavesAfterSmoke = context.computeOnClient(mc -> ShardManager.waveCount());

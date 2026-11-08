@@ -20,11 +20,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * The vortex: screenshots across the effect for each target point (GUI centre, player, a real chest opened with the use
- * key), checks that the shards are pulled together (and into the chest for "source"), that everything is gone after
- * the effect, and that reduceMotion makes it shorter.
- */
 final class VortexScenario {
     private static final int[] SHOTS = {1, 3, 6, 10, 14, 18, 20, 22, 24, 25, 26, 28};
 
@@ -49,7 +44,6 @@ final class VortexScenario {
                 closeAndFollow(context, check, shot, name + "_" + mode, config, null);
             }
 
-            // Source: a chest opened with the use key; the shards end up in it.
             config.set(Params.VORTEX_TARGET, "source");
             BlockPos feet = context.computeOnClient(mc -> mc.player.blockPosition());
             chest = feet.offset(1, 0, 3);
@@ -63,7 +57,6 @@ final class VortexScenario {
             closeAndFollow(context, check, shot, name + "_source", config,
                     new Vector3d(chest.getX() + 0.5, chest.getY() + 0.5, chest.getZ() + 0.5));
 
-            // reduceMotion: shorter.
             config.set(Params.VORTEX_TARGET, "center");
             config.reduceMotion = true;
             context.setScreen(furnace);
@@ -88,7 +81,6 @@ final class VortexScenario {
         }
     }
 
-    /** The removed flashIntensity/ringParticles in an old config and an effect file: read fine, dropped silently. */
     private static void retiredKeys(BiConsumer<Boolean, String> check, String name) {
         ShatterConfig old = ShatterConfig.parse("{\"effect\":\"vortex\",\"effects\":{\"vortex\":{\"params\":"
                 + "{\"flashIntensity\":0.4,\"ringParticles\":16,\"spiralTurns\":3}}}}");
@@ -107,7 +99,6 @@ final class VortexScenario {
 
     private static void closeAndFollow(ClientGameTestContext context, BiConsumer<Boolean, String> check,
                                        Consumer<String> shot, String name, ShatterConfig config, Vector3d into) {
-        // Ticks counted on the client clock (the level clock runs on the server thread): a screenshot may itself take ticks (the shader runs wait 2 per shot).
         long start = context.computeOnClient(mc -> McTest.guiTicks(mc));
         context.runOnClient(mc -> Mc26.setScreen(null));
         String kind = null;
@@ -128,7 +119,6 @@ final class VortexScenario {
             if (tick == 3) {
                 startSpread = spread[0];
             } else if (tick == 22 && spread[0] >= 0) {
-                // Most shards are near the end of their flight (the whole vortex takes about vortexDuration = 24).
                 lateSpread = spread[0];
                 lateCentre = new Vector3d(spread[1], spread[2], spread[3]);
                 lateAge = (int) spread[4];
@@ -153,7 +143,6 @@ final class VortexScenario {
         context.waitTicks(10);
     }
 
-    /** {mean distance of live vortex shards from their centre, centre x, y, z}, or -1 without shards. */
     private static double[] spread() {
         if (ShardManager.batches().isEmpty()) {
             return new double[]{-1, 0, 0, 0, -1};

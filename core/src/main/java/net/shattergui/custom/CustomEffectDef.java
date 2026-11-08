@@ -28,28 +28,13 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-/**
- * A player's effect: a built-in base effect plus changed parameters, optional extra particles and sounds. Pure data:
- * no code, no class names; particles and sounds are vanilla registry ids. Everything is validated and clamped when
- * read; unknown particles and sounds are skipped with a warning; anything else wrong makes the whole file invalid.
- *
- * <pre>
- * { "schema": 1, "id": "ember_swirl", "name": "Ember swirl", "base": "vortex",
- *   "params":    { "spiralTurns": 3, "vortexDuration": 30 },
- *   "particles": [ { "particle": "minecraft:flame", "density": 0.5, "stage": "during" } ],
- *   "sounds":    [ { "sound": "minecraft:block.fire.extinguish", "volume": 0.5, "pitch": 1.2, "moment": "end" } ] }
- * </pre>
- */
 public final class CustomEffectDef implements ParamStore {
     public static final int SCHEMA = 1;
-    /** Built-in effects a custom effect can be based on (not on another custom effect). */
     public static final List<String> BASES = List.of("glass", "burn", "dissolve", "fly", "vortex");
-    /** Hard limits, also for files from resource packs. */
     public static final int MAX_PARTICLES = 8;
     public static final int MAX_SOUNDS = 8;
     public static final float MAX_DENSITY = 10f;
     public static final int MAX_NAME = 48;
-    /** Import: longest accepted code, and largest unpacked JSON. */
     public static final int MAX_CODE_LENGTH = 16_384;
     private static final int MAX_JSON_BYTES = 65_536;
     private static final Pattern ID = Pattern.compile("[a-z0-9_]{1,32}");
@@ -72,18 +57,12 @@ public final class CustomEffectDef implements ParamStore {
         }
     }
 
-    /**
-     * A particle of the effect: {@code particle} its id as the game writes it, {@code path} the id without the
-     * namespace, {@code type} the game's particle type ({@link ParticleSpawner.Simple#type}).
-     */
     public record ParticleSpec(String particle, String path, Object type, float density, Stage stage) {
     }
 
-    /** A sound of the effect: {@code sound} its id as the game writes it. */
     public record SoundSpec(String sound, float volume, float pitch, Stage moment) {
     }
 
-    /** Thrown for a file that cannot be used at all. */
     public static final class InvalidEffectException extends Exception {
         public InvalidEffectException(String message) {
             super(message);
@@ -127,7 +106,6 @@ public final class CustomEffectDef implements ParamStore {
         return sounds;
     }
 
-    /** Renames (display name only), trimmed and cut to {@link #MAX_NAME}; blank keeps the old name. */
     public void rename(String newName) {
         String clean = clean(newName);
         if (!clean.isEmpty()) {
@@ -150,10 +128,6 @@ public final class CustomEffectDef implements ParamStore {
         return value != null ? (T) value : param.def();
     }
 
-    /**
-     * Sets an override of the base effect's parameter. Kept even when equal to the registry default: a parameter the
-     * effect does not set comes from the player's settings for the base effect, which may differ.
-     */
     @Override
     public <T> T set(Param<T> param, Object raw) {
         T value = param.sanitize(raw);
@@ -165,7 +139,6 @@ public final class CustomEffectDef implements ParamStore {
         return params.containsKey(param);
     }
 
-    /** Drops the override: the parameter comes from the player's settings for the base effect again. */
     public void remove(Param<?> param) {
         params.remove(param);
     }
@@ -174,7 +147,6 @@ public final class CustomEffectDef implements ParamStore {
         params.clear();
     }
 
-    /** A deep copy with another id and name (cloning, importing under a free id). */
     public CustomEffectDef copy(String newId, String newName) {
         CustomEffectDef copy = new CustomEffectDef(newId, newName, base);
         copy.params.putAll(params);
@@ -182,8 +154,6 @@ public final class CustomEffectDef implements ParamStore {
         copy.sounds.addAll(sounds);
         return copy;
     }
-
-    // --- reading ---
 
     public static CustomEffectDef parse(String json, String origin) throws InvalidEffectException {
         JsonElement root;
@@ -257,8 +227,6 @@ public final class CustomEffectDef implements ParamStore {
         return def;
     }
 
-    // --- writing ---
-
     public JsonObject toJson() {
         JsonObject json = new JsonObject();
         json.addProperty("schema", SCHEMA);
@@ -303,7 +271,6 @@ public final class CustomEffectDef implements ParamStore {
         return GSON.toJson(toJson());
     }
 
-    /** Export code: gzip-compressed JSON in base64. */
     public String toCode() {
         try {
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -316,7 +283,6 @@ public final class CustomEffectDef implements ParamStore {
         }
     }
 
-    /** Import code → effect, with every check of {@link #parse} plus size limits on the code and the unpacked JSON. */
     public static CustomEffectDef fromCode(String code) throws InvalidEffectException {
         if (code == null || code.isBlank()) {
             throw new InvalidEffectException("empty");
@@ -341,8 +307,6 @@ public final class CustomEffectDef implements ParamStore {
             throw new InvalidEffectException("not a Shatter GUI effect code");
         }
     }
-
-    // --- helpers ---
 
     @SuppressWarnings("unchecked")
     private static <T> JsonElement toJson(Param<T> param, Object value) {

@@ -12,20 +12,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntPredicate;
 
-/**
- * Frames read back at full resolution (unlike {@link FrameGrab}, which averages cells): for checks that count single
- * pixels or need sub-pixel positions. The last drawn frame of the main target ({@link Screenshot#takeScreenshot}, which
- * works with Iris too); requests return at once, the picture arrives a frame or two later ({@link #get}).
- */
 final class FullFrame {
-    /** ARGB per pixel, rows from the top. */
     record Image(int width, int height, int[] argb) {
         int at(int x, int y) {
             return argb[y * width + x];
         }
     }
 
-    /** Pixels that passed a test: how many and their mean position (pixel centres, from the top left). */
     record Blob(int count, double x, double y) {
     }
 
@@ -38,18 +31,12 @@ final class FullFrame {
         context.runOnClient(mc -> grab(mc, name, save));
     }
 
-    /** On the client thread: reads back the frame drawn last. */
     static void grab(Minecraft mc, String name, boolean save) {
         grab(mc, name, save, null);
     }
 
-    /** Results of {@link #grab} with an analysis: only what the analysis returned is kept, not the frame. */
     private static final Map<String, Object> ANALYSES = new ConcurrentHashMap<>();
 
-    /**
-     * On the client thread: reads back the frame drawn last; with {@code analyze} the frame is analysed as soon as it
-     * arrives and dropped (many frames would otherwise sit in memory, 8 MB each at 1920x1080), see {@link #analysis}.
-     */
     static void grab(Minecraft mc, String name, boolean save, java.util.function.Function<Image, Object> analyze) {
         RESULTS.remove(name);
         ANALYSES.remove(name);
@@ -83,7 +70,6 @@ final class FullFrame {
         });
     }
 
-    /** The frame requested as {@code name}, waiting for it up to 60 ticks; null if it never came. */
     static Image get(ClientGameTestContext context, String name) {
         for (int i = 0; i < 60 && !RESULTS.containsKey(name); i++) {
             context.waitTick();
@@ -91,7 +77,6 @@ final class FullFrame {
         return RESULTS.remove(name);
     }
 
-    /** What the analysis of frame {@code name} returned, waiting for it up to 60 ticks; null if it never came. */
     static Object analysis(ClientGameTestContext context, String name) {
         for (int i = 0; i < 60 && !ANALYSES.containsKey(name); i++) {
             context.waitTick();
@@ -111,10 +96,6 @@ final class FullFrame {
         return c & 0xFF;
     }
 
-    /**
-     * The magenta of the test screen ({@code 0xFFFF00FF}) as shards show it: shaded down to 0.4 by their facing and by the
-     * light, so red and blue alike and well above green.
-     */
     static boolean magenta(int c) {
         int r = r(c);
         int g = g(c);
@@ -124,7 +105,6 @@ final class FullFrame {
         return lo >= 45 && g * 2 < lo && hi - lo <= hi * 0.35;
     }
 
-    /** A red block (red concrete or wool), lit or shaded or under a shader pack: red well above green and blue. */
     static boolean red(int c) {
         int r = r(c);
         int g = g(c);
@@ -132,7 +112,6 @@ final class FullFrame {
         return r >= 60 && g * 2 < r && b * 2 < r;
     }
 
-    /** The pixels of {@code area} (fractions x0, y0, x1, y1) that pass {@code test}. */
     static Blob blob(Image image, IntPredicate test, double[] area) {
         int x0 = Math.max(0, (int) Math.floor(area[0] * image.width));
         int y0 = Math.max(0, (int) Math.floor(area[1] * image.height));
@@ -153,10 +132,6 @@ final class FullFrame {
         return count == 0 ? new Blob(0, Double.NaN, Double.NaN) : new Blob((int) count, sx / count, sy / count);
     }
 
-    /**
-     * Mean position of the pixels of {@code area} weighted by {@code weight} (0–1): a soft edge, so a slight change of
-     * brightness or a pixel more or less at the border moves it far less than a hard colour test.
-     */
     static Blob weighted(Image image, java.util.function.IntToDoubleFunction weight, double[] area) {
         int x0 = Math.max(0, (int) Math.floor(area[0] * image.width));
         int y0 = Math.max(0, (int) Math.floor(area[1] * image.height));
@@ -180,7 +155,6 @@ final class FullFrame {
         return sum <= 0 ? new Blob(0, Double.NaN, Double.NaN) : new Blob(count, sx / sum, sy / sum);
     }
 
-    /** How magenta a pixel is, 0–1 (red and blue alike, both well above green). */
     static double magentaWeight(int c) {
         int r = r(c);
         int g = g(c);
@@ -192,14 +166,12 @@ final class FullFrame {
         return strength * balance;
     }
 
-    /** How red a pixel is, 0–1 (red well above green and blue). */
     static double redWeight(int c) {
         int r = r(c);
         int other = Math.max(g(c), b(c));
         return Math.clamp((r - other * 1.6 - 15) / 50.0, 0, 1);
     }
 
-    /** The pixels within {@code radius} of a point that pass {@code test}. */
     static Blob blobAround(Image image, IntPredicate test, double cx, double cy, double radius) {
         long count = 0;
         double sx = 0;
@@ -222,10 +194,6 @@ final class FullFrame {
         return count == 0 ? new Blob(0, Double.NaN, Double.NaN) : new Blob((int) count, sx / count, sy / count);
     }
 
-    /**
-     * Of the pixels of {@code area} where {@code where} holds in either frame (all pixels if null), the share whose
-     * colour differs by more than {@code threshold} in some channel; and the largest difference.
-     */
     static double[] changed(Image a, Image b, int threshold, double[] area, IntPredicate where) {
         if (a == null || b == null || a.width != b.width || a.height != b.height) {
             return new double[]{Double.NaN, Double.NaN, 0};

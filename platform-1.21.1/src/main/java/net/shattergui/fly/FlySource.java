@@ -13,18 +13,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.phys.Vec3;
 
-/** The block or entity a screen was opened from: where the GUI flies out of and back into. */
 public abstract sealed class FlySource {
-    /** Where the GUI flies to and from, now. */
     public abstract Vec3 point();
 
-    /** False once the block is gone or the entity is dead or unloaded. */
     public abstract boolean isValid();
 
-    /** For the profile log. */
     public abstract String describe();
 
-    /** For thematic rules: "block:<id>" or "entity:<id>". */
     public abstract String themeKey();
 
     public static FlySource of(Level level, BlockPos pos) {
@@ -36,7 +31,6 @@ public abstract sealed class FlySource {
     }
 
     static final class BlockSource extends FlySource {
-        /** How high up the block a chest's lid is (the chest model is 14/16 high). */
         private static final double CHEST_LID = 0.8;
 
         private final Level level;
@@ -56,7 +50,6 @@ public abstract sealed class FlySource {
             if (!(state.getBlock() instanceof AbstractChestBlock<?>)) {
                 return center;
             }
-            // Under the lid; for a double chest, between the two halves.
             Vec3 lid = new Vec3(center.x, pos.getY() + CHEST_LID, center.z);
             if (state.hasProperty(ChestBlock.TYPE) && state.getValue(ChestBlock.TYPE) != ChestType.SINGLE) {
                 Direction other = ChestBlock.getConnectedDirection(state);

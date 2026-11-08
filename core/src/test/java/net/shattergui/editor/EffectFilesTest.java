@@ -24,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Saving (atomic, renames), export to a package, import back (checks, id and texture clashes), broken packages. */
 class EffectFilesTest {
     @TempDir
     Path dir;
@@ -33,7 +32,6 @@ class EffectFilesTest {
         return new EffectFiles(dir.resolve("effects"), dir.resolve("textures"), dir.resolve("exports"), dir.resolve("packages"));
     }
 
-    /** A valid PNG of the given size (one grey row repeated), made without any image library. */
     static byte[] png(int w, int h) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         out.write(new byte[]{(byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'});
@@ -91,13 +89,11 @@ class EffectFilesTest {
         files.save("two", Templates.json("glass").replace("glass_fx", "two"), "one");
         assertFalse(files.exists("one"));
         assertEquals(List.of("two"), files.ids());
-        // No temporary files are left behind.
         try (var list = Files.list(files.effects)) {
             assertEquals(1, list.count());
         }
         assertTrue(files.delete("two"));
         assertTrue(files.ids().isEmpty());
-        // Schema-1 files in the folder are not schema-2 effects.
         Files.writeString(files.effects.resolve("old.json"), "{\"schema\": 1, \"id\": \"old\", \"base\": \"glass\"}");
         assertTrue(files.ids().isEmpty());
     }
@@ -117,7 +113,6 @@ class EffectFilesTest {
         Map<String, byte[]> inside = FxPackage.read(pkg);
         assertTrue(inside.containsKey("effect.json"));
         assertArrayEquals(spiral, inside.get("textures/spiral.png"));
-        // Delete the effect and a texture, import back.
         files.delete("masked");
         Files.delete(files.textures.resolve("spiral.png"));
         EffectFiles.ImportResult result = files.importPackage(pkg, id -> false);
@@ -126,7 +121,6 @@ class EffectFilesTest {
         assertTrue(files.exists("masked"));
         assertArrayEquals(spiral, Files.readAllBytes(files.textures.resolve("spiral.png")));
         assertEquals(List.of(pkg), files.importable());
-        // Import again: the id is taken, it comes in under a free one.
         EffectFiles.ImportResult again = files.importPackage(pkg, id -> false);
         assertEquals("masked_2", again.id());
         assertTrue(files.read("masked_2").contains("\"masked_2\""));
@@ -139,7 +133,6 @@ class EffectFilesTest {
         Files.write(files.textures.resolve("spiral.png"), png(64, 64));
         Files.write(files.textures.resolve("spark.png"), png(16, 16));
         Path pkg = files.export("masked", MASKED, Set.of("spiral", "spark"), new ArrayList<>());
-        // A different picture now has the same name.
         Files.write(files.textures.resolve("spiral.png"), png(32, 32));
         EffectFiles.ImportResult result = files.importPackage(pkg, "masked"::equals);
         assertTrue(result.ok(), result.messages().toString());
@@ -153,27 +146,22 @@ class EffectFilesTest {
     void brokenPackagesAreRefused() throws IOException {
         EffectFiles files = files();
         Files.createDirectories(files.exports);
-        // Not a ZIP.
         Path junk = files.exports.resolve("junk.shatterfx");
         Files.write(junk, new byte[]{1, 2, 3, 4});
         assertFalse(files.importPackage(junk, id -> false).ok());
-        // A broken effect inside.
         Path bad = files.exports.resolve("bad.shatterfx");
         FxPackage.write(bad, "{\"schema\": 2, \"id\": \"bad\", \"layers\": [{\"module\": \"nope\"}]}", Map.of());
         EffectFiles.ImportResult result = files.importPackage(bad, id -> false);
         assertFalse(result.ok());
         assertTrue(result.messages().stream().anyMatch(m -> m.contains("layers[0].module")), result.messages().toString());
-        // A sprite too large.
         Path big = files.exports.resolve("big.shatterfx");
         FxPackage.write(big, MASKED, Map.of("spiral", png(64, 64), "spark", png(300, 20)));
         result = files.importPackage(big, id -> false);
         assertFalse(result.ok());
         assertTrue(result.messages().stream().anyMatch(m -> m.contains("spark") && m.contains("256")), result.messages().toString());
-        // Not a PNG.
         Path fake = files.exports.resolve("fake.shatterfx");
         FxPackage.write(fake, MASKED, Map.of("spiral", "hello".getBytes(StandardCharsets.UTF_8)));
         assertFalse(files.importPackage(fake, id -> false).ok());
-        // A path that leaves the package.
         Path evil = files.exports.resolve("evil.shatterfx");
         try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(evil))) {
             zip.putNextEntry(new ZipEntry("../effect.json"));
@@ -181,7 +169,6 @@ class EffectFilesTest {
             zip.closeEntry();
         }
         assertFalse(files.importPackage(evil, id -> false).ok());
-        // Nothing was written by any of them.
         assertTrue(files.ids().isEmpty());
         assertTrue(files.textureNames().isEmpty());
     }

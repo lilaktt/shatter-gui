@@ -17,27 +17,15 @@ import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Frames of the shipped effects, drawn here the way the game and the preview draw them: the interface one block in
- * front of the camera, every corner turned in 3D ({@link FxSimulation#rotate}) and divided by its depth. Every pair of
- * effects must look different at 20, 40, 60 and 80 % of their time: by the opacity mask (its bounding box and how much
- * of it differs) or by the picture itself (a pattern of the interface tinted by the effect's colour). Two effects that
- * nearly match in all four moments ({@link #SAME}) fail the test.
- *
- * <p>Set the environment variable {@code SHATTER_FRAMES_DIR} to a folder of effect files to get the same table for
- * them too (with the old preview's projection: a tumble squeezed the width by its cosine, perspective from the centre).
- */
 class EffectFramesTest {
     static final int W = 120;
     static final int H = 80;
-    /** Plane area shown: x in ±0.9, y in ±0.6 blocks at the interface's depth. */
     private static final float VIEW_X = 0.9f;
     private static final float VIEW_Y = 0.6f;
     private static final float WIDTH = 0.9f;
     private static final float HEIGHT = 0.85f;
     static final float[] MOMENTS = {0.2f, 0.4f, 0.6f, 0.8f};
 
-    /** A frame: opacity 0..1 and brightness of the tinted pattern 0..1 per pixel. */
     record Frame(float[] alpha, float[] picture) {
         int[] box() {
             int x0 = W;
@@ -58,21 +46,12 @@ class EffectFramesTest {
         }
     }
 
-    /**
-     * How two effects differ at one moment, each 0..1: the masks (1 − intersection over union), the pictures (mean
-     * difference over the union), and the bounding boxes (largest change of an edge or of the size, over the larger
-     * box). Two empty frames do not differ.
-     */
     record Difference(float mask, float picture, float box) {
         float score() {
             return Math.max(mask, Math.max(picture, box));
         }
     }
 
-    /**
-     * Below this on average over the moments two effects count as nearly the same. The closest shipped pair is at
-     * about 0.4; a renamed copy is at 0.
-     */
     static final float SAME = 0.3f;
 
     private static String json(String id) throws IOException {
@@ -119,7 +98,6 @@ class EffectFramesTest {
                     float y;
                     float z;
                     if (legacy) {
-                        // The old preview: the tumble only squeezed the width, depth from the piece centre.
                         float fx = (float) Math.cos(p.tilt);
                         float cos = (float) Math.cos(p.angle);
                         float sin = (float) Math.sin(p.angle);
@@ -144,7 +122,6 @@ class EffectFramesTest {
         return new Frame(alpha, picture);
     }
 
-    /** Rasterises one triangle: opacity over what is there, and a checker pattern of the interface's uv. */
     private static void fill(float[] sx, float[] sy, float[] uv, int i, float a, float shade, float[] alpha,
                              float[] picture) {
         int x0 = Math.max(0, (int) Math.floor(Math.min(sx[0], Math.min(sx[1], sx[2]))));
@@ -167,7 +144,6 @@ class EffectFramesTest {
                 }
                 float u = w0 * uv[i] + w1 * uv[i + 2] + w2 * uv[i + 4];
                 float v = w0 * uv[i + 1] + w1 * uv[i + 3] + w2 * uv[i + 5];
-                // A pattern that tells the halves and quarters of the interface apart (so a mirror image differs).
                 float pattern = 0.25f + 0.5f * u * 0.6f + 0.25f * v + (((int) (u * 6) + (int) (v * 5)) % 2) * 0.15f;
                 int k = y * W + x;
                 picture[k] = picture[k] * (1 - a) + pattern * shade * a;
@@ -176,7 +152,6 @@ class EffectFramesTest {
         }
     }
 
-    /** Mean difference over the moments: how far apart two effects look as a whole. */
     static float distance(Frame[] a, Frame[] b) {
         float sum = 0;
         for (int m = 0; m < MOMENTS.length; m++) {
@@ -209,7 +184,6 @@ class EffectFramesTest {
         return new Difference(1 - inter / union, Math.min(1f, picture / union / 0.5f), Math.min(1f, edges / size));
     }
 
-    /** For each effect: its frames' box (w×h, % of the view) and coverage, and its closest other effect. */
     static String table(Map<String, Frame[]> frames, List<String> same) {
         StringBuilder out = new StringBuilder();
         List<String> pairs = new ArrayList<>();
@@ -281,10 +255,6 @@ class EffectFramesTest {
         assertTrue(same.isEmpty(), "effects that nearly match at 20/40/60/80 %: " + same + "\n" + table);
     }
 
-    /**
-     * The largest change of the shape (opaque where alpha > 0.5) against the whole interface in the first half of the
-     * time: 1 − intersection over union. Fading alone leaves it near 0 until the very end.
-     */
     static float motionBeforeFade(FxDef def, boolean legacy) {
         Random random = new Random(7);
         List<Fracture.Piece> cut = Fracture.cut(def.fracture, WIDTH / HEIGHT, 176, random);
@@ -308,7 +278,6 @@ class EffectFramesTest {
         return most;
     }
 
-    /** Least change of shape at half time for a quick effect. */
     static final float MOTION = 0.15f;
 
     @Test
@@ -344,17 +313,13 @@ class EffectFramesTest {
             f.put(id, frames(FxParser.parse(json(id)).def(), false));
         }
         int[] full = f.get("flip")[0].box();
-        // Card flip: narrows about the vertical centre line, the height stays (perspective makes the near edge taller).
         int[] flip = f.get("flip")[3].box();
         assertTrue(flip[2] - flip[0] < (full[2] - full[0]) * 0.7f, "flip narrows: " + (flip[2] - flip[0]));
-        // Turning about its centre line: the near half grows in perspective, but the middle stays near the middle.
         assertTrue(Math.abs((flip[0] + flip[2]) - (full[0] + full[2])) / 2f <= (full[2] - full[0]) * 0.15f,
                 "flip stays centred: " + (flip[0] + flip[2]) / 2f + " vs " + (full[0] + full[2]) / 2f);
         assertTrue(flip[3] - flip[1] >= (full[3] - full[1]) * 0.9f, "flip keeps its height");
-        // Recede: small (about a twentieth across) and darker.
         int[] recede = f.get("recede")[3].box();
         assertTrue(recede[2] - recede[0] < (full[2] - full[0]) * 0.3f, "recede is far away: " + (recede[2] - recede[0]));
-        // Door: the hinge (left edge) stays, the free edge swings in, perspective shortens the far side.
         int[] door = f.get("door")[2].box();
         assertTrue(Math.abs(door[0] - full[0]) <= 3, "door keeps its hinges at the left edge: " + door[0] + " vs " + full[0]);
         assertTrue(door[2] - door[0] < (full[2] - full[0]) * 0.75f, "door swings away: " + (door[2] - door[0]));

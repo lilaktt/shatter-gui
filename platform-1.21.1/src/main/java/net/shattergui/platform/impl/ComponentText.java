@@ -6,7 +6,6 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.shattergui.platform.Text;
 
-/** Core's {@link Text} as the game's {@link Component} (the same API in 1.21.1 as in 26.1). */
 public final class ComponentText implements Text {
     private final MutableComponent component;
 

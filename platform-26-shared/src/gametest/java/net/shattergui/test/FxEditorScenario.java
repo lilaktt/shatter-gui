@@ -26,13 +26,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * The visual effect editor end to end: two own textures go into the textures folder; a new effect is built in the
- * editor (a mask-texture front, an attract layer with a keyframed curve, a spin layer, an overlay with the texture,
- * an own-sprite emitter, a sound), saved, played by closing a furnace, exported as a .shatterfx, deleted (with its
- * textures) and imported back. On the way: undo/redo, Space, the tour, every panel and dialog as a screenshot, the
- * editor at GUI scales 2–4 (full screen) and inside the settings.
- */
 final class FxEditorScenario {
     private static final String ID = "test_editor_fx";
     private static final String MASK = "test_editor_mask";
@@ -61,14 +54,12 @@ final class FxEditorScenario {
             EditorScenario.setScale(context, 2);
             context.setScreen(() -> new ShatterConfigScreen(null));
             context.waitTicks(3);
-            // Inside the settings ("Custom" tab).
             context.runOnClient(mc -> {
                 ShatterConfigScreen settings = EditorScenario.editor(mc);
                 settings.selectTab(ShatterConfigScreen.Tab.CUSTOM);
                 settings.effectEditor();
             });
             context.waitTicks(10);
-            // The tour: open it (it may have been seen already) and go through it.
             context.runOnClient(mc -> {
                 FxEditor editor = EditorScenario.editor(mc).effectEditor();
                 if (editor.tourStep() < 0) {
@@ -88,12 +79,10 @@ final class FxEditorScenario {
                     name + ": the tour closes after its last step");
             shot.accept(name + "_in_settings");
 
-            // Full screen.
             context.runOnClient(mc -> EditorScenario.editor(mc).openEditorFullscreen());
             context.waitFor(mc -> Mc26.screen() instanceof FxEditorScreen, 100);
             context.waitTicks(5);
 
-            // A new effect, built through the editor's own actions.
             context.runOnClient(mc -> {
                 FxEditor editor = editor(mc);
                 editor.newEffect("empty");
@@ -133,7 +122,6 @@ final class FxEditorScenario {
             check.accept(context.computeOnClient(mc -> editor(mc).doc.result().def().textures.size()) == 2,
                     name + ": the effect uses the two own textures");
 
-            // Screenshots of the panels.
             for (Selection s : new Selection[]{Selection.EFFECT, Selection.APPEARANCE, Selection.EDGE,
                     new Selection(Selection.Kind.LAYER, 0), new Selection(Selection.Kind.EMITTER, 0),
                     new Selection(Selection.Kind.SOUND, 0)}) {
@@ -166,7 +154,6 @@ final class FxEditorScenario {
             check.accept(context.computeOnClient(mc -> Mc26.screen() instanceof FxEditorScreen s && !s.hasOverlay()),
                     name + ": Esc closes each dialog and keeps the editor");
 
-            // Undo/redo and Space.
             context.runOnClient(mc -> editor(mc).doc.breakMerge());
             context.runOnClient(mc -> editor(mc).doc.set("duration", 77));
             context.runOnClient(mc -> editor(mc).undo());
@@ -183,7 +170,6 @@ final class FxEditorScenario {
             check.accept(playing != after, name + ": Space pauses and plays the preview");
             context.runOnClient(mc -> editor(mc).previewState().setPlaying(true));
 
-            // Nonsense typed into fields never breaks anything.
             context.runOnClient(mc -> {
                 FxEditor editor = editor(mc);
                 editor.doc.breakMerge();
@@ -203,7 +189,6 @@ final class FxEditorScenario {
             context.waitTicks(3);
             check.accept(context.computeOnClient(mc -> editor(mc).errorCount()) == 0, name + ": undo removes the errors");
 
-            // GUI scales, full screen.
             for (int s : new int[]{2, 3, 4}) {
                 EditorScenario.setScale(context, s);
                 context.waitTicks(10);
@@ -211,7 +196,6 @@ final class FxEditorScenario {
             }
             EditorScenario.setScale(context, 2);
 
-            // Save: written atomically, loaded by the game.
             boolean saved = context.computeOnClient(mc -> editor(mc).save());
             context.waitTicks(2);
             check.accept(saved && Files.exists(file), name + ": save writes effects/" + ID + ".json");
@@ -219,7 +203,6 @@ final class FxEditorScenario {
             check.accept(!hasTempFiles(FxEffects.EFFECTS), name + ": no temporary files are left");
             shot.accept(name + "_saved");
 
-            // Close a furnace with it.
             context.runOnClient(mc -> ((FxEditorScreen) Mc26.screen()).back());
             context.waitTicks(2);
             context.runOnClient(mc -> Mc26.screen().onClose());
@@ -239,7 +222,6 @@ final class FxEditorScenario {
             check.accept(ID.equals(running), name + ": closing the furnace plays the editor's effect (ran " + running + ")");
             waitUntilClear(context);
 
-            // Export, delete (with the textures), import back.
             context.setScreen(() -> new ShatterConfigScreen(null));
             context.waitTicks(3);
             context.runOnClient(mc -> {
@@ -276,7 +258,6 @@ final class FxEditorScenario {
                 try {
                     Files.deleteIfExists(p);
                 } catch (IOException ignored) {
-                    // Left over in the test run folder only.
                 }
             }
             context.runOnClient(mc -> {

@@ -1,24 +1,14 @@
 package net.shattergui.ui.preview;
 
-/**
- * Paints the sample interfaces (176×166, like vanilla) pixel by pixel: a chest, a furnace, the player's inventory or
- * a crafting table, all with the player's inventory and hotbar and a few simple item pictures. Pure code on a {@link Canvas}, so it can
- * be checked without the game. Every pixel and rectangle goes through {@link #fill}, which clips to the canvas: a
- * rectangle partly outside is cut, one entirely outside (or empty) draws nothing. Clipped drawing is counted
- * ({@link #clipped}), so a test can require the designs to fit exactly.
- */
 public final class SamplePainter {
-    /** Something that takes ARGB pixels. */
     public interface Canvas {
         int width();
 
         int height();
 
-        /** Only called with coordinates inside the canvas. */
         void set(int x, int y, int argb);
     }
 
-    /** A plain ARGB array (tests, and the fallback when the game image cannot be made). */
     public static final class ArrayCanvas implements Canvas {
         public final int width;
         public final int height;
@@ -56,15 +46,10 @@ public final class SamplePainter {
         this.canvas = canvas;
     }
 
-    /** How many draws were (partly) outside the canvas and cut. */
     public int clipped() {
         return clipped;
     }
 
-    /**
-     * The one way anything is drawn: the rectangle cut to the canvas. Empty or fully outside: nothing happens. Any
-     * cut is counted.
-     */
     public void fill(int x, int y, int w, int h, int argb) {
         if (w <= 0 || h <= 0) {
             return;
@@ -87,11 +72,9 @@ public final class SamplePainter {
         fill(x, y, 1, 1, argb);
     }
 
-    /** Paints one of the interfaces over the whole canvas. */
     public void paint(SampleImage.Kind kind) {
         int panel = 0xFFC6C6C6;
         fill(0, 0, WIDTH, HEIGHT, 0x00000000);
-        // Panel with rounded 3-pixel corners: dark outline, white light edge top-left, grey shade bottom-right.
         for (int y = 0; y < HEIGHT; y++) {
             for (int x = 0; x < WIDTH; x++) {
                 if (corner(x, y)) {
@@ -110,7 +93,6 @@ public final class SamplePainter {
                 pixel(x, y, c);
             }
         }
-        // "Inventory" caption and the player's slots, the same in every interface.
         caption(8, 73, new int[]{4, 4, 3, 5, 3, 4, 4, 3, 3});
         slots(7, 83, 9, 3);
         slots(7, 141, 9, 1);
@@ -120,7 +102,6 @@ public final class SamplePainter {
         coal(8 + 18 * 5, 142);
         switch (kind) {
             case CHEST -> {
-                // Title as dark bars of letter-like blocks.
                 caption(8, 6, new int[]{5, 3, 4, 4, 3});
                 slots(7, 17, 9, 3);
                 diamond(8 + 18, 18);
@@ -167,7 +148,6 @@ public final class SamplePainter {
         }
     }
 
-    /** A 26×26 result slot. */
     private void bigSlot(int x, int y) {
         fill(x, y, 26, 26, 0xFF8B8B8B);
         fill(x, y, 25, 1, 0xFF373737);
@@ -176,7 +156,6 @@ public final class SamplePainter {
         fill(x + 25, y + 1, 1, 25, 0xFFFFFFFF);
     }
 
-    /** The burning flame between the furnace's slots. */
     private void flame(int x, int y) {
         for (int dy = 0; dy < 14; dy++) {
             int half = Math.max(0, Math.min(6, (dy + 1) / 2));
@@ -187,7 +166,6 @@ public final class SamplePainter {
         }
     }
 
-    /** The progress arrow (half filled). */
     private void arrow(int x, int y) {
         for (int dx = 0; dx < 22; dx++) {
             int half = dx < 15 ? 2 : Math.max(0, 7 - (dx - 15));
@@ -197,7 +175,6 @@ public final class SamplePainter {
         }
     }
 
-    /** A blocky little player in the inventory's picture. */
     private void player(int x, int y) {
         fill(x + 8, y, 10, 10, 0xFFB98A6A);
         fill(x + 8, y, 10, 3, 0xFF4A2F1E);

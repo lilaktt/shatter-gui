@@ -7,12 +7,6 @@ import net.shattergui.ui.UiClock;
 
 import java.util.function.Supplier;
 
-/**
- * Plays a {@link Scene} in a box: the sample opens (with the open effect), stays a moment, closes with the close
- * effect, then a short pause — and again if looping. Rebuilt whenever the scene's settings change ({@link Scene#signature})
- * and the player is set to {@link #autoRestart}. The big preview draws a small world (sky, ground, the chest the
- * interface came from); thumbnails only a dark backdrop.
- */
 public final class PreviewPlayer {
     private enum Phase {
         OPEN, HOLD, CLOSE, REST, IDLE
@@ -51,7 +45,6 @@ public final class PreviewPlayer {
         }
     }
 
-    /** Restart automatically when the scene's settings change. */
     public void autoRestart(boolean value) {
         autoRestart = value;
     }
@@ -92,7 +85,6 @@ public final class PreviewPlayer {
         if (stage.hasSource() != current.hasSource()) {
             stage = stage(w, h, current);
         }
-        // Shown in two places in one frame (a card and a drop-down): advance only once.
         if (lastFrame != UiClock.frameNumber()) {
             lastFrame = UiClock.frameNumber();
             advance(current, UiClock.dt() * 20f);
@@ -219,7 +211,6 @@ public final class PreviewPlayer {
         int horizon = y + Math.round(h * 0.62f);
         ui.g.fillGradient(x, y, x + w, horizon, 0xFF7FA6D9, 0xFFB9CCE6);
         ui.g.fillGradient(x, horizon, x + w, y + h, 0xFF4E7A3A, 0xFF2F4A24);
-        // A few grass tiles for depth.
         for (int i = 0; i < 12; i++) {
             int gx = x + (i * 37 + 11) % Math.max(1, w);
             int gy = horizon + 3 + (i * 13) % Math.max(1, (y + h - horizon - 4));
@@ -228,7 +219,6 @@ public final class PreviewPlayer {
         Draw.rect(ui, x, horizon, w, 1, 0x40FFFFFF);
     }
 
-    /** Sample size and place for a box; the chest sits below it on the ground. */
     private static Sim.Stage stage(int w, int h, Scene scene) {
         float aspect = (float) SampleImage.WIDTH / SampleImage.HEIGHT;
         float sw = Math.min(w * 0.62f, h * 0.68f * aspect);
@@ -240,9 +230,8 @@ public final class PreviewPlayer {
         return new Sim.Stage(w, h, sx, sy, sw, sh, sourceX, sourceY, h - 3f, scene.hasSource(), w < 120, SampleImage.Kind.CHEST);
     }
 
-    /** The current phase as text (for tests and logs). */
     public String describe() {
         return phase + " " + Math.round(phaseTime) + "t" + (sim != null ? " " + sim.getClass().getSimpleName() : "")
-                + (stage != null ? " " + lastW + "x" + lastH : " no-stage"); // not shown: tests and logs
+                + (stage != null ? " " + lastW + "x" + lastH : " no-stage");
     }
 }

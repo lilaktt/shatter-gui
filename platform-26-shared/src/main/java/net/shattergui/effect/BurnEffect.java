@@ -25,25 +25,16 @@ import org.joml.Vector3f;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * The screen catches fire at its bottom edge and burns upwards with a ragged front: each cell heats up, glows, chars
- * and crumbles away in place, while flames, sparks and embers rise from it. When everything has burnt only smoke is
- * left, rising from where the screen was. Nothing moves or falls; the plane stays frozen in the world like glass.
- */
 public final class BurnEffect implements ShatterEffect {
     public static final String ID = "burn";
 
-    /** Fine grid (~48x30, adapted to the screen's aspect ratio), two triangles per cell. */
     private static final int CELLS = 48 * 30;
-    /** Stage lengths in ticks, counted from the moment a cell catches fire. */
     private static final float PREHEAT = 5f;
     private static final float EMBER = 3f;
     private static final float CHAR = 7f;
     private static final float CRUMBLE = 7f;
     private static final float BURNT = EMBER + CHAR + CRUMBLE;
-    /** The centroid burns slightly ahead of the corners, so each cell chars from the inside. */
     private static final float CENTER_LEAD = 0.5f;
-    /** Share of the burn duration spent climbing; the rest is noise that makes the front ragged. */
     private static final float CLIMB = 0.8f;
     private static final float RAGGEDNESS = 0.45f;
     private static final float NOISE_SCALE = 5f;
@@ -70,7 +61,6 @@ public final class BurnEffect implements ShatterEffect {
         float duration = params.i(Params.BURN_DURATION) * params.durationScale();
         int seed = random.nextInt();
         for (ShardInstance shard : layout.shards()) {
-            // Position in the image from the texture coordinates: x = u, y = 1 - v (0 = top, 1 = bottom).
             float[] uv = shard.uv();
             float x = (uv[0] + uv[2] + uv[4]) / 3f;
             float y = 1f - (uv[1] + uv[3] + uv[5]) / 3f;
@@ -110,17 +100,14 @@ public final class BurnEffect implements ShatterEffect {
         float burning = shard.age() + partialTick - shard.effectData;
         out.unlit = true;
         out.edge = color(burning);
-        // Only the color leads; one alpha per cell, or fading cells would show their rims as a grid.
         out.center = (out.edge & 0xFF000000) | (color(burning + CENTER_LEAD) & 0xFFFFFF);
         out.scale = scale(burning);
-        // No flicker with reduceMotion.
         float flicker = params.reduceMotion() ? 1f
                 : 0.8f + 0.2f * Mth.sin((shard.age() + partialTick) * 1.7f + shard.seed() * 30f);
         out.glow = glow(burning) * flicker;
         out.glowColor = lerp(GLOW_HOT, GLOW_COOL, Math.clamp(burning / (EMBER + CHAR), 0f, 1f));
     }
 
-    /** Ticks since the cell caught fire (negative = not yet) → ARGB. */
     private static int color(float burning) {
         if (burning < -PREHEAT) {
             return 0xFF000000 | WHITE;
@@ -140,7 +127,6 @@ public final class BurnEffect implements ShatterEffect {
         return (alpha << 24) | lerp(CHARCOAL, ASH, Math.clamp(crumble, 0f, 1f));
     }
 
-    /** Crumbling cells shrink into their centre instead of falling. */
     private static float scale(float burning) {
         if (burning < EMBER + CHAR) {
             return 1f;
@@ -148,7 +134,6 @@ public final class BurnEffect implements ShatterEffect {
         return 1f - 0.9f * smoothstep(0f, 1f, (burning - EMBER - CHAR) / CRUMBLE);
     }
 
-    /** Only the front itself glows: full while the cell is an ember, gone early in the charring. */
     private static float glow(float burning) {
         if (burning < -1f || burning >= EMBER + CHAR) {
             return 0f;
@@ -162,63 +147,40 @@ public final class BurnEffect implements ShatterEffect {
         return 1f - smoothstep(0f, 0.3f, (burning - EMBER) / CHAR);
     }
 
-    /**
-     * Burns, rises and smokes for the whole wave, with a per-tick particle budget. Vanilla particles have a fixed world
-     * size and speed, so close to the camera (the flat screen sits one block in front of it) they would fill the view:
-     * every particle is shrunk with {@link Particle#scale} and slowed by how close the screen is, so the fire looks
-     * the same relative to the screen at any distance. The game's particle setting is respected.
-     */
     private static final class BurnWave implements ShatterWave {
-        /** Columns of smoke left where the screen was. */
         private static final int SMOKE_COLUMNS = 6;
-        /** At this distance (blocks) and beyond, particles keep their vanilla size and speed. */
         private static final double FULL_SIZE_DISTANCE = 4.0;
         private static final float MIN_SIZE = 0.15f;
-        /** Below this size LAVA sparks are skipped: their gravity cannot be scaled and they would fall far. */
         private static final float MIN_SPARK_SIZE = 0.5f;
-        /** Particles per tick at burnFlameDensity = 1, spread over the cells that are burning. */
         private static final float FLAMES_PER_TICK = 2.5f;
         private static final float EMBERS_PER_TICK = 2f;
         private static final float SPARKS_PER_TICK = 0.3f;
-        /**
-         * Smoke at burnSmokeDensity = {@link #SMOKE_REFERENCE} (the default): from the cells at the front (still
-         * glowing), and campfire puffs per column and tick. Half of what it used to be; scales linearly with the setting.
-         */
         private static final float FRONT_SMOKE_PER_TICK = 0.5f;
         private static final float SMOKE_PER_TICK = 0.125f;
         private static final float SMOKE_REFERENCE = 0.35f;
-        /** Smoke particles of one wave alive at once, at most. */
         private static final int MAX_SMOKE = 24;
-        /** Campfire puff size (vanilla draws them three times normal size). */
         private static final float SMOKE_SIZE = 0.6f;
-        /** Puffs stop this many ticks before the end, so the last ones still rise a little before they fade. */
         private static final int MIN_PUFF_TICKS = 25;
-        /** Ticks over which a particle fades out before it dies. */
         private static final int FADE_TICKS = 20;
 
         private record Column(Vector3d pos, float ignition) {
         }
 
-        /** A particle of this wave, the wave tick it dies at, its alpha when spawned and whether it is smoke. */
         private record Tracked(SingleQuadParticle particle, int death, float alpha, boolean smoke) {
         }
 
         private final RandomSource random;
         private final List<Column> columns = new ArrayList<>();
         private final List<ShardInstance> burning = new ArrayList<>();
-        /** Cells at the front itself (glowing embers), the hottest part. */
         private final List<ShardInstance> front = new ArrayList<>();
         private final List<Tracked> particles = new ArrayList<>();
         private int liveSmoke;
-        /** Wave tick by which a hurried wave (spam) must be gone, or MAX_VALUE. */
         private int hurryEnd = Integer.MAX_VALUE;
         private int fadeTicks = FADE_TICKS;
         private final Vector3f corner = new Vector3f();
         private final Vec3 center;
         private final float burnEnd;
-        /** Wave tick by which the smoke and every other particle is gone. */
         private int smokeEnd;
-        /** Size and speed factor for this tick's particles. */
         private float size = 1f;
         private int age;
 
@@ -242,13 +204,10 @@ public final class BurnEffect implements ShatterEffect {
         @Override
         public boolean tick(ClientLevel level, List<ShardInstance> liveShards, ParamValues params) {
             age++;
-            // smokeDurationTicks is the whole tail: by smokeEnd every particle of the wave is gone. Puffs stop early
-            // enough to still live a while, and spawn() cuts every lifetime to smokeEnd, fadeOut() fades them to it.
             smokeEnd = Math.min(hurryEnd,
                     Mth.ceil(burnEnd) + Math.round(params.i(Params.BURN_SMOKE_DURATION) * params.durationScale()));
             boolean emitting = hurryEnd == Integer.MAX_VALUE;
             if (emitting && age == Mth.ceil(burnEnd)) {
-                // The last of it goes out.
                 EffectSounds.play(SoundEvents.FIRE_EXTINGUISH, params.volume(Params.BURN_SOUND) * 0.25f, 1.3f);
             }
             burning.clear();
@@ -278,7 +237,6 @@ public final class BurnEffect implements ShatterEffect {
             if (emitting && status != ParticleStatus.MINIMAL) {
                 float density = params.f(Params.BURN_FLAME_DENSITY) * params.particleScale()
                         * (status == ParticleStatus.DECREASED ? 0.5f : 1f);
-                // Flame tongues stay close to the front; the small embers rise further.
                 emit(burning, ParticleTypes.FLAME, FLAMES_PER_TICK * density, 0.01, 0.01, 0.015);
                 emit(burning, ParticleTypes.SMALL_FLAME, EMBERS_PER_TICK * density, 0.02, 0.04, 0.05);
                 if (size >= MIN_SPARK_SIZE) {
@@ -308,10 +266,6 @@ public final class BurnEffect implements ShatterEffect {
             return age < smokeEnd || !particles.isEmpty();
         }
 
-        /**
-         * Spam: everything ends within {@code ticks}. No new particles; the live ones get their lifetimes cut and fade
-         * out over the remaining ticks.
-         */
         @Override
         public void hurry(int ticks) {
             hurryEnd = age + ticks;
@@ -326,7 +280,6 @@ public final class BurnEffect implements ShatterEffect {
             });
         }
 
-        /** Particles that die within {@link #fadeTicks} lose their alpha linearly, reaching 0 when they die. */
         private void fadeOut() {
             for (Tracked tracked : particles) {
                 int left = tracked.death() - age;
@@ -338,10 +291,6 @@ public final class BurnEffect implements ShatterEffect {
             }
         }
 
-        /**
-         * {@code perTick} particles on average (the fraction is rolled), each on a random point inside a random cell of
-         * {@code cells}, drifting up.
-         */
         private void emit(List<ShardInstance> cells, SimpleParticleType type, float perTick,
                           double sideways, double riseMin, double riseExtra) {
             if (cells.isEmpty() || perTick <= 0f) {
@@ -360,10 +309,6 @@ public final class BurnEffect implements ShatterEffect {
             spawn(type, x, y, z, vx, vy, vz, 1f);
         }
 
-        /**
-         * Spawns through the particle engine to get the particle back, then slows it by {@link #size} and shrinks it by
-         * {@link #size} × {@code extraScale}.
-         */
         private void spawn(SimpleParticleType type, double x, double y, double z, double vx, double vy, double vz,
                            float extraScale) {
             boolean smoke = type == ParticleTypes.SMOKE || type == ParticleTypes.CAMPFIRE_COSY_SMOKE;
@@ -382,7 +327,6 @@ public final class BurnEffect implements ShatterEffect {
             if (scale != 1f) {
                 particle.scale(scale);
             }
-            // Vanilla lifetimes are long (cosy campfire smoke 80–129 ticks): none may outlive the wave.
             int left = Math.max(1, smokeEnd - age);
             if (particle.getLifetime() > left) {
                 particle.setLifetime(left);
@@ -397,8 +341,6 @@ public final class BurnEffect implements ShatterEffect {
             return (random.nextDouble() * 2 - 1) * amount;
         }
     }
-
-    // --- small helpers ---
 
     private static int rgb(int r, int g, int b) {
         return (r << 16) | (g << 8) | b;
@@ -416,7 +358,6 @@ public final class BurnEffect implements ShatterEffect {
         return t * t * (3 - 2 * t);
     }
 
-    /** Two octaves of value noise, 0..1. */
     static float fbm(float x, float y, int seed) {
         return 0.65f * valueNoise(x, y, seed) + 0.35f * valueNoise(x * 2f, y * 2f, seed + 1);
     }

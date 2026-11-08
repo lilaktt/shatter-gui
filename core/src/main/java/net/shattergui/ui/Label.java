@@ -5,7 +5,6 @@ import net.shattergui.platform.Text;
 
 import java.util.function.Supplier;
 
-/** Text, wrapped to the width. A heading style is a little brighter with extra space above. */
 public class Label extends Widget {
     public enum Style {
         HEADING, BODY, DIM, SMALL
@@ -48,7 +47,6 @@ public class Label extends Widget {
             case BODY -> ui.textWrapped(text.get(), x, y, w, Theme.TEXT);
             case DIM -> ui.textWrapped(text.get(), x, y, w, Theme.TEXT_DIM);
             case SMALL -> {
-                // Wrapped at the small size, never cut off.
                 float scale = Ui.smallScale();
                 ui.g.pose().pushMatrix();
                 ui.g.pose().translate(x, y);

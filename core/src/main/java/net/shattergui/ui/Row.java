@@ -3,10 +3,6 @@ package net.shattergui.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Children side by side, vertically centred. Each child has a fixed width or a share of the rest ({@link #flex});
- * when the row is narrower than {@link #wrapBelow}, children stack instead (for small GUI scales).
- */
 public class Row extends Container {
     private final List<Integer> widths = new ArrayList<>();
     private final int gap;
@@ -16,19 +12,16 @@ public class Row extends Container {
         this.gap = gap;
     }
 
-    /** Adds a child of fixed width. */
     public <T extends Widget> T fixed(T child, int width) {
         widths.add(width);
         return add(child);
     }
 
-    /** Adds a child taking a share ({@code weight}) of the width left over. */
     public <T extends Widget> T flex(T child, int weight) {
         widths.add(-weight);
         return add(child);
     }
 
-    /** Below this width the children are stacked. */
     public Row wrapBelow(int width) {
         wrapBelow = width;
         return this;

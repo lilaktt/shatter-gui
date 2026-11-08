@@ -6,16 +6,10 @@ import com.google.gson.JsonPrimitive;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * One typed setting of an effect (or of the "general" group): name, type, range, default and translation key. Every
- * value that reaches an effect goes through {@link #sanitize}, which clamps it into range and replaces anything
- * unusable (wrong type, NaN, unknown choice) with the default, so no input can produce a fatal value.
- */
 public abstract sealed class Param<T> permits Param.Float, Param.Int, Param.Bool, Param.Choice {
     private final String group;
     private final String id;
     private final T def;
-    /** Group whose translations it uses (the effects shipped as data share one set), or null for its own. */
     private String langGroup;
 
     Param(String group, String id, T def) {
@@ -36,17 +30,14 @@ public abstract sealed class Param<T> permits Param.Float, Param.Int, Param.Bool
         return def;
     }
 
-    /** Translation key of the name; {@code + ".tooltip"} for the description. */
     public String langKey() {
         return "param.shatter_gui." + (langGroup != null ? langGroup : group) + "." + id;
     }
 
-    /** Uses the translations of another group (same name and description for many effects). */
     void sharedLang(String group) {
         langGroup = group;
     }
 
-    /** Any input (JSON number or text, editor text, a value of the right type) → a valid value. */
     public abstract T sanitize(Object raw);
 
     public JsonElement toJson(T value) {
@@ -68,7 +59,6 @@ public abstract sealed class Param<T> permits Param.Float, Param.Int, Param.Bool
         return group + "." + id;
     }
 
-    /** A number with a range. */
     public static final class Float extends Param<java.lang.Float> {
         private final float min;
         private final float max;
@@ -108,7 +98,6 @@ public abstract sealed class Param<T> permits Param.Float, Param.Int, Param.Bool
         }
     }
 
-    /** A whole number with a range. */
     public static final class Int extends Param<Integer> {
         private final int min;
         private final int max;
@@ -170,7 +159,6 @@ public abstract sealed class Param<T> permits Param.Float, Param.Int, Param.Bool
         }
     }
 
-    /** One of a fixed list of names. */
     public static final class Choice extends Param<String> {
         private final List<String> choices;
 
@@ -194,7 +182,6 @@ public abstract sealed class Param<T> permits Param.Float, Param.Int, Param.Bool
             return def();
         }
 
-        /** Translation key of one choice. */
         public String choiceKey(String choice) {
             return langKey() + "." + choice;
         }

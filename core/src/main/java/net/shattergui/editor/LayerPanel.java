@@ -21,12 +21,6 @@ import net.shattergui.ui.Widget;
 
 import java.util.List;
 
-/**
- * The left panel: the effect's parts as a list — its settings, its look and the edge flight, then the layers,
- * particle emitters and sounds. Each item can be shown or hidden (the eye: hidden items are kept but not played),
- * renamed (double click), dragged to another place in its group, duplicated and removed; problems show as a dot.
- * "Add" opens the catalogue of modules.
- */
 final class LayerPanel extends Container {
     private static final int ROW_H = 16;
     private final FxEditor editor;
@@ -34,7 +28,6 @@ final class LayerPanel extends Container {
     private final ScrollView scroll = new ScrollView(list);
     private final Button addButton;
     private String shape = "";
-    /** The row being dragged and where it would go (index in its group), or null. */
     private ItemRow dragged;
     private int dropIndex = -1;
 
@@ -45,7 +38,6 @@ final class LayerPanel extends Container {
         addButton.tooltip(EditorUi.tr("add"), EditorUi.tr("add.desc"));
     }
 
-    /** Rebuilds the rows when the lists change size. */
     private void sync() {
         String now = editor.doc.size("layers") + "/" + editor.doc.size("emitters") + "/" + editor.doc.size("sounds");
         if (now.equals(shape)) {
@@ -62,7 +54,6 @@ final class LayerPanel extends Container {
         group(Selection.Kind.SOUND, Icon.NOTE, "group.sounds", FxLimits.MAX_SOUNDS);
     }
 
-    /** A card per group: its name, how many of the maximum, its rows (or a hint when empty). */
     private void group(Selection.Kind kind, Icon icon, String key, int max) {
         String listName = Selection.listOf(kind);
         int count = editor.doc.size(listName);
@@ -92,9 +83,6 @@ final class LayerPanel extends Container {
         super.draw(ui);
     }
 
-    // --- names ---
-
-    /** What a list item is called: its own name, else what it is (module, particle, sound). */
     static Text itemName(FxDoc doc, Selection.Kind kind, int index) {
         String path = Selection.listOf(kind) + "[" + index + "]";
         String own = doc.str(path + ".name", "").trim();
@@ -142,8 +130,6 @@ final class LayerPanel extends Container {
         };
     }
 
-    // --- rows ---
-
     private static void problemDot(Ui ui, List<FxProblems.Problem> problems, int x, int y) {
         if (problems.isEmpty()) {
             return;
@@ -190,7 +176,6 @@ final class LayerPanel extends Container {
         }
     }
 
-    /** The effect, its look, the edge flight. */
     private final class SectionRow extends Widget {
         private final Selection selection;
         private final Icon icon;
@@ -226,7 +211,6 @@ final class LayerPanel extends Container {
             boolean dim = selection.kind() == Selection.Kind.EDGE && !edgeOn();
             int color = dim ? Theme.TEXT_FAINT : on ? Theme.TEXT : Theme.TEXT_DIM;
             Draw.icon(ui, icon, x + 5, y + (h - 9) / 2, 1, on ? Theme.accentHover() : color);
-            // The full name if it fits, else its short form (the tooltip always has the full one).
             Text shown = ui.font.width(title) <= w - 34 || shortTitle == null ? title : shortTitle;
             ui.textFit(shown, x + 17, y + (h - 8) / 2, w - 34, color);
             problemDot(ui, editor.problemsAt(selection.path(), selection.kind() == Selection.Kind.EFFECT), x + w - 20, y + h / 2);
@@ -261,7 +245,6 @@ final class LayerPanel extends Container {
         }
     }
 
-    /** A layer, emitter or sound. */
     private final class ItemRow extends Container {
         private final Selection selection;
         private final TextField rename = new TextField(FxParser.MAX_LABEL);

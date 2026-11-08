@@ -4,15 +4,9 @@ import net.shattergui.ShatterMod;
 
 import java.util.Locale;
 
-/**
- * Always on (unlike {@link ShatterProfiler}): closing a screen must never hold up the game. From the call that closes
- * the screen until a few frames later (capture, Spatial GUI copy, spawn), every step is timed; one over
- * {@link #LIMIT_MS} ms logs a single warning line with the step's name (at most one per close).
- */
 public final class CloseWatchdog {
     public static final long LIMIT_MS = 50;
     private static final long LIMIT_NANOS = LIMIT_MS * 1_000_000L;
-    /** Frames after the close in which deferred steps are still timed. */
     private static final int WATCHED_FRAMES = 10;
 
     private static String screen = "";
@@ -25,7 +19,6 @@ public final class CloseWatchdog {
     private CloseWatchdog() {
     }
 
-    /** HEAD of {@code Minecraft#setScreen(null)}: a screen starts closing. */
     public static void begin(String screenName) {
         screen = screenName;
         warned = false;
@@ -34,14 +27,12 @@ public final class CloseWatchdog {
         slowestNanos = 0;
     }
 
-    /** One frame of the watched close is over. */
     public static void frameEnd() {
         if (framesLeft > 0) {
             framesLeft--;
         }
     }
 
-    /** A step of the close ran from {@code startNanos} until now. Returns now, for the next step. */
     public static long step(String name, long startNanos) {
         long now = System.nanoTime();
         if (framesLeft <= 0) {
@@ -58,10 +49,6 @@ public final class CloseWatchdog {
         return now;
     }
 
-    /**
-     * RETURN of {@code setScreen(null)}: the whole call, vanilla included. If it was slow but none of Shatter GUI's
-     * steps was, the time went to vanilla or other mods ({@code Screen#removed}, closing the container).
-     */
     public static void endCall(long startNanos) {
         if (framesLeft <= 0) {
             return;
@@ -73,7 +60,6 @@ public final class CloseWatchdog {
         }
     }
 
-    /** Warnings logged in this session (tests). */
     public static int warnings() {
         return warnings;
     }

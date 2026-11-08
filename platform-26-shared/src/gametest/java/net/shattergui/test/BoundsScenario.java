@@ -16,11 +16,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * Screens with parts outside the container panel (creative tabs, scroll bar and arrows; the recipe book next to the
- * survival inventory and the furnace): every part must burn and shatter. Screenshots of the open screen, burn and
- * glass; the burn check compares the shard area with the panel.
- */
 final class BoundsScenario {
     private BoundsScenario() {
     }
@@ -30,7 +25,6 @@ final class BoundsScenario {
         ShatterConfig config = ShatterConfig.get();
         String effect = config.effect;
         try {
-            // Creative inventory, opened with the inventory key like a player.
             singleplayer.getServer().runCommand("gamemode creative @p");
             context.waitTicks(5);
             for (String fx : new String[]{"burn", "glass"}) {
@@ -42,7 +36,6 @@ final class BoundsScenario {
             singleplayer.getServer().runCommand("gamemode survival @p");
             context.waitTicks(5);
 
-            // Survival inventory and furnace with the recipe book open.
             context.runOnClient(mc -> {
                 mc.player.getRecipeBook().setOpen(RecipeBookType.CRAFTING, true);
                 mc.player.getRecipeBook().setOpen(RecipeBookType.FURNACE, true);

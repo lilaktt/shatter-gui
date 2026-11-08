@@ -15,14 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-/**
- * The PNGs of {@code config/shatter_gui/textures}, loaded for the editor's thumbnails and preview. The folder is looked
- * at again every few seconds (and on "Refresh"): new and changed files are loaded, removed ones freed. A file that
- * cannot be used gets a clear reason instead of a picture (not a PNG, too large, too big a file, a bad name, too
- * many). Everything is freed when the editor closes.
- */
 final class TextureLibrary {
-    /** One file: its picture (null if unusable) or the reason it is unusable. */
     record Entry(String name, long bytes, long modified, int width, int height, FxTextures.Tex tex, Text error) {
         boolean ok() {
             return tex != null;
@@ -46,7 +39,6 @@ final class TextureLibrary {
         return dir;
     }
 
-    /** Changes whenever a texture is added, changed or removed. */
     int version() {
         return version;
     }
@@ -59,7 +51,6 @@ final class TextureLibrary {
         return entries.get(name);
     }
 
-    /** The loaded picture for a name, or null (the preview's texture lookup). */
     FxTextures.Tex tex(String name) {
         Entry e = entries.get(name);
         return e == null ? null : e.tex();
@@ -71,7 +62,6 @@ final class TextureLibrary {
         }
     }
 
-    /** Loads new and changed files, frees removed ones. */
     void rescan() {
         lastScan = System.currentTimeMillis();
         Map<String, Path> files = new LinkedHashMap<>();
@@ -124,7 +114,6 @@ final class TextureLibrary {
         }
         if (changed) {
             version++;
-            // Keep the order by name.
             List<Map.Entry<String, Entry>> sorted = new ArrayList<>(entries.entrySet());
             sorted.sort(Map.Entry.comparingByKey());
             entries.clear();

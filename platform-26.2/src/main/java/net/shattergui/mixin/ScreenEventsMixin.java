@@ -11,12 +11,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * Since 26.2 Fabric fires this event inside {@code AbstractContainerScreen#extractRenderState}, and a screen without
- * Fabric's per-screen events throws there. The real preview's screens have none on purpose (only the protected
- * {@code init()} is called, so nobody hears of them): for them the event is an empty one. {@code require = 0}: if Fabric
- * changes this, the preview falls back to the simple samples, as for any other failure.
- */
 @Mixin(value = ScreenEvents.class, remap = false)
 public abstract class ScreenEventsMixin {
     @Unique

@@ -9,10 +9,6 @@ import net.shattergui.platform.Text;
 import java.util.function.Consumer;
 import java.util.function.IntPredicate;
 
-/**
- * A one-line text field: caret, selection (Shift+arrows, Ctrl+A, double use of Home/End), clipboard (Ctrl+C/X/V),
- * a hint when empty, a character filter and a length limit. Enter calls {@link #onEnter}, Esc {@link #onEscape} if set.
- */
 public class TextField extends Widget {
     private String value = "";
     private int cursor;
@@ -65,7 +61,6 @@ public class TextField extends Widget {
         return value;
     }
 
-    /** Sets the text without calling the change listener. */
     public TextField value(String text) {
         value = text.length() > maxLength ? text.substring(0, maxLength) : text;
         cursor = value.length();
@@ -73,7 +68,6 @@ public class TextField extends Widget {
         return this;
     }
 
-    /** Replaces the text as typing would (the filter and length limit apply, the change listener runs). */
     public void typeText(String text) {
         selectAll();
         insert(text);
@@ -111,7 +105,6 @@ public class TextField extends Widget {
         if (value.isEmpty() && hint != null && f < 0.5f) {
             ui.textFit(hint, tx, ty, tw, Theme.TEXT_FAINT);
         }
-        // Keep the caret inside the visible part.
         int caretX = ui.font.width(value.substring(0, cursor));
         if (caretX - scroll > tw - 2) {
             scroll = caretX - tw + 2;
@@ -210,7 +203,6 @@ public class TextField extends Widget {
                 onEscape.run();
             }
             default -> {
-                // Letters and other keys arrive as characters; Tab and arrows up/down move focus.
                 return key != Keys.KEY_TAB && key != Keys.KEY_UP && key != Keys.KEY_DOWN
                         && key >= 32 && key < 256;
             }

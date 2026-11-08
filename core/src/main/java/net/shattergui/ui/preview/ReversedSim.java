@@ -5,17 +5,11 @@ import net.shattergui.ui.Ui;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A code effect's 2D stand-in played backwards, as {@link net.shattergui.effect.ReversedEffect} does in the world: the
- * forward run is recorded tick by tick (at most 40 ticks of it), then shown from its end to its start in the opening's
- * length ({@link net.shattergui.params.OpenTiming}), the pieces fading in over the first part. Particles are not replayed.
- */
 final class ReversedSim extends Sim {
     private static final int WINDOW_TICKS = 40;
     private static final float FADE_IN = 0.3f;
 
     private final Sim forward;
-    /** frames[tick][piece]: cx, cy, angle, flip, scale, alpha, tint, overlay, dead. */
     private final List<float[][]> frames = new ArrayList<>();
     private final int window;
     private final int length;
@@ -44,7 +38,6 @@ final class ReversedSim extends Sim {
         return out;
     }
 
-    /** Puts the forward pieces where the forward run was at {@code window·(1 − shown/length)}. */
     private void apply(float shown) {
         float t = Math.clamp(shown / length, 0f, 1f);
         float at = window * (1f - t);

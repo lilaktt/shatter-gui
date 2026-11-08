@@ -9,11 +9,6 @@ import java.util.function.DoubleFunction;
 import java.util.function.DoubleSupplier;
 import java.util.function.Function;
 
-/**
- * A slider with its value in a box on the right. Drag or click the track; arrows (Shift: ×10) step it when focused.
- * Clicking the value box (or Enter) turns it into a text field for an exact value, typed in display units (e.g.
- * seconds) and converted back by {@link #parser}; Enter applies, Esc cancels.
- */
 public class Slider extends Container {
     public static final int VALUE_WIDTH = 60;
     private final double min;
@@ -28,10 +23,6 @@ public class Slider extends Container {
     private boolean dragging;
     private boolean editing;
 
-    /**
-     * @param formatter raw value → shown text (with units)
-     * @param parser    typed text → raw value, or null if it is not a number
-     */
     public Slider(double min, double max, double step, DoubleSupplier getter, DoubleConsumer setter,
                   DoubleFunction<String> formatter, Function<String, Double> parser) {
         this.min = min;
@@ -144,14 +135,12 @@ public class Slider extends Container {
         return max;
     }
 
-    /** Sets a value as the track would (clamped). */
     public void setValue(double value) {
         if (Double.isFinite(value)) {
             setter.accept(Math.clamp(value, min, max));
         }
     }
 
-    /** The exact-value box (tests type into it). */
     public TextField field() {
         return field;
     }

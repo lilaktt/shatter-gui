@@ -38,12 +38,6 @@ import java.util.Locale;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
-/**
- * The right panel: every setting of what is selected, with human names and units, an exact-value box on each slider,
- * "back to default", curves (presets, Bézier handles, keyframes), colour gradients, targets, textures, particles and
- * sounds with search. Rebuilt when the selection or the shape of the effect changes; in between the controls read
- * the effect live, so undo, the timeline and the preview stay in step.
- */
 final class Inspector extends Container {
     private static final JsonElement ALPHA_DEFAULT = JsonParser.parseString("{\"keys\": [[0, 1], [0.75, 1], [1, 0]]}");
     private static final JsonElement EMITTER_ALPHA_DEFAULT = JsonParser.parseString("{\"keys\": [[0, 1], [0.7, 1], [1, 0]]}");
@@ -53,7 +47,6 @@ final class Inspector extends Container {
 
     private final FxEditor editor;
     private final Column content = new Column(0, 6);
-    /** Where the builders put rows: the current card. */
     private Container target = content;
     private final ScrollView scroll = new ScrollView(content);
 
@@ -97,12 +90,10 @@ final class Inspector extends Container {
         super.draw(ui);
     }
 
-    /** Builds the controls for the current selection. */
     void rebuild() {
         content.clear();
         target = content;
         Selection s = editor.selection();
-        // Problems about the item as a whole (not a single field).
         for (FxProblems.Problem p : editor.problemsAt(s.path(), true)) {
             content.add(new Note(p));
         }
@@ -116,12 +107,9 @@ final class Inspector extends Container {
                 case SOUND -> buildSound(s.path());
             }
         } catch (RuntimeException e) {
-            // Odd data the controls cannot show: say so instead of failing.
             content.add(new Label(EditorUi.tr("inspector.cannot_show", String.valueOf(e.getMessage())), Label.Style.DIM));
         }
     }
-
-    // --- pages ---
 
     private void buildEffect() {
         section("section.general", false);
@@ -428,8 +416,6 @@ final class Inspector extends Container {
         Platform.get().sounds().play(id, pitch, volume);
     }
 
-    // --- common parts of list items ---
-
     private void itemHead(String p) {
         TextField name = new TextField(FxParser.MAX_LABEL);
         name.value(editor.doc.str(p + ".name", ""));
@@ -463,9 +449,6 @@ final class Inspector extends Container {
         row.fixed(del, del.naturalWidth());
     }
 
-    // --- field builders ---
-
-    /** Starts a card; the rows after it go into it. Rare groups start folded. */
     private void section(String key, boolean folded) {
         Section section = new Section("inspector." + key, sectionIcon(key), EditorUi.tr(key), folded);
         String page = helpPage(key);
@@ -476,7 +459,6 @@ final class Inspector extends Container {
         target = section;
     }
 
-    /** The help page a card's "?" opens (the cards whose idea takes more than a tooltip), or null. */
     private static String helpPage(String key) {
         return switch (key) {
             case "section.layer" -> "layers";
@@ -489,7 +471,6 @@ final class Inspector extends Container {
         };
     }
 
-    /** A field's help with its default value (a toggle's, a choice's). */
     private static Text withDefault(Text help, Text value) {
         return help.copy().append("\n").append(Text.translatable("ui.shatter_gui.default", value));
     }
@@ -519,7 +500,6 @@ final class Inspector extends Container {
         };
     }
 
-    /** "Advanced", folded: the item's own name, whether it plays, duplicate and delete. */
     private void advanced(String p) {
         section("section.advanced", true);
         itemHead(p);
@@ -539,7 +519,6 @@ final class Inspector extends Container {
                 v -> EditorUi.format(f.unit(), v), t -> EditorUi.parse(f.unit(), t));
     }
 
-    /** A plain number (never a curve). */
     private void number(String key, String path, String fieldKey) {
         FxSchema.Field f = FxSchema.field(fieldKey);
         Slider s = slider(f, () -> editor.doc.num(path, f.def()), v -> editor.doc.set(path, (float) v));
@@ -547,7 +526,6 @@ final class Inspector extends Container {
                 () -> editor.doc.has(path));
     }
 
-    /** A number that may be a curve. */
     private void value(String key, String path, String fieldKey, JsonElement def, String window) {
         FxSchema.Field f = FxSchema.field(fieldKey);
         ValueControl control = new ValueControl(editor, path, f, def, window);
@@ -570,10 +548,6 @@ final class Inspector extends Container {
                 null, null);
     }
 
-    /**
-     * {@code "followCamera"}: absent (the default of the role it plays: openings follow the camera, closes do not),
-     * true or false. The player's setting "Follow the camera" may override it.
-     */
     private void followCamera() {
         String path = "followCamera";
         java.util.function.Supplier<String> current = () -> !editor.doc.has(path) ? "auto"
@@ -598,7 +572,6 @@ final class Inspector extends Container {
                 box, () -> editor.doc.remove(path), () -> editor.doc.has(path));
     }
 
-    /** One of several names; {@code rebuild}: the controls below depend on it. */
     private void choice(String key, String path, List<String> values, String prefix, String def, boolean rebuild) {
         Dropdown<String> box = new Dropdown<>(() -> {
             List<Dropdown.Option<String>> options = new ArrayList<>();
@@ -675,7 +648,6 @@ final class Inspector extends Container {
         return "texture";
     }
 
-    /** "center", "source", "player" or [u, v]. */
     private void point(String key, String path, boolean allowFar) {
         target.add(new FieldRow(editor, EditorUi.tr(key), EditorUi.tr(key + ".desc"), path, new PointControl(path, allowFar),
                 () -> {
@@ -735,7 +707,6 @@ final class Inspector extends Container {
         }
     }
 
-    /** Sets one number of a fixed-size list (creating the list with defaults first). */
     private void setComponent(String path, int i, float value, int size, float... defaults) {
         editor.doc.edit(path + "[" + i + "]", r -> {
             JsonElement e = FxDoc.get(r, path);
@@ -803,7 +774,6 @@ final class Inspector extends Container {
         }
     }
 
-    /** Wave direction: where the front moves to. */
     private void direction() {
         String path = "trigger.direction";
         String[] names = {"up", "down", "left", "right", "up_left", "up_right", "down_left", "down_right"};
@@ -842,7 +812,6 @@ final class Inspector extends Container {
         field("field.wave_direction", path, box, () -> editor.doc.remove(path), () -> editor.doc.has(path));
     }
 
-    /** follow-path points: up to 8 offsets, each x, y (and z) in interface widths. */
     private void pathPoints(String path) {
         section("section.path", false);
         int n = Math.max(0, editor.doc.size(path));
@@ -880,7 +849,6 @@ final class Inspector extends Container {
         }
     }
 
-    /** A segmented choice button. */
     private static Button segment(Text text, BooleanSupplier on, Runnable action) {
         return new Button(text, null, Button.Kind.GHOST, action) {
             @Override
@@ -890,8 +858,6 @@ final class Inspector extends Container {
             }
         };
     }
-
-    // --- registries ---
 
     private static List<Dropdown.Option<String>> modules() {
         List<Dropdown.Option<String>> out = new ArrayList<>();
@@ -925,7 +891,6 @@ final class Inspector extends Container {
         return sounds;
     }
 
-    /** A problem about the item as a whole. */
     private static final class Note extends Widget {
         private final FxProblems.Problem problem;
 
@@ -948,7 +913,6 @@ final class Inspector extends Container {
         }
     }
 
-    /** Placeholder-safe supplier of the current selection's title (kept for tests). */
     Supplier<Text> title() {
         return () -> LayerPanel.itemName(editor.doc, editor.selection().kind(), editor.selection().index());
     }

@@ -13,19 +13,10 @@ import net.shattergui.ShatterGuiClient;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * GPU textures that hold captured screens. Everything stays on the GPU: the main target is copied into a slot with
- * {@code copyTextureToTexture} and the slot is sampled directly by the shards. Slots are registered in the
- * {@code TextureManager} once and reused; a slot's GPU texture is only recreated when the window size changes.
- * The world backup used during capture is a single reused texture as well.
- */
 public final class CapturePool {
-    /** Simultaneous captures (overlapping shard waves). Past this the oldest wave is dropped. */
     public static final int MAX_SLOTS = 8;
-    /** Free slots that keep their GPU texture for reuse; the rest give the memory back. */
     private static final int MAX_IDLE_WITH_MEMORY = 1;
 
-    /** A captured screen, sampled by the shards of one wave. */
     public static final class Slot extends AbstractTexture {
         private final Identifier id;
         private boolean inUse;
@@ -86,7 +77,6 @@ public final class CapturePool {
     private CapturePool() {
     }
 
-    /** A free slot holding a texture of the given size, or null if all {@link #MAX_SLOTS} are in use. */
     public static Slot acquire(int width, int height, TextureFormat format) {
         Slot slot = null;
         for (Slot candidate : SLOTS) {
@@ -117,7 +107,6 @@ public final class CapturePool {
         }
     }
 
-    /** The reused world backup texture, recreated only when the size or format changes. */
     public static GpuTexture backup(int width, int height, TextureFormat format) {
         if (backup == null || backup.getWidth(0) != width || backup.getHeight(0) != height || backup.getFormat() != format) {
             if (backup != null) {
@@ -129,7 +118,6 @@ public final class CapturePool {
         return backup;
     }
 
-    /** Number of slots currently holding GPU memory (for leak checks). */
     public static int texturesWithMemory() {
         int count = backup != null ? 1 : 0;
         for (Slot slot : SLOTS) {

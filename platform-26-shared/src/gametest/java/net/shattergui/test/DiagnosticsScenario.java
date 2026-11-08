@@ -8,11 +8,6 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import net.shattergui.platform.impl.Mc26;
 
-/**
- * "Copy diagnostics" (settings → About, {@code -PtestOnly=diagnostics}): the clipboard gets every field a bug report
- * needs, the mod's last warning (a probe logged here) and nothing of the player's home folder or user name. The mod's
- * log keeps reaching the game's log (the warnings are collected beside it).
- */
 final class DiagnosticsScenario {
     private static final List<String> FIELDS = List.of("Shatter GUI:", "Build:", "Minecraft:", "Fabric Loader:", "Fabric API:",
             "Iris:", "Sodium:", "Spatial GUI:", "GPU:", "Driver:", "GPU vendor:", "Shader pack:", "Open effect:",
@@ -32,7 +27,6 @@ final class DiagnosticsScenario {
         context.setScreen(() -> null);
         context.runOnClient(mc -> mc.keyboardHandler.setClipboard(old == null ? "" : old));
         ShatterGuiClient.LOGGER.info("[ShatterTest] diagnostics:\n{}", text);
-        // Windows' clipboard ends lines with CRLF as SDL (26.3) hands it back.
         check.accept(text.equals(clipboard.replace("\r\n", "\n")), "diagnostics: the text must be on the clipboard ("
                 + text.length() + " characters copied, " + clipboard.length() + " there)");
         for (String field : FIELDS) {

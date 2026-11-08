@@ -11,16 +11,10 @@ import net.shattergui.platform.impl.GuiDrawing26;
 import net.shattergui.platform.impl.Input26;
 import net.shattergui.platform.impl.Mc26;
 
-/**
- * The screen class core's screens extend, on 26.1: a real {@link Screen} whose frame and input events are handed to
- * core in core's terms. Same members as the contract in core ({@code core/src/contract}).
- */
 public abstract class PlatformScreen extends Screen {
     protected PlatformScreen(Text title) {
         super(ComponentText.unwrap(title));
     }
-
-    // --- the game's events in core's terms ---
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
@@ -52,7 +46,6 @@ public abstract class PlatformScreen extends Screen {
         return uiCharTyped(new Input26.Char(event));
     }
 
-    /** One frame. */
     protected abstract void renderUi(GuiDrawing drawing, int mouseX, int mouseY, float partialTick);
 
     protected abstract boolean uiMouseClicked(double x, double y, int button, boolean doubleClick);
@@ -65,34 +58,26 @@ public abstract class PlatformScreen extends Screen {
 
     protected abstract boolean uiCharTyped(CharInput character);
 
-    // --- what core screens may ask the game ---
-
-    /** The game's own handling of a key the UI did not take. */
     protected boolean platformKeyPressed(KeyInput key) {
         return super.keyPressed(((Input26.Key) key).event());
     }
 
-    /** A world is loaded (false before the screen is opened). */
     protected boolean inWorld() {
         return minecraft != null && minecraft.level != null;
     }
 
-    /** Runs on the game thread after the current event. */
     protected void runLater(Runnable task) {
         minecraft.execute(task);
     }
 
-    /** Shows another screen (a core screen, or one the platform handed in, e.g. a parent; null: none). */
     protected void showScreen(Object screen) {
         Mc26.setScreen((Screen) screen);
     }
 
-    /** The screen the game shows now (null before this one is opened). */
     protected Object currentScreen() {
         return minecraft == null ? null : Mc26.screen();
     }
 
-    /** Asks the game's "open this link?" question, coming back here. */
     protected void confirmLink(String url) {
         Mc26.confirmLink(this, url);
     }

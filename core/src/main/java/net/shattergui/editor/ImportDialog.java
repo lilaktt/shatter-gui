@@ -15,11 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-/**
- * "Import": the packages found in the exports and packages folders (newest first) — a click imports one, checked
- * first, nothing written if it is broken — or an effect code from the clipboard. "Open folder" shows where to drop
- * a .shatterfx file.
- */
 final class ImportDialog extends UiScreen.Overlay {
     private static final int ROW = 14;
     private final FxEditor editor;

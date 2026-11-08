@@ -16,11 +16,6 @@ import net.shattergui.ui.Ui;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A colour gradient: the bar shows it (over a checkerboard, for transparency) with its stops below. A click on the
- * bar adds a stop with the colour found there, dragging a stop moves it, the chosen stop is edited with the colour
- * picker underneath, "remove" deletes it (one stop always stays). Written as one colour or a list of {t, color}.
- */
 final class GradientEditor extends Container {
     private record Stop(float t, int color) {
     }

@@ -1,6 +1,5 @@
 package net.shattergui.platform;
 
-/** The key codes the UI uses: GLFW's. A version whose game reports other codes translates them (26.3: SDL scancodes). */
 public final class Keys {
     public static final int KEY_SPACE = 32;
     public static final int KEY_S = 83;

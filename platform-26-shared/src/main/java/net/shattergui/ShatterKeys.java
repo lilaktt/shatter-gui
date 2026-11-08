@@ -12,10 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * The mod's key bindings on 26.1 ({@link ModKeys} defines them and what they do): registered with Fabric in the mod's
- * own category, unbound by default; presses are handled at the end of each client tick.
- */
 public final class ShatterKeys implements KeyBindings {
     public static final ShatterKeys BINDINGS = new ShatterKeys();
     private static final Map<String, KeyMapping> MAPPINGS = new LinkedHashMap<>();
@@ -44,17 +40,14 @@ public final class ShatterKeys implements KeyBindings {
         }
     }
 
-    /** See {@link ModKeys#nextFavorite}. */
     public static String nextFavorite(ShatterConfig config) {
         return ModKeys.nextFavorite(config);
     }
 
-    /** The cycle key (tests bind it). */
     public static KeyMapping cycleKey() {
         return MAPPINGS.get(ModKeys.CYCLE_EFFECT);
     }
 
-    /** See {@link ModKeys#setEnabled}. */
     public static void setEnabled(boolean enabled) {
         ModKeys.setEnabled(enabled);
     }

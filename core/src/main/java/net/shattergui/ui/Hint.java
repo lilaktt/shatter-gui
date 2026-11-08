@@ -7,10 +7,6 @@ import net.shattergui.platform.TextLine;
 import java.util.List;
 import java.util.function.Supplier;
 
-/**
- * Explanatory text set apart from the settings: smaller, muted, in a faint plate with an accent mark on the left, and
- * wrapped to the width (never cut off).
- */
 public class Hint extends Widget {
     private final Supplier<Text> text;
     private List<TextLine> lines = List.of();

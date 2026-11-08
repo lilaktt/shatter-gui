@@ -19,12 +19,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * The effects shipped with the mod: every one loads without a message, closes a furnace (screenshots at three
- * moments) and ends cleanly; some open it by gathering (the screen stays hidden until the pieces have landed); the
- * glitch with reduce motion; the Effects tab lists them with their settings and "Copy to my effects" opens a copy in
- * the editor.
- */
 final class BundledEffectsScenario {
     private static final List<String> OPEN = List.of("frost", "portal", "blinds", "explosion", "pixelate", "pop", "slide",
             "flip", "door", "iris", "spring");
@@ -52,12 +46,10 @@ final class BundledEffectsScenario {
                 close(context, check, shot, name + "_" + id, id, furnace, config);
             }
 
-            // Reduce motion: the glitch's calm version.
             config.reduceMotion = true;
             close(context, check, shot, name + "_glitch_reduced", "glitch", furnace, config);
             config.reduceMotion = reduce;
 
-            // Opening by gathering (flat GUI or Spatial GUI's plane; GatherScenario checks the frames of every effect).
             config.effect = "glass";
             for (String id : OPEN) {
                 open(context, check, shot, name + "_open_" + id, id, furnace, config);
@@ -65,7 +57,6 @@ final class BundledEffectsScenario {
 
             thematic(context, check, shot, name + "_thematic", furnace, config);
 
-            // The Effects tab with a shipped effect selected, then its copy in the editor.
             config.openEffect = ShatterConfig.OPEN_NONE;
             context.setScreen(() -> new ShatterConfigScreen(null));
             context.waitTicks(3);
@@ -94,7 +85,6 @@ final class BundledEffectsScenario {
         }
     }
 
-    /** Thematic mode: a furnace burns; the player's change to the table; off again → the general effect. */
     private static void thematic(ClientGameTestContext context, BiConsumer<Boolean, String> check, Consumer<String> shot,
                                  String name, Supplier<Screen> furnace, ShatterConfig config) {
         boolean was = config.thematic;
@@ -112,7 +102,6 @@ final class BundledEffectsScenario {
             config.thematic = false;
             config.themes.clear();
             check.accept("glass".equals(closeAndName(context, furnace)), name + ": off by default: the general effect");
-            // The table in the Screens tab.
             config.thematic = true;
             context.setScreen(() -> new ShatterConfigScreen(null));
             context.waitTicks(3);
@@ -200,7 +189,6 @@ final class BundledEffectsScenario {
         check.accept(hidden, name + ": the screen is hidden while it gathers");
         check.accept(id.equals(running), name + ": the gathering runs " + id + " (ran " + running + ")");
         check.accept(shown, name + ": the screen is shown once the pieces have landed");
-        // Closing it again works as usual (glass).
         context.runOnClient(mc -> Mc26.setScreen(null));
         waitUntilClear(context, 200);
         context.waitTicks(3);

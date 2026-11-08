@@ -1,11 +1,6 @@
 package net.shattergui.ui;
 
-/**
- * Small icons as 9×9 pixel patterns in code ({@code #} = drawn), no texture files. Drawn by {@link Draw#icon} in any
- * colour, at any whole-pixel scale.
- */
 public enum Icon {
-    /** An arrow out of a square (a page outside the game). */
     EXTERNAL(
             ".....####",
             ".......##",
@@ -16,7 +11,6 @@ public enum Icon {
             "#.....#..",
             "#.....#..",
             "#######.."),
-    /** Brackets (source code). */
     BRACKETS(
             ".........",
             ".....#...",
@@ -27,7 +21,6 @@ public enum Icon {
             "..##..#..",
             "...#.....",
             "........."),
-    /** A map marker (report a place: a bug). */
     MARKER(
             "..#####..",
             ".#######.",

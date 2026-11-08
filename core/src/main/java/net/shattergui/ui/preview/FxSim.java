@@ -14,15 +14,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.function.Function;
 
-/**
- * A schema-2 effect in the editor's preview: the same {@link FxSimulation} as in the world (same pieces, modules,
- * masks, timing), drawn in 2D through a camera one block in front of the interface, as in the game: every corner is
- * turned in 3D (spin and tumble, {@link FxSimulation#rotate}) and divided by its depth, so a card turned about its
- * vertical axis narrows with perspective and a door swings on its hinges instead of just squeezing. Overlays as
- * textured triangles, own sprites as textured squares, vanilla particles as coloured dots.
- */
 public final class FxSim extends Sim implements FxSimulation.Host {
-    /** One drawn triangle: its sim piece and offset from the piece centre (blocks, plane axes), and its GUI uv. */
     private record Tri(FxSimulation.Piece piece, float dx, float dy, float[] guiUv, Piece drawn) {
     }
 
@@ -33,19 +25,10 @@ public final class FxSim extends Sim implements FxSimulation.Host {
     private final float px;
     private float carry;
 
-    /**
-     * @param def      the effect
-     * @param textures its textures by name (a missing one is null: masks fall back to noise, overlays and sprites are
-     *                 not drawn)
-     */
     public FxSim(Stage stage, ParamValues params, long seed, FxDef def, Function<String, FxTextures.Tex> textures) {
         this(stage, params, seed, def, textures, false, false);
     }
 
-    /**
-     * @param bundled  a shipped effect: its own settings (length, strength, particles) apply
-     * @param reversed played backwards (opening a screen)
-     */
     public FxSim(Stage stage, ParamValues params, long seed, FxDef def, Function<String, FxTextures.Tex> textures,
                  boolean bundled, boolean reversed) {
         super(stage, params, seed);
@@ -73,7 +56,6 @@ public final class FxSim extends Sim implements FxSimulation.Host {
         place(0f);
     }
 
-    /** A drawn triangle from GUI fractions (uv = GUI fractions of the sample). */
     private Piece triangleAt(float u0, float v0, float u1, float v1, float u2, float v2) {
         Piece p = new Piece();
         float[] us = {u0, u1, u2};
@@ -98,7 +80,6 @@ public final class FxSim extends Sim implements FxSimulation.Host {
         }
     }
 
-    /** Moves the drawn triangles to the simulation's state at the given partial tick. */
     private void place(float partial) {
         float[] edge = sim.edgeOffset(partial);
         float mosaic = sim.mosaic(partial);
@@ -106,7 +87,6 @@ public final class FxSim extends Sim implements FxSimulation.Host {
             FxSimulation.Piece p = tri.piece();
             Piece d = tri.drawn();
             for (int c = 0; c < 3; c++) {
-                // Coarse pixels: the texture corners move towards the piece's centre.
                 d.u[c] = tri.guiUv()[c * 2] + (p.u - tri.guiUv()[c * 2]) * mosaic;
                 d.v[c] = tri.guiUv()[c * 2 + 1] + (p.v - tri.guiUv()[c * 2 + 1]) * mosaic;
             }
@@ -121,7 +101,6 @@ public final class FxSim extends Sim implements FxSimulation.Host {
                 d.sy = new float[3];
             }
             for (int c = 0; c < 3; c++) {
-                // Corner relative to the piece centre (blocks, y up), turned in 3D, then seen from one block away.
                 float cx = (tri.dx() + d.lx[c] / px) * scale;
                 float cy = (tri.dy() - d.ly[c] / px) * scale;
                 float[] v = FxSimulation.rotate(cx, cy, 0, p.tiltAxis, tilt, angle);
@@ -171,7 +150,6 @@ public final class FxSim extends Sim implements FxSimulation.Host {
                     continue;
                 }
                 float strength = sim.overlay(tri.piece(), k, carry) * d.alpha;
-                // The preview has normal blending only: additive and multiply are approximated by opacity.
                 strength *= "normal".equals(o.blend()) ? 1f : 0.6f;
                 if (strength <= 0.01f) {
                     continue;
@@ -221,22 +199,17 @@ public final class FxSim extends Sim implements FxSimulation.Host {
         return !sim.alive() && particles.isEmpty();
     }
 
-    /** The simulation (the editor reads its time, pieces and sprites). */
     public FxSimulation simulation() {
         return sim;
     }
 
-    /** Vanilla particles shown as dots right now. */
     public int dotCount() {
         return particles.size();
     }
 
-    /** Triangles drawn for the pieces. */
     public int triangleCount() {
         return tris.size();
     }
-
-    // --- FxSimulation.Host ---
 
     @Override
     public float[] point(FxDef.Point.Kind kind) {
@@ -278,10 +251,8 @@ public final class FxSim extends Sim implements FxSimulation.Host {
 
     @Override
     public void playSound(String sound, float volume, float pitch) {
-        // The editor's preview is silent.
     }
 
-    /** Colliding pieces land on the preview's floor (the only "block" here), with the same bounce and friction. */
     @Override
     public int move(float[] s, float radius, float bounce, float friction) {
         s[0] += s[3];

@@ -13,22 +13,15 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-/**
- * What a scenario can do, from the test thread: run code on the client thread, wait for client ticks, take
- * screenshots, check conditions. A small stand-in for Fabric's client game test context, which Fabric API for 1.21.1
- * does not have.
- */
 final class TestContext {
     private static final AtomicLong TICKS = new AtomicLong();
     private static final AtomicLong FRAMES = new AtomicLong();
-    /** Nanoseconds between the last frames (ring), for the freeze check. */
     private static final long[] FRAME_GAPS = new long[64];
     private static long lastFrame;
 
     private final List<String> failures = new ArrayList<>();
     private int checks;
 
-    /** END_CLIENT_TICK. */
     static void onTick() {
         synchronized (TICKS) {
             TICKS.incrementAndGet();
@@ -36,7 +29,6 @@ final class TestContext {
         }
     }
 
-    /** Every frame (HUD callback). */
     static void onFrame() {
         long now = System.nanoTime();
         long n = FRAMES.incrementAndGet();
@@ -50,7 +42,6 @@ final class TestContext {
         return FRAMES.get();
     }
 
-    /** The longest gap between two frames among the frames after {@code fromFrame} (ms), at most 60 frames back. */
     static double longestFrameGapSince(long fromFrame) {
         long now = FRAMES.get();
         long worst = 0;
@@ -95,7 +86,6 @@ final class TestContext {
         }
     }
 
-    /** Waits until {@code condition} holds on the client, at most {@code maxTicks}; false if it never did. */
     boolean waitFor(Predicate<Minecraft> condition, int maxTicks) {
         for (int t = 0; t < maxTicks; t++) {
             if (computeOnClient(condition::test)) {
@@ -106,13 +96,11 @@ final class TestContext {
         return computeOnClient(condition::test);
     }
 
-    /** The last frame, saved to screenshots/<name>.png of the run folder. */
     void shot(String name) {
         runOnClient(mc -> Screenshot.grab(mc.gameDirectory, name + ".png", mc.getMainRenderTarget(), message -> {
         }));
     }
 
-    /** The last frame as a picture (close it). */
     NativeImage frame() {
         return computeOnClient(mc -> Screenshot.takeScreenshot(mc.getMainRenderTarget()));
     }

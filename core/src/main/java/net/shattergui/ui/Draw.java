@@ -2,11 +2,6 @@ package net.shattergui.ui;
 
 import net.shattergui.platform.UiTexture;
 
-/**
- * Drawing primitives of the editor, all built from {@code fill}/{@code fillGradient} and the pose stack: rounded
- * rectangles (corners as short scanlines), soft shadows, outlines, pixel icons; plus textured or coloured triangles as
- * a GUI render element (the effect previews).
- */
 public final class Draw {
     private Draw() {
     }
@@ -17,7 +12,6 @@ public final class Draw {
         }
     }
 
-    /** Corner inset of row {@code i} (0 = outermost) of a quarter circle of radius r. */
     private static int inset(int r, int i) {
         double d = r - i - 0.5;
         return (int) Math.round(r - Math.sqrt(Math.max(0, r * r - d * d)));
@@ -40,7 +34,6 @@ public final class Draw {
         ui.g.fill(x, y + r, x + w, y + h - r, color);
     }
 
-    /** Vertical gradient from {@code top} to {@code bottom}. */
     public static void roundGradient(Ui ui, int x, int y, int w, int h, int r, int top, int bottom) {
         if (w <= 0 || h <= 0) {
             return;
@@ -55,7 +48,6 @@ public final class Draw {
                 Theme.mix(top, bottom, (float) (h - r) / h));
     }
 
-    /** A 1-pixel rounded border. */
     public static void roundOutline(Ui ui, int x, int y, int w, int h, int r, int color) {
         if (w <= 2 || h <= 2 || (color >>> 24) == 0) {
             return;
@@ -69,7 +61,6 @@ public final class Draw {
             int in = inset(r, i);
             int next = i + 1 < r ? inset(r, i + 1) : 0;
             int span = Math.max(1, in - next);
-            // Top and bottom arcs: the pixels of this row that are not covered by the next row.
             ui.g.fill(x + in, y + i, x + in + span, y + i + 1, color);
             ui.g.fill(x + w - in - span, y + i, x + w - in, y + i + 1, color);
             ui.g.fill(x + in, y + h - i - 1, x + in + span, y + h - i, color);
@@ -81,7 +72,6 @@ public final class Draw {
         ui.g.fill(x + w - 1, y + r, x + w, y + h - r, color);
     }
 
-    /** A rounded rectangle with a 1-pixel border of another colour (border shape, then the fill inset by one). */
     public static void roundBox(Ui ui, int x, int y, int w, int h, int r, int fill, int border) {
         if ((border >>> 24) == 0) {
             roundRect(ui, x, y, w, h, r, fill);
@@ -91,7 +81,6 @@ public final class Draw {
         roundRect(ui, x + 1, y + 1, w - 2, h - 2, Math.max(0, r - 1), fill);
     }
 
-    /** A soft drop shadow under a rounded rectangle; {@code strength} 0..1. */
     public static void shadow(Ui ui, int x, int y, int w, int h, int r, float strength) {
         if (strength <= 0.01f) {
             return;
@@ -104,7 +93,6 @@ public final class Draw {
         }
     }
 
-    /** A pixel icon, {@code scale} screen pixels per icon pixel. */
     public static void icon(Ui ui, Icon icon, int x, int y, int scale, int color) {
         for (int py = 0; py < Icon.SIZE; py++) {
             int run = -1;
@@ -120,28 +108,21 @@ public final class Draw {
         }
     }
 
-    /** An icon centred in a box. */
     public static void iconCentered(Ui ui, Icon icon, int x, int y, int w, int h, int color) {
         int size = Icon.SIZE;
         icon(ui, icon, x + (w - size) / 2, y + (h - size) / 2, 1, color);
     }
 
-    /** A filled circle (for swatches and knobs). */
     public static void circle(Ui ui, int cx, int cy, int radius, int color) {
         roundRect(ui, cx - radius, cy - radius, radius * 2, radius * 2, radius, color);
     }
 
-    /** A whole texture stretched over a rectangle (two triangles). */
     public static void texture(Ui ui, UiTexture texture, float x, float y, float w, float h, int color) {
         float x1 = x + w;
         float y1 = y + h;
         texture(ui, texture, x, y, w, h, color, 0, 0, 1, 1, false);
     }
 
-    /**
-     * As above, the part (u0, v0)–(u1, v1) of the texture (v0 > v1 flips it); {@code premultiplied}: see
-     * {@link #triangles}.
-     */
     public static void texture(Ui ui, UiTexture texture, float x, float y, float w, float h, int color,
                                float u0, float v0, float u1, float v1, boolean premultiplied) {
         float x1 = x + w;
@@ -150,21 +131,10 @@ public final class Draw {
         triangles(ui, texture, premultiplied, data, new int[]{color, color, color, color, color, color}, 6);
     }
 
-    // --- triangles ---
-
-    /**
-     * A batch of triangles: {@code data} holds per vertex {x, y, u, v} in GUI coordinates (u, v ignored without a
-     * texture) and {@code colors} one ARGB per vertex. Drawn with the current pose and clip. Triangles of either
-     * winding are fine (the GUI pipelines cull back faces, so they are reordered here).
-     */
     public static void triangles(Ui ui, UiTexture texture, float[] data, int[] colors, int vertexCount) {
         triangles(ui, texture, false, data, colors, vertexCount);
     }
 
-    /**
-     * As above; {@code premultiplied}: the texture's colours are already multiplied by its alpha (a GUI captured on a
-     * transparent target), so it is blended that way and the vertex colours are premultiplied to match.
-     */
     public static void triangles(Ui ui, UiTexture texture, boolean premultiplied, float[] data, int[] colors,
                                  int vertexCount) {
         if (vertexCount < 3) {

@@ -11,11 +11,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-/**
- * A JSON value being read, with its path for messages. Reading an object marks its keys as used; {@link #finish()}
- * then warns about every key nobody asked for (unknown fields are ignored, but never silently). Numbers out of range
- * are clamped with a warning; a wrong type is an error.
- */
 final class Node {
     private final JsonElement element;
     private final String path;
@@ -68,7 +63,6 @@ final class Node {
         return path.isEmpty() ? key : path + "." + key;
     }
 
-    /** A field of this object (missing if this is not an object or has no such key). */
     Node get(String key) {
         used.add(key);
         JsonElement value = isObject() ? element.getAsJsonObject().get(key) : null;
@@ -79,7 +73,6 @@ final class Node {
         return isObject() && element.getAsJsonObject().has(key);
     }
 
-    /** Requires an object here; an error otherwise. */
     boolean expectObject() {
         if (!isObject()) {
             problems.error(path, "must be an object " + describe());
@@ -88,7 +81,6 @@ final class Node {
         return true;
     }
 
-    /** Warns about keys of this object that were never read. */
     void finish() {
         if (!isObject()) {
             return;
@@ -99,8 +91,6 @@ final class Node {
             }
         }
     }
-
-    // --- primitive fields ---
 
     float num(String key, float def, float min, float max) {
         Node n = get(key);
@@ -159,7 +149,6 @@ final class Node {
         return element.getAsString();
     }
 
-    /** One of the allowed names (case-insensitive); an error listing them otherwise. */
     String choice(String key, String def, List<String> allowed) {
         return get(key).asChoice(def, allowed);
     }
@@ -180,7 +169,6 @@ final class Node {
         return lower;
     }
 
-    /** The elements of an array field, at most {@code max} (more: a warning, the rest skipped). */
     List<Node> array(String key, int max) {
         return get(key).asArray(max);
     }
@@ -204,7 +192,6 @@ final class Node {
         return out;
     }
 
-    /** An array of exactly {@code size} numbers, each clamped; null (with an error) if it is not one. */
     float[] numbers(int size, float min, float max) {
         if (missing()) {
             return null;
@@ -227,7 +214,6 @@ final class Node {
         return out;
     }
 
-    /** A short description of what was found, for error messages. */
     String describe() {
         if (element == null || element.isJsonNull()) {
             return "(missing)";

@@ -5,10 +5,6 @@ import net.shattergui.platform.Keys;
 
 import java.util.function.BooleanSupplier;
 
-/**
- * A rounded card holding a column of widgets. Optionally clickable ({@link #onClick}): then it lifts and brightens on
- * hover, can be focused, and shows an accent border when {@link #selected}.
- */
 public class Card extends Column {
     private Runnable onClick;
     private Runnable onDoubleClick;
@@ -27,7 +23,6 @@ public class Card extends Column {
         return this;
     }
 
-    /** The second click of a double click (the first one still runs {@link #onClick}). */
     public Card onDoubleClick(Runnable action) {
         onDoubleClick = action;
         return this;

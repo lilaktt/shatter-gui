@@ -6,15 +6,10 @@ import net.shattergui.shatter.ShardMesh;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 
-/** Initial-motion helpers shared by effects. */
 final class ShardMotion {
     private ShardMotion() {
     }
 
-    /**
-     * Radial push from the image center, plus forward along the view, plus an upward kick and noise.
-     * All parts scale with {@code burst} (blocks/tick).
-     */
     static void burst(ShardInstance shard, ShardMesh.Layout layout, Vector3f forward, double burst, double upward,
                       RandomSource random) {
         Vector3d radial = new Vector3d(shard.pos()).sub(layout.center());
@@ -29,7 +24,6 @@ final class ShardMotion {
                 .add(random.nextGaussian() * noise, random.nextGaussian() * noise, random.nextGaussian() * noise);
     }
 
-    /** Random axis, rate between 30% and 100% of {@code spin} (rad/tick). */
     static void spin(ShardInstance shard, float spin, RandomSource random) {
         Vector3f axis = new Vector3f(random.nextFloat() * 2 - 1, random.nextFloat() * 2 - 1, random.nextFloat() * 2 - 1);
         if (axis.lengthSquared() < 1.0e-4f) {

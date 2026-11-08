@@ -39,25 +39,12 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.function.Supplier;
 
-/**
- * The visual editor of schema-2 effects, made of the mod's own widgets. Top: the effects menu, name, Save,
- * Undo/Redo, Test, Export, Import, folder, full screen. Left: the effect's parts (layers, emitters, sounds) or the
- * texture library. Middle: the live preview with its transport. Right: the inspector. Bottom: the timeline and a
- * line with the limits as counters (pieces, particles, layers, textures, size) and the last message.
- *
- * <p>The effect is edited as its JSON ({@link FxDoc}): every change is an undo step (Ctrl+Z, Ctrl+Y), checked at once
- * (the parser plus {@link EditorChecks}), and shown by the preview; while there are errors the preview keeps the last
- * valid state. Save writes {@code effects/<id>.json} atomically and reloads the effects so the game uses it.
- * Nothing the player types can break it: odd values are clamped or reported next to their field.
- */
 public final class FxEditor extends Container {
-    /** What the screen around the editor offers. */
     public interface Host {
         boolean fullscreen();
 
         void toggleFullscreen();
 
-        /** True if the classic (format 1) effects can be shown instead (only inside the settings). */
         boolean canShowClassic();
 
         void showClassic();
@@ -139,7 +126,6 @@ public final class FxEditor extends Container {
         return host;
     }
 
-    /** The id written in the effect being edited (saved or not). */
     public String docId() {
         return doc.str("id", "");
     }
@@ -152,12 +138,8 @@ public final class FxEditor extends Container {
         return selection;
     }
 
-    // --- layout and frame ---
-
     @Override
     protected void arrange() {
-        // Layout runs once per frame before drawing: the per-frame work goes first, so a rebuilt inspector is laid out
-        // before it is drawn.
         if (lastFrame != UiClock.frameNumber()) {
             lastFrame = UiClock.frameNumber();
             try {
@@ -202,7 +184,6 @@ public final class FxEditor extends Container {
         }
     }
 
-    /** Something in the editor broke: logged once, said in the status line; the game goes on. */
     private void failed(RuntimeException e) {
         reportedFailure = true;
         net.shattergui.ui.UiFailures.report("frame FxEditor", e);
@@ -210,7 +191,6 @@ public final class FxEditor extends Container {
         refreshInspector();
     }
 
-    /** Once per frame: the preview follows the effect; the inspector is rebuilt when needed; the tour starts. */
     private void frame() {
         FxParser.Result result = doc.result();
         if (result.ok()) {
@@ -231,7 +211,6 @@ public final class FxEditor extends Container {
         }
     }
 
-    /** The backgrounds of the panels. */
     private final class Decor extends Widget {
         @Override
         protected void draw(Ui ui) {
@@ -274,7 +253,6 @@ public final class FxEditor extends Container {
         }
     }
 
-    /** A limit and how much of it the effect uses. */
     record Counter(Text label, long value, long max) {
     }
 
@@ -303,9 +281,6 @@ public final class FxEditor extends Container {
         return out;
     }
 
-    // --- problems ---
-
-    /** Parser problems plus the editor's own checks (cached until the effect or the textures change). */
     public List<FxProblems.Problem> problems() {
         if (checkedVersion != doc.version() || checkedLibrary != library.version()) {
             checkedVersion = doc.version();
@@ -321,7 +296,6 @@ public final class FxEditor extends Container {
         return problems;
     }
 
-    /** Problems of a field (exact: only that path; otherwise also everything inside it). */
     public List<FxProblems.Problem> problemsAt(String path, boolean exact) {
         List<FxProblems.Problem> out = new ArrayList<>();
         for (FxProblems.Problem p : problems()) {
@@ -340,8 +314,6 @@ public final class FxEditor extends Container {
         return preview.sim() != null && preview.sim().simulation().maskMissing();
     }
 
-    // --- selection ---
-
     public void select(Selection s) {
         if (s.list() != null && (s.index() < 0 || s.index() >= doc.size(s.list()))) {
             s = Selection.EFFECT;
@@ -352,7 +324,6 @@ public final class FxEditor extends Container {
         }
     }
 
-    /** The inspector is rebuilt in the next frame (a form or the effect's shape changed). */
     public void refreshInspector() {
         inspectorDirty = true;
     }
@@ -364,8 +335,6 @@ public final class FxEditor extends Container {
         String param = path.substring(path.lastIndexOf('.') + 1);
         timeline.showCurve(path, field, def, window, Text.literal(item.getString() + " · " + param));
     }
-
-    // --- list items ---
 
     public int addLayer(FxDef.Module module) {
         JsonObject layer = new JsonObject();
@@ -498,7 +467,6 @@ public final class FxEditor extends Container {
         refreshInspector();
     }
 
-    /** Uses a library texture: the selected (or a new) sprite emitter, a new overlay, the trigger mask or the look's mask. */
     public void useTexture(String name, String role) {
         if (name == null) {
             return;
@@ -536,20 +504,15 @@ public final class FxEditor extends Container {
         status(EditorUi.tr("status.texture_used", name), true);
     }
 
-    // --- preview ---
-
     public void togglePlay() {
         preview.setPlaying(!preview.playing());
     }
 
-    /** The interface the preview breaks (remembered between sessions). */
     public void setSample(SampleImage.Kind kind) {
         preview.setSample(kind);
         state.sample = kind.id();
         state.save();
     }
-
-    // --- undo, keys ---
 
     public void undo() {
         if (doc.undo()) {
@@ -568,7 +531,6 @@ public final class FxEditor extends Container {
         refreshInspector();
     }
 
-    /** Ctrl+Z, Ctrl+Y / Ctrl+Shift+Z, Ctrl+S, Space (play/pause, unless typing). */
     public boolean shortcut(KeyInput event) {
         int key = event.key();
         UiScreen screen = UiScreen.active();
@@ -595,9 +557,6 @@ public final class FxEditor extends Container {
         return false;
     }
 
-    // --- files ---
-
-    /** Runs {@code action}, asking first if there are unsaved changes. */
     public void confirmLeave(Runnable action) {
         if (fileId != null ? !doc.dirty() : !doc.changedSinceLoad()) {
             action.run();
@@ -619,7 +578,6 @@ public final class FxEditor extends Container {
         }
     }
 
-    /** A new, unsaved effect from a template, under a free id. */
     public void newEffect(String template) {
         JsonObject root = com.google.gson.JsonParser.parseString(Templates.json(template)).getAsJsonObject();
         String id = freeId("empty".equals(template) ? "my_effect" : "my_" + template);
@@ -643,10 +601,6 @@ public final class FxEditor extends Container {
         status(EditorUi.tr("status.duplicated", id), true);
     }
 
-    /**
-     * A copy of a shipped effect to change: unsaved, under a free id ("<id>_copy"), named "<name> (copy)". Saving it
-     * makes it one of the player's effects; the original stays as it is.
-     */
     public void cloneFrom(String json, String name) {
         JsonObject root = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
         String original = root.has("id") ? root.get("id").getAsString() : "";
@@ -664,11 +618,6 @@ public final class FxEditor extends Container {
         status(EditorUi.tr("status.cloned", name), true);
     }
 
-    /**
-     * The names of the layers, particles and sounds of a shipped template or effect, in the player's language: they
-     * are written in English in the files and translated by {@code ui.shatter_gui.fx.label.<name>}. The copy then
-     * belongs to the player, names and all.
-     */
     static void localizeLabels(JsonObject root) {
         for (String list : List.of("layers", "emitters", "sounds")) {
             localizeList(root, list);
@@ -695,7 +644,6 @@ public final class FxEditor extends Container {
     }
 
     private void afterLoad() {
-        // Another effect: the preview must not keep showing the previous one if this one has errors.
         preview.setDef(null);
         selection = Selection.EFFECT;
         timeline.hideCurve();
@@ -709,7 +657,6 @@ public final class FxEditor extends Container {
                 || Platform.get().effects().dataIds().contains(id));
     }
 
-    /** Saves to {@code effects/<id>.json} (atomically) and reloads the effects. False if it could not. */
     public boolean save() {
         String id = doc.str("id", "");
         if (!FxParser.ID.matcher(id).matches()) {
@@ -759,7 +706,6 @@ public final class FxEditor extends Container {
         status(EditorUi.tr("status.deleted", id), true);
     }
 
-    /** Writes {@code exports/<id>.shatterfx} with the effect and its textures; effects without textures also go to the clipboard as a code. */
     public Path exportPackage() {
         String id = doc.str("id", "");
         if (!FxParser.ID.matcher(id).matches()) {
@@ -790,12 +736,10 @@ public final class FxEditor extends Container {
         }
     }
 
-    /** What an import note says, in the player's language. */
     public static Text note(EffectFiles.Note note) {
         return EditorUi.tr("import.note." + note.key(), localized(note.args()));
     }
 
-    /** Arguments of a message with file problems in the player's language ({@link net.shattergui.fx.FxIOException}). */
     static Object[] localized(Object... args) {
         Object[] out = args.clone();
         for (int i = 0; i < out.length; i++) {
@@ -806,7 +750,6 @@ public final class FxEditor extends Container {
         return out;
     }
 
-    /** Imports a package (checked first) and opens it. */
     public EffectFiles.ImportResult importPackage(Path file) {
         EffectFiles.ImportResult result = files.importPackage(file, id -> Platform.get().effects().isBuiltIn(id)
                 || Platform.get().effects().dataIds().contains(id) && !files.exists(id));
@@ -825,7 +768,6 @@ public final class FxEditor extends Container {
         return result;
     }
 
-    /** Imports an effect code from the clipboard as a new, unsaved effect. */
     public boolean importClipboard() {
         String json = FxFiles.fromCode(Platform.get().desktop().clipboard());
         if (json == null || FxParser.schemaOf(json) != FxLimits.SCHEMA) {
@@ -855,7 +797,6 @@ public final class FxEditor extends Container {
         }
     }
 
-    /** Plays the effect as it is now (unsaved) in the world, on a snapshot of the editor. */
     public boolean test() {
         FxParser.Result result = doc.result();
         if (!result.ok()) {
@@ -884,8 +825,6 @@ public final class FxEditor extends Container {
         }
     }
 
-    // --- host ---
-
     public void toggleFullscreen() {
         host.toggleFullscreen();
     }
@@ -904,14 +843,11 @@ public final class FxEditor extends Container {
         return status;
     }
 
-    /** The editor goes away (settings closed): textures and the test effect are freed. */
     public void dispose() {
         releaseTest();
         library.releaseAll();
         state.save();
     }
-
-    // --- tour ---
 
     public void startTour() {
         UiScreen screen = UiScreen.active();
@@ -930,12 +866,10 @@ public final class FxEditor extends Container {
         screen.setFocus(tour);
     }
 
-    /** True while the editor is on screen (laid out this frame or the last). */
     public boolean shown() {
         return UiClock.frameNumber() - arrangedFrame <= 1;
     }
 
-    /** The current tour step (tests), or -1. */
     public int tourStep() {
         UiScreen screen = UiScreen.active();
         if (screen != null) {
@@ -947,8 +881,6 @@ public final class FxEditor extends Container {
         }
         return -1;
     }
-
-    // --- for tests and keyboard users: the panels' dialogs ---
 
     public void openCatalog() {
         ModuleCatalog.open(this);
@@ -966,7 +898,6 @@ public final class FxEditor extends Container {
         EffectsMenu.open(this, top.effectsButton());
     }
 
-    /** Shows a layer parameter's curve on the timeline (as its "show on the timeline" button). */
     public void showParamCurve(int layer, String param) {
         String path = "layers[" + layer + "]";
         FxDef.Module module = FxDef.Module.byName(doc.str(path + ".module", "stay"));
@@ -980,7 +911,6 @@ public final class FxEditor extends Container {
         }
     }
 
-    /** Closes the tour if it is open (counts as seen). */
     public void closeTour() {
         UiScreen screen = UiScreen.active();
         if (screen != null) {
@@ -992,7 +922,6 @@ public final class FxEditor extends Container {
         }
     }
 
-    /** Moves the open tour on by one step (Enter does the same). */
     public void tourNext() {
         UiScreen screen = UiScreen.active();
         if (screen != null) {
@@ -1004,13 +933,11 @@ public final class FxEditor extends Container {
         }
     }
 
-    /** Selects the left tab (0 layers, 1 textures). */
     public void showLeftTab(int tab) {
         leftTab = tab;
         leftTabs.select(tab, true);
     }
 
-    /** Chooses a library texture (as a click on its thumbnail). */
     public void chooseTexture(String name) {
         textures.choose(name);
     }

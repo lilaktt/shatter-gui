@@ -6,7 +6,6 @@ import net.shattergui.ui.Ui;
 import net.shattergui.ui.Widget;
 import net.shattergui.ui.preview.PreviewPlayer;
 
-/** An animated miniature of an effect: a looping {@link PreviewPlayer} in a framed box of fixed aspect. */
 final class Thumb extends Widget {
     private final PreviewPlayer player;
     private final float aspect;
@@ -27,7 +26,6 @@ final class Thumb extends Widget {
     public void layout(int x, int y, int w) {
         int height = measure(w);
         int width = Math.min(w, Math.round(height / aspect));
-        // Centred in the space it was given.
         super.layout(x + (w - width) / 2, y, width);
         this.h = height;
     }

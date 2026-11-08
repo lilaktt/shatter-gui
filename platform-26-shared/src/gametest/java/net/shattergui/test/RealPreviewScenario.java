@@ -15,12 +15,6 @@ import net.shattergui.ui.preview.SampleImage;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-/**
- * The editor's real preview: each vanilla screen is drawn off-screen into a texture the preview breaks; making them
- * opens nothing (Minecraft.screen, the player's open menu, the open/close effects and waves stay as they were); in
- * creative the inventory stays a sample; a screen that throws switches to the simple samples with a notice; the quick
- * switch turns it back on; closing the editor frees every texture.
- */
 final class RealPreviewScenario {
     private RealPreviewScenario() {
     }
@@ -37,7 +31,6 @@ final class RealPreviewScenario {
             ShatterConfigScreen s = EditorScenario.editor(mc);
             s.selectTab(ShatterConfigScreen.Tab.CUSTOM);
             s.effectEditor().closeTour();
-            // At GUI scale 4 the editor only fits on the whole screen.
             s.openEditorFullscreen();
         });
         context.waitTicks(3);
@@ -86,7 +79,6 @@ final class RealPreviewScenario {
         int textures = context.computeOnClient(mc -> RealPreview.texturesInMemory());
         ShatterGuiClient.LOGGER.info("[ShatterTest] {}: {} preview textures in memory", name, textures);
 
-        // Creative: the inventory screen would turn into the creative one; it stays the sample, nothing changes.
         singleplayer.getServer().runCommand("gamemode creative @p");
         context.waitTicks(5);
         context.runOnClient(mc -> {
@@ -103,7 +95,6 @@ final class RealPreviewScenario {
         singleplayer.getServer().runCommand("gamemode survival @p");
         context.waitTicks(5);
 
-        // A screen that throws: simple samples, one notice, the editor keeps working.
         context.runOnClient(mc -> {
             RealPreview.release();
             RealPreview.breakNextForTests();
@@ -117,7 +108,6 @@ final class RealPreviewScenario {
         shot.accept(name + "_failed_notice");
         check.accept(context.computeOnClient(mc -> Mc26.screen()) == editorScreen, name + ": the editor must stay open");
 
-        // The quick switch turns it back on.
         context.runOnClient(mc -> RealPreview.toggleQuick());
         boolean back = false;
         for (int i = 0; i < 40 && !back; i++) {
@@ -131,7 +121,6 @@ final class RealPreviewScenario {
                 name + ": the quick switch must turn it off");
         context.runOnClient(mc -> RealPreview.toggleQuick());
 
-        // Closing the editor (full screen → settings → world) frees the pictures.
         context.runOnClient(mc -> Mc26.screen().onClose());
         context.waitTicks(3);
         context.runOnClient(mc -> Mc26.screen().onClose());

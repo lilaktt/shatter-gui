@@ -26,13 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
-/** Owns all live shards, grouped by the captured texture they sample. */
 public final class ShardManager {
-    /** One closed screen: its capture texture plus the shards cut from it. The texture slot is freed with the last shard. */
-    /**
-     * An opening's plane: as it was when its picture was taken ({@code captured}, centre in world coordinates) and as it
-     * is in the current frame ({@code now}, centre relative to the camera; may return null when unknown).
-     */
     public record OpenAnchor(PlaneBasis captured, java.util.function.Supplier<PlaneBasis> now, boolean onSpatialPlane) {
     }
 
@@ -40,35 +34,20 @@ public final class ShardManager {
         final CapturePool.Slot slot;
         final List<ShardInstance> shards;
         final ShatterEffect effect;
-        /** The effect's wave-level behaviour, or null. */
         final ShatterWave wave;
-        /** The settings the effect runs with, taken when it started. */
         final ParamValues params;
-        /** Started by the editor's preview: runs even while the mod is switched off. */
         final boolean preview;
-        /** Whether the batch has been drawn yet (for profiling the first frame). */
         boolean rendered;
-        /** Ticks until a hurried batch is gone, or -1 if it runs normally (see {@link #hurry}). */
         int hurryLeft = -1;
-        /** The length of the hurry, in ticks. */
         int hurryTotal = HURRY_TICKS;
-        /**
-         * For an opening: the plane it was cut from and where that plane is now, or null. While it follows the camera
-         * ({@link #follows}) the pieces are drawn relative to the plane of this frame (see {@link CameraSpace#follow}),
-         * so they stay in front of the face while the player moves and land where the real screen appears.
-         */
         final OpenAnchor anchor;
-        /** Whether this opening follows the camera (the player's setting, the effect's own, the role's default). */
         final boolean follows;
         private PlaneBasis lastPlane;
-        /** The screen an opening (gathering) wave belongs to, or null for a close. */
         final Screen owner;
 
         Batch(CapturePool.Slot slot, List<ShardInstance> shards, ShatterEffect effect, ShatterWave wave,
               ParamValues params, boolean preview, OpenAnchor anchor, Screen owner) {
             this.anchor = anchor;
-            // Openings follow by default; of the closes only the fly effect can (it then leaves from where the
-            // screen is now), and only when asked to: the pieces of the others stay in the world.
             this.follows = anchor != null && (effect.opens()
                     ? FollowCamera.follows(params, effect.followCamera(), true)
                     : effect.base() instanceof net.shattergui.effect.FlyEffect
@@ -86,24 +65,17 @@ public final class ShardManager {
             return params;
         }
 
-        /** Started by the editor's preview. */
         public boolean preview() {
             return preview;
         }
 
-        /**
-         * False for an opening wave whose screen is no longer the open one: it is never drawn (and goes at the next tick).
-         * Only the screen on display may have a gathering picture of itself.
-         */
         public boolean belongsToScreen() {
             return !effect.opens() || owner == null || owner == Mc26.screen();
         }
 
-        /** How this batch's world positions are drawn this frame, given the live camera position. */
         public CameraSpace space(Vec3 live) {
             if (follows) {
                 PlaneBasis now = anchor.now().get();
-                // A frame without the plane (Spatial GUI not drawing it): where it was last seen, relative to the camera.
                 lastPlane = now != null ? now : lastPlane;
                 if (lastPlane != null) {
                     return CameraSpace.follow(anchor.captured(), lastPlane);
@@ -112,17 +84,14 @@ public final class ShardManager {
             return CameraSpace.world(live);
         }
 
-        /** World centre of the plane an opening was cut from (tests check where it is drawn), or null. */
         public org.joml.Vector3d planeCenter() {
             return anchor != null ? anchor.captured().center() : null;
         }
 
-        /** Whether it is drawn relative to the plane of this frame (an opening that follows the camera). */
         public boolean follows() {
             return follows;
         }
 
-        /** Whether it is an opening on Spatial GUI's plane (drawn with the level's projection, like that plane). */
         public boolean onSpatialPlane() {
             return anchor != null && anchor.onSpatialPlane();
         }
@@ -131,7 +100,6 @@ public final class ShardManager {
             return hurryLeft >= 0;
         }
 
-        /** Fades the whole batch out within {@code ticks}, its particles included. */
         void hurry(int ticks) {
             if (hurried()) {
                 return;
@@ -143,7 +111,6 @@ public final class ShardManager {
             }
         }
 
-        /** 1 normally; for a hurried batch, down to 0 when it is gone. Multiplies the opacity of everything drawn. */
         public float fade(float partialTick) {
             return hurried() ? Math.clamp((hurryLeft - partialTick) / hurryTotal, 0f, 1f) : 1f;
         }
@@ -160,12 +127,10 @@ public final class ShardManager {
             return effect;
         }
 
-        /** The wave-level behaviour, or null. */
         public ShatterWave wave() {
             return wave;
         }
 
-        /** True exactly once: the first time the batch is drawn. */
         public boolean markRendered() {
             boolean first = !rendered;
             rendered = true;
@@ -173,34 +138,20 @@ public final class ShardManager {
         }
     }
 
-    /**
-     * Spam protection: with more waves than this running, or more shards in all of them, the oldest fade out within
-     * {@link #HURRY_TICKS}, so rapid opening and closing never piles up effects (or their particles).
-     */
     private static final int MAX_ACTIVE_WAVES = 4;
     private static final int MAX_TOTAL_SHARDS = 8000;
     private static final int HURRY_TICKS = 6;
-    /** "finishOldest": a wave making room for a new one is gone within this many ticks (0.2 s). */
     public static final int FINISH_TICKS = 4;
 
     private static final List<Batch> BATCHES = new ArrayList<>();
     private static final RandomSource RANDOM = RandomSource.create();
-    /**
-     * Set by tests ({@link #seedForTests}): each wave then gets its own generator made from this seed and the wave's
-     * number, so how a wave breaks and flies does not depend on the waves before it or on timing. Null in the game.
-     */
     private static Long testSeed;
-    /** The wave the last {@link #spawn} call started, or null if it started none. */
     private static Batch lastSpawned;
     private static long seededWaves;
 
     private ShardManager() {
     }
 
-    /**
-     * Tests: from now on every wave breaks and flies the same way each run ({@code seed}), counting waves from 0 again;
-     * null goes back to the game's unseeded randomness.
-     */
     public static Batch lastSpawned() {
         return lastSpawned;
     }
@@ -210,14 +161,12 @@ public final class ShardManager {
         seededWaves = 0;
     }
 
-    /** Tests: while true no shard settles (they stay over the blocks), to compare the same frame before and after. */
     private static boolean settleHeld;
 
     public static void holdSettledForTests(boolean held) {
         settleHeld = held;
     }
 
-    /** Settled shards of the closes now ({@link Settle}), for tests and the diagnostics. */
     public static int settledShardCount() {
         int count = 0;
         for (Batch batch : BATCHES) {
@@ -242,7 +191,6 @@ public final class ShardManager {
         return count;
     }
 
-    /** Shards that count towards {@code maxShards}. */
     private static int limitedShardCount() {
         int count = 0;
         for (Batch batch : BATCHES) {
@@ -253,7 +201,6 @@ public final class ShardManager {
         return count;
     }
 
-    /** Whether an effect started by the editor's preview is still running. */
     public static boolean hasPreview() {
         for (Batch batch : BATCHES) {
             if (batch.preview) {
@@ -263,15 +210,10 @@ public final class ShardManager {
         return false;
     }
 
-    /** Waves still running (with shards, or only wave-level effects such as smoke). */
     public static int waveCount() {
         return BATCHES.size();
     }
 
-    /**
-     * Effects playing now that count towards {@code maxConcurrentEffects}: every wave that is not finishing (an opening,
-     * a close, or only the particles a close left) and a fly-in. The editor's previews do not count.
-     */
     public static int playingCount() {
         int count = FlyOpen.running() ? 1 : 0;
         for (Batch batch : BATCHES) {
@@ -282,12 +224,6 @@ public final class ShardManager {
         return count;
     }
 
-    /**
-     * Room for one more effect, asked when it is about to start; {@code waiting}: effects already on their way (a
-     * capture that has not reached its frame yet). "finishOldest": the oldest waves finish within {@link #FINISH_TICKS}
-     * until the new one fits, and it starts; "skipNew": false if it does not fit — it must not start. The spam limits
-     * ({@link #MAX_ACTIVE_WAVES}, {@link #MAX_TOTAL_SHARDS}) still apply on top.
-     */
     public static boolean admit(int waiting, String what) {
         ShatterConfig config = ShatterConfig.get();
         int max = config.maxConcurrent();
@@ -304,7 +240,6 @@ public final class ShardManager {
         return true;
     }
 
-    /** "finishOldest": the {@code count} oldest waves that still play normally finish within {@link #FINISH_TICKS}. */
     private static void finishOldest(int count, String what, int max) {
         int finished = 0;
         for (Batch batch : BATCHES) {
@@ -322,9 +257,7 @@ public final class ShardManager {
         }
     }
 
-    /** The most effects that played at once since {@link #resetPeak}, counted whenever a wave starts (tests). */
     private static int peakPlaying;
-    /** Effects that did not start because of "skipNew" in this session (tests). */
     private static int skipped;
 
     public static int skippedCount() {
@@ -339,7 +272,6 @@ public final class ShardManager {
         peakPlaying = playingCount();
     }
 
-    /** Ticks the longest-finishing wave (made room, or over a spam limit) has been finishing, -1 if none (tests). */
     public static int longestFinishing() {
         int longest = -1;
         for (Batch batch : BATCHES) {
@@ -350,7 +282,6 @@ public final class ShardManager {
         return longest;
     }
 
-    /** A capture texture slot; drops the oldest wave if every slot is taken. */
     public static CapturePool.Slot acquireSlot(int width, int height, TextureFormat format) {
         CapturePool.Slot slot = CapturePool.acquire(width, height, format);
         while (slot == null && !BATCHES.isEmpty()) {
@@ -362,34 +293,21 @@ public final class ShardManager {
         return slot;
     }
 
-    /**
-     * Cuts the {@code bounds} part of the image in {@code slot} into shards lying on {@code plane}. Takes ownership of
-     * the slot. {@code target}: where the fly effect flies to, or null. Runs with the saved settings.
-     */
     public static void spawn(CapturePool.Slot slot, ShardPlane plane, ImageRect bounds, Vector3f forward,
                              ShatterEffect effect, FlyTarget target) {
         spawn(slot, plane, bounds, forward, effect, target, ParamValues.current(), false);
     }
 
-    /**
-     * As above with given settings (the editor's preview runs unsaved ones). {@code preview}: spawns even with the
-     * mod switched off, so the editor can show an effect before it is enabled.
-     */
     public static void spawn(CapturePool.Slot slot, ShardPlane plane, ImageRect bounds, Vector3f forward,
                              ShatterEffect effect, FlyTarget target, ParamValues params, boolean preview) {
         spawn(slot, plane, bounds, forward, effect, target, params, preview, null, null);
     }
 
-    /**
-     * As above; {@code anchor}: an opening's plane, then and now (see {@link Batch#space});
-     * {@code owner}: the screen an opening wave gathers (it ends when that screen is no longer shown).
-     */
     public static void spawn(CapturePool.Slot slot, ShardPlane plane, ImageRect bounds, Vector3f forward,
                              ShatterEffect effect, FlyTarget target, ParamValues params, boolean preview,
                              OpenAnchor anchor, Screen owner) {
         lastSpawned = null;
         if (effect.opens() && (owner == null || owner != Mc26.screen())) {
-            // The screen closed or changed before its picture was taken: nothing to gather.
             CapturePool.release(slot);
             ShatterProfiler.openValue("open.dropped", "screen no longer open when the gathering would start");
             return;
@@ -436,11 +354,6 @@ public final class ShardManager {
                 CapturePool.texturesWithMemory()), spawnStart);
     }
 
-    /**
-     * The limit of effects at once checked again when the wave really starts: effects admitted at the same time (two
-     * captures in one frame, a Spatial GUI copy) may not all fit. "skipNew" drops this one (an opening shows its screen
-     * at once); "finishOldest" makes room.
-     */
     private static boolean admitAtSpawn(ShatterEffect effect) {
         ShatterConfig config = ShatterConfig.get();
         int max = config.maxConcurrent();
@@ -470,7 +383,6 @@ public final class ShardManager {
         if (BATCHES.isEmpty()) {
             return;
         }
-        // Close effects pause with the world; openings are the interface's own animation and go on (EffectClock).
         boolean paused = mc.isPaused();
         BlockCollision.newTick();
         boolean enabled = ShatterConfig.get().enabled;
@@ -478,7 +390,6 @@ public final class ShardManager {
         while (batches.hasNext()) {
             Batch batch = batches.next();
             if (!enabled && !batch.preview) {
-                // Switched off while it ran: gone at once.
                 if (batch.wave != null) {
                     batch.wave.hurry(1);
                 }
@@ -488,7 +399,6 @@ public final class ShardManager {
                 continue;
             }
             if (!batch.belongsToScreen()) {
-                // An opening whose screen closed or was replaced: gone at once, its texture freed.
                 dispose(batch);
                 CapturePool.release(batch.slot);
                 batches.remove();
@@ -502,7 +412,6 @@ public final class ShardManager {
                 return shard.isDead();
             });
             boolean waveAlive = batch.wave != null && batch.wave.tick(mc.level, batch.shards, batch.params);
-            // Closes only: an opening, a fly that follows the camera and a preview are never settled.
             boolean settles = !batch.effect.opens() && !batch.follows() && !batch.preview && !settleHeld;
             for (ShardInstance shard : batch.shards) {
                 shard.updateSettled(mc.level, settles);
@@ -519,10 +428,6 @@ public final class ShardManager {
         }
     }
 
-    /**
-     * Ends every opening (gathering) wave at once and frees its texture: the screen it gathers closed or was replaced.
-     * Whatever its effect: a gathering never outlives its screen. Returns how many were dropped.
-     */
     public static int endOpenings() {
         int dropped = 0;
         Iterator<Batch> it = BATCHES.iterator();
@@ -538,7 +443,6 @@ public final class ShardManager {
         return dropped;
     }
 
-    /** Opening waves running now (tests). */
     public static int openingCount() {
         int count = 0;
         for (Batch batch : BATCHES) {
@@ -553,7 +457,6 @@ public final class ShardManager {
         return Minecraft.getInstance();
     }
 
-    /** Drops every wave at once; their particles are cut short too (leaving the world, switching the mod off). */
     public static void clear() {
         for (Batch batch : BATCHES) {
             if (batch.wave != null) {
@@ -571,7 +474,6 @@ public final class ShardManager {
         }
     }
 
-    /** Before a new wave of {@code incoming} shards is added: hurries the oldest waves out while over a spam limit. */
     private static void hurryOldWaves(int incoming) {
         int waves = 1;
         int shards = incoming;
@@ -599,7 +501,6 @@ public final class ShardManager {
         }
     }
 
-    /** A new wave over the limit makes the oldest shards start fading now; far over the limit drops them. */
     private static void enforceLimit(int incoming, int max) {
         int excess = limitedShardCount() + incoming - max;
         if (excess <= 0) {

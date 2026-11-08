@@ -13,20 +13,17 @@ import java.util.Base64;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-/** Where the schema-2 effects live in the config folder, and their share codes (gzip + base64 of the JSON). */
 public final class FxFiles {
     public static final Path CONFIG = Platform.get().paths().configDir().resolve("shatter_gui");
     public static final Path EFFECTS = CONFIG.resolve("effects");
     public static final Path TEXTURES = CONFIG.resolve("textures");
     public static final Path PACKAGES = CONFIG.resolve("packages");
-    /** Where the editor writes exported packages (not loaded from there, so an export never doubles an effect). */
     public static final Path EXPORTS = CONFIG.resolve("exports");
     private static final int MAX_CODE_LENGTH = 32_768;
 
     private FxFiles() {
     }
 
-    /** A code (gzip + base64) for any effect JSON; null if it cannot be made. */
     public static String codeOf(String json) {
         try {
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -39,7 +36,6 @@ public final class FxFiles {
         }
     }
 
-    /** The JSON inside a code, or null if it is not one (or too large). */
     public static String fromCode(String code) {
         if (code == null || code.isBlank() || code.trim().length() > MAX_CODE_LENGTH) {
             return null;

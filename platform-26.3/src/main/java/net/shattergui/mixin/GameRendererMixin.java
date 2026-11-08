@@ -17,7 +17,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** The frame's hooks in 26.3 (extraction and drawing are separate calls here, the drawing takes no arguments). What they do is in {@link FrameHooks}. */
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
     @Shadow
@@ -27,18 +26,15 @@ public abstract class GameRendererMixin {
     @Final
     private FogRenderer fogRenderer;
 
-    /** The level's projection, view bobbing included, and rotation, for the effects drawn over the world. */
     @ModifyArg(method = "renderLevel", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/ProjectionMatrixBuffer;getBuffer(Lorg/joml/Matrix4f;)Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;"))
     private Matrix4f shatterGui$levelProjection(Matrix4f projection) {
         OnTopPass.levelProjection(projection);
         OnTopPass.cleanProjection(gameRenderState.levelRenderState.cameraRenderState.projectionMatrix);
-        // Before the level render: without a shader pack's view bobbing (it is put into this matrix during the render).
         OnTopPass.cleanViewRotation(gameRenderState.levelRenderState.cameraRenderState.viewRotationMatrix);
         return projection;
     }
 
-    /** The menu blur radius of this frame: faded with an opening or closing screen (OpenBackdrop). */
     @ModifyArg(method = "render", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/GlobalSettingsUniform;update(IIDJFILnet/minecraft/world/phys/Vec3;Z)V"),
             index = 5)
@@ -53,10 +49,6 @@ public abstract class GameRendererMixin {
                 gameRenderState.levelRenderState.cameraRenderState.viewRotationMatrix);
     }
 
-    /**
-     * Right before vanilla clears the depth for the hand (javap: the one clear in render3dHud). The main depth still holds
-     * the world; with post effects vanilla clears its separate HUD depth instead and the main one keeps the world anyway.
-     */
     @Inject(method = "render3dHud", at = @At(value = "INVOKE",
             target = "Lcom/mojang/renderpearl/api/commands/CommandEncoder;clearDepthTexture(Lcom/mojang/renderpearl/api/textures/GpuTexture;D)V"))
     private void shatterGui$beforeHand(CameraRenderState cameraState, PlayerRenderState playerState,

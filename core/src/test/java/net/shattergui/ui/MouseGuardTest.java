@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** NaN and infinite mouse positions mean "no mouse"; repeated UI failures are logged once. */
 class MouseGuardTest {
     @Test
     void brokenPositionsAreNoMouse() {
@@ -20,7 +19,6 @@ class MouseGuardTest {
         assertFalse(MouseGuard.valid(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY));
         assertFalse(MouseGuard.valid(Double.NEGATIVE_INFINITY, 0));
         assertFalse(MouseGuard.valid(1e12, 0));
-        // An infinite double cast to int (what the game hands to rendering).
         int inf = (int) Double.POSITIVE_INFINITY;
         int negInf = (int) Double.NEGATIVE_INFINITY;
         int nan = (int) Double.NaN;
@@ -30,7 +28,6 @@ class MouseGuardTest {
         assertEquals(MouseGuard.NONE, MouseGuard.sanitize(inf));
         assertEquals(MouseGuard.NONE, MouseGuard.sanitize(negInf));
         assertEquals(240, MouseGuard.sanitize(240));
-        // "No mouse" is outside every widget.
         Widget w = new Widget() {
             @Override
             protected void draw(Ui ui) {

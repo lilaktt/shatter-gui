@@ -27,28 +27,14 @@ import net.shattergui.shatter.ShardManager;
 
 import java.util.List;
 
-/**
- * Remembers which block or entity a screen was opened from, starts the fly-in when it opens and hands the source to
- * the close effect.
- *
- * <p>The source is the last block or entity the player used (right click, client side) if the screen opens within
- * {@link #USE_WINDOW_MS} of that. Screens opened any other way (inventory key, a server opening a screen remotely)
- * have no source: only with the fly effect they fly in from and out to an edge of the screen (see
- * {@link #edgeFlightAllowed}); otherwise they open and close as the chosen effects say. The player's own inventory never
- * has a source.
- * A source that is gone by the time the screen closes (block broken, entity dead) makes the close fall back to glass.
- */
 public final class FlyController {
-    /** A screen opening later than this after the click is not from that click. */
     private static final long USE_WINDOW_MS = 1000;
 
     private static FlySource lastUse;
     private static long lastUseTime;
-    /** The source of the screen that is open now. */
     private static FlySource openSource;
     private static String missingReason;
     private static boolean closedHadSource;
-    /** Thematic key of the source of the screen that last closed (even if it is gone now), or null. */
     private static String closedSourceKey;
     private static final RandomSource RANDOM = RandomSource.create();
 
@@ -68,7 +54,6 @@ public final class FlyController {
             }
             return InteractionResult.PASS;
         });
-        // While the GUI flies in it is not where the mouse coordinates point: ignore the mouse until it has landed.
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
             if (!ShatterConfig.get().enabled) {
                 return;
@@ -80,7 +65,6 @@ public final class FlyController {
         });
     }
 
-    /** Still flying in or being gathered: not where the mouse coordinates point. */
     private static boolean busy(Screen s) {
         return FlyOpen.isAnimating(s) || OpenAssemble.hides(s);
     }
@@ -90,7 +74,6 @@ public final class FlyController {
         lastUseTime = System.currentTimeMillis();
     }
 
-    /** RETURN of {@code Minecraft#setScreen}, when a screen opened over the world (no screen before). */
     public static void onScreenOpened(Screen screen) {
         ShatterConfig config = ShatterConfig.get();
         if (!config.enabled) {
@@ -121,10 +104,8 @@ public final class FlyController {
         if (source != null) {
             from = FlyTarget.point(source.point());
         } else if (edgeFlightAllowed(screen, keys, config)) {
-            // The fly pair: without a container, in from an edge, as it will leave through one.
             from = FlyTarget.edge(EdgeTransition.pick(params.s(Params.FLY_EDGE_DIRECTION), RANDOM, !params.reduceMotion()));
         } else {
-            // Without a container: "from the block" has nothing to fly from; the screen just opens.
             return;
         }
         ShatterProfiler.beginOpen(keys.getFirst(), effect, source != null ? source.describe() : from.describe());
@@ -137,7 +118,6 @@ public final class FlyController {
             return;
         }
         boolean spatial = SpatialGuiCompat.isShowing(screen) && SpatialGuiCompat.cancelOpenAnimation();
-        // An opening: quicker with openSpeed, like every other opening.
         int duration = Math.max(2, Math.round(params.ticks(Params.FLY_DURATION) / params.f(Params.OPEN_SPEED)));
         OpenAssemble.flyStarted(screen, duration);
         FlyOpen.start(screen, from, spatial, duration,
@@ -148,11 +128,6 @@ public final class FlyController {
                 : "flat GUI") + ", " + duration + " ticks)", start);
     }
 
-    /**
-     * Opens by gathering ({@link OpenAssemble}): the screen is captured and the effect plays backwards into it (see
-     * {@link ShatterEffects#opening}). On the flat GUI the capture is ours, on the next frame; on a Spatial GUI plane
-     * its own texture is copied a frame later and the plane stays hidden until the pieces have landed.
-     */
     private static void gather(Screen screen, List<String> keys, String effect, String id, FlySource source,
                                ShatterConfig config, long start) {
         ShatterProfiler.beginOpen(keys.getFirst(), effect, source != null ? source.describe() : "no source");
@@ -181,33 +156,22 @@ public final class FlyController {
         ShatterProfiler.openStep("open.gather (" + id + " backwards, capture next frame)", start);
     }
 
-    /**
-     * Edge flights belong to the fly effect: only when the screen closes with fly, and never for chat, sign, book and
-     * command screens ({@link EdgeTransition#allows}).
-     */
     public static boolean edgeFlightAllowed(Screen screen, List<String> keys, ShatterConfig config) {
         return EdgeTransition.allows(screen) && ScreenRules.effectFor(keys, config, openSourceKey()).base() instanceof FlyEffect;
     }
 
-    /** Thematic key ("block:minecraft:ender_chest") of the source of the screen that last closed, or null. */
     public static String closedSourceKey() {
         return closedSourceKey;
     }
 
-    /** Thematic key of the source of the screen open now, or null. */
     public static String openSourceKey() {
         return openSource != null ? openSource.themeKey() : null;
     }
 
-    /** Whether the screen that last closed had a source, valid or not (no source: it may fly off an edge). */
     public static boolean hadSource() {
         return closedHadSource;
     }
 
-    /**
-     * RETURN of {@code Minecraft#setScreen(null)}: stops the fly-in and returns the source of the screen that closed if
-     * it still exists (block still there, entity alive), else null.
-     */
     public static FlySource onScreenClosed() {
         FlyOpen.stop();
         endOpening("closed");
@@ -227,11 +191,6 @@ public final class FlyController {
         return source;
     }
 
-    /**
-     * HEAD of {@code Minecraft#setScreen} whenever the screen changes (closed or replaced by another): every opening of
-     * the screen that was shown ends now — the gathering wave and its texture, a capture or Spatial GUI copy still
-     * waiting for its frame — whatever its effect.
-     */
     public static void endOpening(String why) {
         boolean was = OpenAssemble.active();
         OpenAssemble.stop();
@@ -243,7 +202,6 @@ public final class FlyController {
         }
     }
 
-    /** Why {@link #onScreenClosed} returned null, for the profile log. */
     public static String missingReason() {
         return missingReason;
     }

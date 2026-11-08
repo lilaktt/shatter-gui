@@ -10,15 +10,10 @@ import net.shattergui.params.ParamValues;
 import java.util.List;
 import java.util.Random;
 
-/** How a schema-2 effect runs with the player's settings; shared by the effect in the world and the previews. */
 public final class FxRun {
     private FxRun() {
     }
 
-    /**
-     * The simulation of {@code def} with the settings: a shipped effect's own length, strength and particles on top of
-     * the general ones, and played backwards for opening a screen.
-     */
     public static FxSimulation simulate(FxDef def, boolean bundled, boolean reversed, List<Fracture.Piece> cut, float width,
                                         float height, FxSimulation.Host host, Random random, ParamValues params) {
         BundledParams.Set own = bundled ? BundledParams.of(def.id) : null;
@@ -34,7 +29,6 @@ public final class FxRun {
             sim.strength(params.f(own.intensity()));
         }
         if (reversed) {
-            // An opening is quicker than the effect (capped, and openSpeed on top): the same motion, sampled.
             sim.reverse(OpenTiming.playback(sim.duration, OpenTiming.quick(def.id, bundled, def.duration), params));
         }
         return sim;

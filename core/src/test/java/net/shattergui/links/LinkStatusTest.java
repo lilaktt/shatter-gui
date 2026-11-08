@@ -16,9 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** The page checks of "About" with a fake HTTP client: what each answer shows, offline, one request per session. */
 class LinkStatusTest {
-    /** Answers from a table; records what it was asked. */
     private static final class FakeHttp implements LinkStatus.Http {
         final Map<String, Object> answers;
         final List<String> userAgents = new ArrayList<>();
@@ -67,7 +65,6 @@ class LinkStatusTest {
                 LinkStatus.Page.GITHUB.api, 200));
         assertEquals(LinkStatus.State.NOT_PUBLISHED, LinkStatus.ask(http, LinkStatus.Page.MODRINTH, "0.1.0-beta"));
         assertEquals(LinkStatus.State.AVAILABLE, LinkStatus.ask(http, LinkStatus.Page.GITHUB, "0.1.0-beta"));
-        // No e-mail or anything about the player: the project and its version.
         for (String agent : http.userAgents) {
             assertEquals("lilaktt/shatter-gui/0.1.0-beta", agent);
             assertFalse(agent.contains("@"));
@@ -94,7 +91,6 @@ class LinkStatusTest {
         LinkStatus.useForTests(offline);
         long start = System.nanoTime();
         LinkStatus.check("1");
-        // check() returns at once: the requests run on their own thread.
         assertTrue(System.nanoTime() - start < 200_000_000L, "check must not wait for the network");
         assertTrue(LinkStatus.awaitForTests(2000));
         assertEquals(LinkStatus.State.UNKNOWN, LinkStatus.state(LinkStatus.Page.MODRINTH));

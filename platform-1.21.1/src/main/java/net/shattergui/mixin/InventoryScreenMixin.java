@@ -9,7 +9,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Leaves the player model out of a flying flat GUI; see {@link FlyOpen#hidesPictureInPicture}. */
 @Mixin(InventoryScreen.class)
 public abstract class InventoryScreenMixin {
     @Inject(method = "renderEntityInInventoryFollowsMouse", at = @At("HEAD"), cancellable = true)

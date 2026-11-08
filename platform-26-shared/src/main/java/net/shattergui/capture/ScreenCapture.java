@@ -27,34 +27,15 @@ import org.joml.Vector3f;
 import java.util.function.Consumer;
 import java.util.Locale;
 
-/**
- * Captures the last frame of a closing screen as a transparent GPU texture. Nothing is read back to the CPU.
- *
- * <p>The screen is already gone when {@code Minecraft#setScreen} runs, so the capture happens on the next frame:
- * <ol>
- *   <li>{@link #requestCapture} remembers the old screen, the camera and the effect.</li>
- *   <li>In {@code GameRenderer#extractGui} the old screen is extracted instead of the HUD
- *       ({@link #extractPendingScreen}), with its blurred/darkened background suppressed, and its bounds are taken
- *       from the screen geometry.</li>
- *   <li>Around {@code GuiRenderer#render} the main target is backed up and cleared to transparent
- *       ({@link #beforeGuiRender}); after the GUI is drawn it is copied into a {@link CapturePool} texture and the world
- *       image is restored ({@link #afterGuiRender}). All of this is GPU-side copies.</li>
- * </ol>
- */
 public final class ScreenCapture {
-    /** Far outside the screen so nothing is hovered and no tooltip is drawn. */
     private static final int NO_MOUSE = -100_000;
-    /** Give up if the capture frame never happens (e.g. rendering is skipped). */
     private static final int MAX_WAIT_FRAMES = 5;
-    /** GUI pixels added around the content bounds (outlines, shadows, rounding). */
     private static final int CONTENT_MARGIN = 2;
 
     public record CameraSnapshot(double x, double y, double z, Vector3f forward, Vector3f up, Vector3f left,
                                  float fovDegrees, int windowWidth, int windowHeight) {
     }
 
-    /** {@code target}: where the fly effect flies to, or null. */
-    /** {@code params}: the settings to run with; {@code preview}: started by the editor (runs while the mod is off). */
     private record Capture(CameraSnapshot camera, ShatterEffect effect, ImageRect bounds, FlyTarget target,
                            ParamValues params, boolean preview, Screen screen) {
     }
@@ -67,7 +48,6 @@ public final class ScreenCapture {
     private static Capture armed;
     private static GpuTexture backup;
     private static long guiRenderStart;
-    /** The close wave the capture of this frame started (drawn in this frame, see {@link #takeSpawnedClose}). */
     private static ShardManager.Batch spawnedClose;
 
     private ScreenCapture() {
@@ -77,7 +57,6 @@ public final class ScreenCapture {
         requestCapture(screen, effect, target, ParamValues.current(), false);
     }
 
-    /** The editor's preview: given (unsaved) settings, and it runs even while the mod is switched off. */
     public static void requestCapture(Screen screen, ShatterEffect effect, FlyTarget target, ParamValues params,
                                       boolean preview) {
         Minecraft mc = Minecraft.getInstance();
@@ -91,7 +70,6 @@ public final class ScreenCapture {
         waitedFrames = 0;
     }
 
-    /** An opening's capture that has not happened yet is forgotten (its screen closed or was replaced). */
     public static void cancelPendingOpening() {
         if (pending != null && pending.effect().opens()) {
             clearPending();
@@ -101,20 +79,14 @@ public final class ScreenCapture {
         }
     }
 
-    /** The mod was switched off: forget a capture that has not happened yet. */
     public static void cancelPending() {
         clearPending();
     }
 
-    /** True while the closing screen is being extracted; used to skip its background. */
     public static boolean isExtracting() {
         return extracting;
     }
 
-    /**
-     * Called at the head of {@code GameRenderer#extractGui}. Returns true if it replaced this frame's GUI with the
-     * closing screen (the caller then cancels the vanilla extraction).
-     */
     public static boolean extractPendingScreen(GuiRenderState state, float partialTick) {
         if (pendingScreen == null) {
             return false;
@@ -152,7 +124,6 @@ public final class ScreenCapture {
         return true;
     }
 
-    /** Before the GUI is drawn: back up the world image and clear the target to transparent. */
     public static void beforeGuiRender() {
         if (armed == null) {
             return;
@@ -172,7 +143,6 @@ public final class ScreenCapture {
         guiRenderStart = ShatterProfiler.now();
     }
 
-    /** After the GUI is drawn: copy it into a pool texture (GPU-side), restore the world image, spawn shards. */
     public static void afterGuiRender() {
         Capture capture = armed;
         armed = null;
@@ -206,18 +176,12 @@ public final class ScreenCapture {
         }
     }
 
-    /** The close wave started by this frame's capture, once (then null). */
     public static ShardManager.Batch takeSpawnedClose() {
         ShardManager.Batch batch = spawnedClose;
         spawnedClose = null;
         return batch;
     }
 
-    /**
-     * Where the GUI is inside a full-screen image of {@code screen}: the panel of a container screen
-     * ({@code leftPos, topPos, imageWidth, imageHeight} over the screen size), or the whole image for any other screen.
-     * Fractions, so this also holds for images rendered at another GUI scale or resolution.
-     */
     public static ImageRect guiBounds(Screen screen) {
         if (screen instanceof AbstractContainerScreen<?> container && screen.width > 0 && screen.height > 0) {
             AbstractContainerScreenAccessor panel = (AbstractContainerScreenAccessor) container;
@@ -230,12 +194,6 @@ public final class ScreenCapture {
         return ImageRect.FULL;
     }
 
-    /**
-     * Where everything the screen draws is, as fractions of the screen: the union of the bounds of every element, item,
-     * text and picture-in-picture in {@code state} (the screen was just extracted into it, without the shared
-     * background), plus a small margin. Wider than {@link #guiBounds} for anything drawn outside the container panel:
-     * creative tabs, scroll bars, the recipe book, panels of other mods. Falls back to {@link #guiBounds} if empty.
-     */
     public static ImageRect contentBounds(GuiRenderState state, Screen screen) {
         int[] box = {Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE};
         Consumer<ScreenArea> add = area -> {
@@ -260,10 +218,6 @@ public final class ScreenCapture {
                 (box[2] + CONTENT_MARGIN) / w, (box[3] + CONTENT_MARGIN) / h);
     }
 
-    /**
-     * {@link #contentBounds} of a screen that is not being drawn this frame (Spatial GUI draws it into its own texture):
-     * extracts it once more into a scratch state, on the CPU only.
-     */
     public static ImageRect measureContentBounds(Screen screen) {
         GuiRenderState state = new GuiRenderState();
         GuiGraphicsExtractor graphics = new GuiGraphicsExtractor(Minecraft.getInstance(), state, NO_MOUSE, NO_MOUSE);
@@ -280,12 +234,6 @@ public final class ScreenCapture {
         return contentBounds(state, screen);
     }
 
-    /**
-     * Extracts {@code screen} into {@code state} as a capture does: the mouse far away (nothing hovered, no tooltip) and
-     * without the shared in-world background. For pictures of screens that are not on display (the editor's real
-     * preview). The steps of {@code Screen#extractRenderStateWithTooltipAndSubtitles} are called one by one: that
-     * method is also where Fabric's screen events run, and they need a screen opened through {@code setScreen}.
-     */
     public static void extractQuietly(Screen screen, GuiRenderState state, float partialTick) {
         GuiGraphicsExtractor graphics = new GuiGraphicsExtractor(Minecraft.getInstance(), state, NO_MOUSE, NO_MOUSE);
         extracting = true;
@@ -300,12 +248,10 @@ public final class ScreenCapture {
         }
     }
 
-    /** A close capture is waiting for its frame or running in this one (the real preview then waits). */
     public static boolean busy() {
         return pendingScreen != null || armed != null;
     }
 
-    /** For the profile log. */
     public static String describe(ImageRect content, ImageRect panel) {
         return String.format(Locale.ROOT, "%.0f%% x %.0f%%, panel %.0f%% x %.0f%%", content.width() * 100,
                 content.height() * 100, panel.width() * 100, panel.height() * 100);

@@ -16,11 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * The live preview in the middle: the effect on a sample interface (chest, furnace or inventory) and its transport —
- * play/pause (Space), a time bar to scrub (pauses), the time, speed 0.25×–2×, loop and "another break" (new random
- * pieces). With errors in the effect it keeps showing the last state that was valid and says so.
- */
 final class PreviewPane extends Container {
     private final FxEditor editor;
     private final Button play;
@@ -30,7 +25,6 @@ final class PreviewPane extends Container {
     private final Dropdown<SampleImage.Kind> sample;
     private final Button reseed;
     private final Button opening;
-    /** Quick switch: real vanilla screens ↔ the simple painted samples. */
     private final Button real;
     private final Box box = new Box();
     private int controlsY;
@@ -43,7 +37,6 @@ final class PreviewPane extends Container {
             protected void draw(Ui ui) {
                 tooltip(EditorUi.tr(editor.preview.playing() ? "preview.pause" : "preview.play"), EditorUi.tr("preview.play.desc"));
                 super.draw(ui);
-                // The icon follows the state.
                 int ix = x + (w - 9) / 2;
                 int iy = y + (h - 9) / 2;
                 Draw.icon(ui, editor.preview.playing() ? Icon.PAUSE : Icon.PLAY, ix, iy, 1, Theme.TEXT);
@@ -144,7 +137,6 @@ final class PreviewPane extends Container {
         }
     }
 
-    /** The preview picture with its banners. */
     private final class Box extends Widget {
         @Override
         protected void draw(Ui ui) {
@@ -161,7 +153,6 @@ final class PreviewPane extends Container {
                 banner = EditorUi.tr("preview.mask_missing");
                 color = Theme.WARNING;
             } else if (Platform.get().capture().realPreviewNotice()) {
-                // Shown for a few seconds after the real preview failed (the log has the details).
                 banner = EditorUi.tr("preview.real.failed");
                 color = Theme.WARNING;
             }
@@ -184,14 +175,12 @@ final class PreviewPane extends Container {
         }
     }
 
-    /** Time bar: the effect's length, the playhead; click or drag to scrub (pauses). */
     private final class Scrubber extends Widget {
         private boolean dragging;
 
         @Override
         protected void draw(Ui ui) {
             EditorPreview p = editor.preview;
-            // The full time if it fits, else shorter forms (never cut off); the tooltip has it in full.
             String time = String.format(Locale.ROOT, "%.2f / %.2f s", p.time() / 20f, p.duration() / 20f);
             tooltip(EditorUi.tr("preview.scrub"), Text.literal(time + " · ").append(EditorUi.tr("preview.scrub.desc")));
             for (String shorter : new String[]{String.format(Locale.ROOT, "%.1f/%.1fs", p.time() / 20f, p.duration() / 20f),

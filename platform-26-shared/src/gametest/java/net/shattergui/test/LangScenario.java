@@ -19,11 +19,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-/**
- * One language (German, Russian: long; Japanese: CJK) at GUI scales 1–4: every settings tab and every part of the
- * editor, recording which texts had to be shortened with "…". Texts of the mod's translations must fit; the player's
- * own data (effect ids, file names, screen class names) may be shortened. Screenshots: {@code lang_de_s<scale>_…}.
- */
 final class LangScenario {
     private LangScenario() {
     }
@@ -61,7 +56,6 @@ final class LangScenario {
         context.waitTicks(5);
     }
 
-    /** Each translation as a pattern: its text with every %s as "anything". */
     private static List<Pattern> patterns(String code) {
         List<Pattern> out = new ArrayList<>();
         try (InputStream in = LangScenario.class.getResourceAsStream("/assets/shatter_gui/lang/" + code + ".json")) {
@@ -75,7 +69,6 @@ final class LangScenario {
                     }
                     regex.append(Pattern.quote(part));
                 }
-                // A text with only a placeholder ("%s") is data, not a translation.
                 if (!value.replaceAll("%(\\d+\\$)?[sd]", "").isBlank()) {
                     out.add(Pattern.compile(regex.toString(), Pattern.DOTALL));
                 }

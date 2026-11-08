@@ -11,7 +11,6 @@ import net.shattergui.platform.UiFont;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Text, translations and the font of 1.21.1 (the same calls as 26.1). */
 final class Texts121 implements Texts, UiFont {
     record Line(FormattedCharSequence sequence) implements TextLine {
     }

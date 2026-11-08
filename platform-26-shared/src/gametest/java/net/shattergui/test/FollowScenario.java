@@ -24,25 +24,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.BiConsumer;
 
-/**
- * Openings while the player moves ({@code -PtestOnly=follow}): a chest and a furnace opened by the use key and the
- * inventory, each with the fly-out from the block (not the inventory: it has no block) and gathering ({@code glass},
- * {@code pop}), while the player sprints forward and while the camera turns. In every frame of the opening the centre of
- * its plane (as drawn: {@code FrameAudit#openPlane}) must be in view and 0.5–2 blocks from the camera, and in its last
- * frame it must be where the real screen is (the flat GUI: its centre on the plane 1 block in front of the camera;
- * Spatial GUI: its plane). Before the fix the gathering stayed where the screen was opened and fell behind.
- */
 final class FollowScenario {
-    /** Sprinting speed on the ground, blocks per tick. */
     private static final double SPRINT = 0.28;
-    /** Turning speed for the turning runs, degrees per tick. */
     private static final float TURN = 4f;
     private static final double NEAR = 0.5;
     private static final double FAR = 2.0;
-    /** The last frame of a gathering is the real screen's place exactly; a flight is a step short of it. */
     private static final double END_GATHER = 0.03;
     private static final double END_FLY = 0.25;
-    /** Projection margin (the frame edge itself counts as in view). */
     private static final double VIEW_MARGIN = 1.02;
 
     private FollowScenario() {
@@ -56,13 +44,11 @@ final class FollowScenario {
         float openSpeed = config.get(Params.OPEN_SPEED);
         context.runOnClient(mc -> FrameAudit.enable(true));
         BlockPos feet = context.computeOnClient(mc -> mc.player.blockPosition());
-        // Room to run: 14 blocks of air ahead (south), the block two up and one ahead (above the head while running).
         BlockPos block = feet.offset(0, 2, 1);
         command(singleplayer, "fill %d %d %d %d %d %d minecraft:air", feet.getX() - 2, feet.getY(), feet.getZ() - 1,
                 feet.getX() + 2, feet.getY() + 4, feet.getZ() + 15);
         StringBuilder table = new StringBuilder();
         try {
-            // Default open speed: the openings take their usual 4–10 ticks.
             config.effect = "pop";
             for (String target : List.of("chest", "furnace", "inventory")) {
                 for (String open : List.of(ShatterConfig.OPEN_FLY_FROM_BLOCK, ShatterConfig.OPEN_DATA_PREFIX + "glass",
@@ -105,8 +91,6 @@ final class FollowScenario {
         }
         context.waitTicks(3);
         long from = context.computeOnClient(mc -> FrameAudit.next());
-        // The motion starts with the click and goes on through the whole opening (vanilla releases the movement keys
-        // when a screen opens, so the speed is set every tick, as momentum or a server would move the player).
         move(context, motion);
         if (useKey) {
             context.getInput().pressKey(options -> options.keyUse);
@@ -114,15 +98,12 @@ final class FollowScenario {
             context.runOnClient(mc -> Mc26.setScreen(new InventoryScreen(mc.player)));
         }
         List<String> shots = new ArrayList<>();
-        // The use key goes through the integrated server, which may lag far behind (shader packs on a slow machine):
-        // first wait for the screen, moving all the while.
         for (int wait = 0; wait < 200 && context.computeOnClient(mc -> Mc26.screen() == null); wait++) {
             move(context, motion);
             context.waitTick();
         }
         int ticks = 0;
         boolean seenOpening = false;
-        // Until the opening is over (and at least until it started), at most 30 ticks.
         while (ticks < 30) {
             move(context, motion);
             if (ticks < 12) {
@@ -138,7 +119,6 @@ final class FollowScenario {
                 break;
             }
         }
-        // One more frame with the real screen, to compare the last frame of the opening with.
         context.waitTick();
         Expected expected = context.computeOnClient(FollowScenario::expected);
         List<FrameAudit.Frame> frames = context.computeOnClient(mc -> FrameAudit.since(from));
@@ -149,7 +129,6 @@ final class FollowScenario {
         waitUntilClear(context);
 
         List<float[]> planes = new ArrayList<>();
-        // Spatial GUI's plane in the same frames: where the real screen is (it may move with its camera).
         List<float[]> screens = new ArrayList<>();
         for (FrameAudit.Frame f : frames) {
             if (f.plane() != null) {
@@ -173,9 +152,6 @@ final class FollowScenario {
             far = Math.max(far, distance);
             double view = view(p, expected);
             worstView = Math.max(worstView, view);
-            // The real screen on Spatial GUI's plane is where Spatial GUI puts it: in its third person about 2.6 blocks
-            // from its camera and level (below the view when the camera looks up). There the bounds also take in
-            // that plane in the same frame: the opening must be no further off than the screen it becomes.
             float[] screen = screens.get(k);
             double viewLimit = VIEW_MARGIN;
             double nearLimit = NEAR;
@@ -202,7 +178,6 @@ final class FollowScenario {
         double[] real = fly ? expected.panel : expected.image;
         float[] lastScreen = screens.getLast();
         if (lastScreen != null) {
-            // Spatial GUI: its plane in the very frame of the opening's last frame.
             real = new double[]{lastScreen[0], lastScreen[1], lastScreen[2]};
         }
         double end = Math.sqrt(Math.pow(last[0] - real[0], 2) + Math.pow(last[1] - real[1], 2) + Math.pow(last[2] - real[2], 2));
@@ -214,10 +189,6 @@ final class FollowScenario {
                 planes.size(), near, far, worstView, end, bounds));
     }
 
-    /**
-     * Where the real screen is now, in camera coordinates (right, up, forward): the panel's centre and the picture's
-     * centre (the whole window), on the flat GUI's plane 1 block ahead or on Spatial GUI's plane.
-     */
     private record Expected(double[] panel, double[] image, double tanHalf, double aspect) {
     }
 
@@ -228,7 +199,6 @@ final class FollowScenario {
         Vector3d spatial = Mc26.screen() != null && SpatialGuiCompat.isShowing(Mc26.screen()) ? SpatialGuiCompat.planeCenterNow() : null;
         if (spatial != null) {
             double[] c = local(camera, spatial);
-            // On the plane the panel is where the content is; the opening is checked against the plane's centre.
             return new Expected(c, c, tanHalf, aspect);
         }
         double[] image = {0, 0, 1};
@@ -246,12 +216,10 @@ final class FollowScenario {
         return Math.sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]);
     }
 
-    /** How far outside the view a point projects (≤ 1 is in view; behind the camera is far out). */
     private static double view(float[] p, Expected e) {
         return p[2] <= 0 ? 99 : Math.max(Math.abs(p[0]) / (p[2] * e.tanHalf * e.aspect), Math.abs(p[1]) / (p[2] * e.tanHalf));
     }
 
-    /** A camera-relative point in world axes → right, up, forward. */
     private static double[] local(Camera camera, Vector3d v) {
         org.joml.Vector3fc left = camera.leftVector();
         org.joml.Vector3fc up = camera.upVector();

@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** When a piece counts as settled (drawn in the world's depth with "alwaysOnTop") and the bias towards the camera. */
 class SettleTest {
     @Test
     void motionlessOnABlockSettlesAfterAFewTicks() {
@@ -44,12 +43,10 @@ class SettleTest {
         assertFalse(Settle.moved(0, 0, 0, 0f));
         assertFalse(Settle.moved(5.0e-5, 0, 0, 0f));
         assertTrue(Settle.moved(0, -2.0e-4, 0, 0f));
-        // A turn of 0.05 degree is motion; one of 0.005 degree is not.
         assertTrue(Settle.moved(0, 0, 0, turn(0.05)));
         assertFalse(Settle.moved(0, 0, 0, turn(0.005)));
     }
 
-    /** The half-turn sine of a turn by {@code degrees} about a tilted axis, from an arbitrary start, as floats. */
     private static float turn(double degrees) {
         double[] start = normalize(new double[]{0.31, -0.62, 0.18, 0.69});
         double half = Math.toRadians(degrees) / 2;
@@ -59,13 +56,11 @@ class SettleTest {
         float sin = Settle.halfTurnSin((float) start[0], (float) start[1], (float) start[2], (float) start[3],
                 (float) end[0], (float) end[1], (float) end[2], (float) end[3]);
         assertEquals(Math.sin(half), sin, 2e-6);
-        // -q is the same rotation as q.
         assertEquals(sin, Settle.halfTurnSin((float) start[0], (float) start[1], (float) start[2], (float) start[3],
                 (float) -end[0], (float) -end[1], (float) -end[2], (float) -end[3]), 1e-6);
         return sin;
     }
 
-    /** Quaternions as x, y, z, w. */
     private static double[] multiply(double[] a, double[] b) {
         return new double[]{
                 a[3] * b[0] + b[3] * a[0] + a[1] * b[2] - a[2] * b[1],
@@ -97,10 +92,8 @@ class SettleTest {
         float before = (float) Math.sqrt(x * x + y * y + z * z);
         float after = before * k;
         assertEquals(Settle.BIAS, before - after, 1e-5);
-        // Same direction: the same point on the screen.
         assertEquals(x / z, x * k / (z * k), 1e-6);
         assertEquals(y / z, y * k / (z * k), 1e-6);
-        // Right at the camera nothing moves.
         assertEquals(1f, Settle.towardsCamera(0.01f, 0f, -0.02f, Settle.BIAS));
         assertEquals(1f, Settle.towardsCamera(1f, 1f, 1f, 0f));
     }

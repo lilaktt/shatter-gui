@@ -7,7 +7,6 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import java.util.List;
 import java.util.Set;
 
-/** Applies the Spatial GUI mixins only when a supported Spatial GUI is installed. */
 public final class SpatialGuiMixinPlugin implements IMixinConfigPlugin {
     @Override
     public void onLoad(String mixinPackage) {

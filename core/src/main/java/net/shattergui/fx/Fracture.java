@@ -4,13 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-/**
- * Cuts the interface into pieces, in GUI fractions (u right, v down, both 0..1). A piece is one or more triangles that
- * move together (a Voronoi cell, a grid cell…). Modes: grid, voronoi, strips, radial, pixels. With a region, only that
- * rectangle is cut as asked; the rest becomes a few large pieces marked as outside.
- */
 public final class Fracture {
-    /** One piece: its centroid and triangles (6 floats each: u0 v0 u1 v1 u2 v2), and whether it lies in the region. */
     public record Piece(float cu, float cv, float[] triangles, boolean inRegion) {
         public int triangleCount() {
             return triangles.length / 6;
@@ -20,10 +14,6 @@ public final class Fracture {
     private Fracture() {
     }
 
-    /**
-     * @param aspect      world width / height of the interface (cells are made round in world space)
-     * @param guiPixelsW  the interface's width in GUI pixels (for pixel mode)
-     */
     public static List<Piece> cut(FxDef.Fracture spec, float aspect, float guiPixelsW, Random random) {
         float[] r = spec.region() != null ? spec.region() : new float[]{0, 0, 1, 1};
         List<Piece> pieces = new ArrayList<>();
@@ -68,7 +58,6 @@ public final class Fracture {
         return limit(pieces);
     }
 
-    /** Keeps whole pieces up to the triangle and piece limits. */
     private static List<Piece> limit(List<Piece> pieces) {
         List<Piece> out = new ArrayList<>(pieces.size());
         int triangles = 0;
@@ -81,8 +70,6 @@ public final class Fracture {
         }
         return out;
     }
-
-    // --- grid, strips, pixels ---
 
     private static void grid(float[] r, int cols, int rows, float jitterU, float jitterV, boolean split, Random random,
                              List<Piece> out) {
@@ -123,13 +110,10 @@ public final class Fracture {
         }
     }
 
-    // --- voronoi ---
-
     private static void voronoi(FxDef.Fracture spec, float[] r, float aspect, Random random, List<Piece> out) {
         float regionAspect = aspect * (r[2] - r[0]) / (r[3] - r[1]);
         int gc = Math.max(1, Math.round((float) Math.sqrt(spec.count() * regionAspect)));
         int gr = Math.max(1, Math.round((float) spec.count() / gc));
-        // Seeds in isotropic space: x = u·aspect, y = v.
         List<float[]> seeds = new ArrayList<>();
         for (int i = 0; i < gc; i++) {
             for (int j = 0; j < gr; j++) {
@@ -146,7 +130,6 @@ public final class Fracture {
                 if (other == seed) {
                     continue;
                 }
-                // Keep the side closer to the seed: (p - mid) · (other - seed) <= 0.
                 float nx = other[0] - seed[0];
                 float ny = other[1] - seed[1];
                 float mx = (other[0] + seed[0]) / 2;
@@ -162,7 +145,6 @@ public final class Fracture {
         }
     }
 
-    /** Sutherland–Hodgman: keeps the part of the polygon where a·x + b·y + c <= 0. */
     static List<float[]> clip(List<float[]> poly, float a, float b, float c) {
         List<float[]> out = new ArrayList<>(poly.size() + 2);
         for (int i = 0; i < poly.size(); i++) {
@@ -181,7 +163,6 @@ public final class Fracture {
         return out;
     }
 
-    /** A polygon (isotropic coordinates) as a piece: a triangle fan, back in GUI fractions. */
     private static Piece polygon(List<float[]> poly, float aspect, boolean inRegion) {
         float[] tris = new float[(poly.size() - 2) * 6];
         int k = 0;
@@ -198,8 +179,6 @@ public final class Fracture {
         }
         return piece(tris, inRegion);
     }
-
-    // --- radial ---
 
     private static void radial(FxDef.Fracture spec, float[] r, float aspect, Random random, List<Piece> out) {
         float cu = spec.center().kind() == FxDef.Point.Kind.FIXED ? spec.center().u() : 0.5f;
@@ -236,7 +215,6 @@ public final class Fracture {
                 List<float[]> cell = k == 0
                         ? List.of(new float[]{cx, cy}, vertex[1][j], vertex[1][n])
                         : List.of(vertex[k][j], vertex[k + 1][j], vertex[k + 1][n], vertex[k][n]);
-                // Clip to the region rectangle (four half-planes).
                 List<float[]> clipped = clipToRect(cell, rect);
                 if (clipped.size() >= 3) {
                     out.add(polygon(clipped, aspect, true));
@@ -256,8 +234,6 @@ public final class Fracture {
         p = p.size() < 3 ? p : clip(p, 0, 1, -y1);
         return p;
     }
-
-    // --- outside the region ---
 
     private static void outside(float[] r, List<Piece> out) {
         float[][] bands = {
@@ -282,8 +258,6 @@ public final class Fracture {
         }
     }
 
-    // --- helpers ---
-
     private static float[] tri(float[] a, float[] b, float[] c) {
         return new float[]{a[0], a[1], b[0], b[1], c[0], c[1]};
     }
@@ -295,7 +269,6 @@ public final class Fracture {
         return out;
     }
 
-    /** A piece with its area-weighted centroid. */
     static Piece piece(float[] tris, boolean inRegion) {
         double area = 0;
         double cu = 0;
@@ -315,7 +288,6 @@ public final class Fracture {
         return new Piece((float) (cu / area), (float) (cv / area), tris, inRegion);
     }
 
-    /** Total area of the pieces (1 when they cover the whole interface without overlap; for tests). */
     public static double area(List<Piece> pieces) {
         double area = 0;
         for (Piece piece : pieces) {

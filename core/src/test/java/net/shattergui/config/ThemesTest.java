@@ -16,7 +16,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Thematic mode's rules: the shipped table, its order and the player's changes. */
 class ThemesTest {
     private static List<Themes.Rule> shipped() throws IOException {
         try (InputStream in = ThemesTest.class.getResourceAsStream("/assets/shatter_gui/themes.json")) {

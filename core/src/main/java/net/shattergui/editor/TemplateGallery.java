@@ -16,10 +16,6 @@ import net.shattergui.ui.UiClock;
 import net.shattergui.ui.UiScreen;
 import net.shattergui.ui.Widget;
 
-/**
- * "New effect": the starting points as cards, each playing its effect in a little live preview — empty, glass, burn,
- * dissolve, vortex, particle rain. A click starts a new, unsaved effect from it.
- */
 final class TemplateGallery extends UiScreen.Overlay {
     private final Column content = new Column(0, 6);
     private final ScrollView scroll = new ScrollView(content);
@@ -49,7 +45,6 @@ final class TemplateGallery extends UiScreen.Overlay {
         UiScreen.active().openOverlay(new TemplateGallery(editor));
     }
 
-    /** A template playing in a loop. */
     private static final class Mini extends Widget {
         private final EditorPreview preview;
         private long frame = -1;

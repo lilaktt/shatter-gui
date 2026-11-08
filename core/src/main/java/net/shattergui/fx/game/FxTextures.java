@@ -14,20 +14,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * The textures of one schema-2 effect: PNGs checked before decoding (the PNG header gives the size, so an oversized
- * or broken file is refused without allocating it), size limits by role (sprites up to 256², overlays and masks up to
- * 512²), at most 16 per effect and 2 MB of files together, at most {@link FxLimits#MAX_LOADED_TEXTURES} loaded over all
- * effects. Sprites and overlays become GPU textures; masks keep a CPU copy of their brightness. Freed with the effect.
- */
 public final class FxTextures {
-    /** Where a texture's bytes come from (a package, the config folder, resource packs). */
     public interface Source {
-        /** The file's bytes, or null if this source does not have it. */
         byte[] read(String name) throws IOException;
     }
 
-    /** One loaded texture. */
     public static final class Tex {
         public final String name;
         public final int width;
@@ -43,12 +34,10 @@ public final class FxTextures {
             this.brightness = brightness;
         }
 
-        /** The GPU texture (null for a mask, which only has its brightness). */
         public UiTexture gpu() {
             return gpu;
         }
 
-        /** Brightness 0..1 at (u right, v down), bilinear; NaN without a CPU copy. */
         public float sample(float u, float v) {
             if (brightness == null) {
                 return Float.NaN;
@@ -94,7 +83,6 @@ public final class FxTextures {
         return loadedTotal;
     }
 
-    /** Loads every texture the effect uses from the first source that has it. Missing or invalid ones are warnings. */
     public static FxTextures load(FxDef def, List<Source> sources) {
         FxTextures out = new FxTextures();
         long bytesTotal = 0;
@@ -141,13 +129,7 @@ public final class FxTextures {
         return out;
     }
 
-    /**
-     * A texture for the editor's library and preview: usable in any role (GPU texture and brightness), up to the
-     * overlay size, not counted towards the effects' own limit. Null (with the reason in {@code warnings}) if it is
-     * not a usable PNG. Free it with {@link #releaseLoose}.
-     */
     public static Tex decodeLoose(String name, byte[] bytes, List<String> warnings) {
-        // "editor-lib" cannot be an effect id (no '-'), so these never replace an effect's textures.
         return decode("editor-lib", name, FxDef.TextureRole.OVERLAY, bytes, warnings);
     }
 
@@ -179,7 +161,6 @@ public final class FxTextures {
         int w = image.width();
         int h = image.height();
         float[] brightness = null;
-        // Masks and overlays keep a CPU copy of their brightness (a texture may serve as both).
         if (role != FxDef.TextureRole.SPRITE) {
             brightness = new float[w * h];
             for (int y = 0; y < h; y++) {
@@ -200,12 +181,10 @@ public final class FxTextures {
         return new Tex(name, w, h, gpu, brightness);
     }
 
-    /** Width and height from a PNG's IHDR, or null if it is not a PNG. */
     static int[] pngSize(byte[] b) {
         return net.shattergui.fx.FxPackage.pngSize(b);
     }
 
-    /** Frees the GPU textures (reload, effect removed). */
     public void release() {
         if (released) {
             return;

@@ -23,24 +23,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * Vortex: the GUI breaks into ~14x9 shards which, with a short wave from the centre outwards, come loose and spiral
- * around a point, faster and closer, stretching a little along their path and turning violet and then white, until
- * they are sucked into the point, shrinking to nothing. Nothing follows: no flash, no particles.
- *
- * <p>The orbit lies in the GUI plane's own axes (right, up, normal) through the target point, in world coordinates, so
- * it works the same for the flat GUI and a Spatial GUI plane. Per shard {@link ShardInstance#effectData} is the tick it
- * comes loose; {@link VortexWave} keeps its starting orbit (radius, angle, height above the plane) and moves it.
- */
 public final class VortexEffect implements ShatterEffect {
     public static final String ID = "vortex";
 
     private static final int CELLS = 14 * 9;
-    /** Share of the duration over which the shards come loose, from the centre outwards. */
     private static final float WAVE_SPREAD = 0.25f;
-    /** Size at the end of the flight: nothing, the shard vanishes into the point. */
     private static final float END_SCALE = 0f;
-    /** Strength of the violet-to-white glow as the shards near the point. */
     private static final float GLOW = 0.7f;
     private static final float MAX_STRETCH = 0.45f;
     private static final int WHITE = 0xFFFFFF;
@@ -105,7 +93,6 @@ public final class VortexEffect implements ShatterEffect {
         out.unlit = true;
         out.set((Math.round(alpha * 255) << 24) | color);
         out.scale = Mth.lerp(e, 1f, END_SCALE);
-        // A violet glow that brightens as the shards near the point.
         out.glow = e * e * GLOW;
         out.glowColor = lerp(VIOLET, WHITE, e);
     }
@@ -114,12 +101,10 @@ public final class VortexEffect implements ShatterEffect {
         return params.i(Params.VORTEX_DURATION) * params.durationScale();
     }
 
-    /** One shard's flight: the release wave takes the rest, so the whole vortex lasts about {@code duration}. */
     static float flight(float duration) {
         return duration * (1f - WAVE_SPREAD);
     }
 
-    /** 0..1 over a shard's flight, accelerating ("faster and closer"). */
     static float eased(float since, float flight) {
         if (since <= 0f) {
             return 0f;
@@ -128,7 +113,6 @@ public final class VortexEffect implements ShatterEffect {
         return (float) Math.pow(t, 1.6);
     }
 
-    /** center: the GUI centre; source: the block or entity it was opened from (else as player); player: in front of the player. */
     private static Vector3d target(ShardSource source, Vector3d center) {
         String mode = source.params().s(Params.VORTEX_TARGET);
         FlyTarget from = source.target();
@@ -160,7 +144,6 @@ public final class VortexEffect implements ShatterEffect {
         return t * t * (3 - 2 * t);
     }
 
-    /** Moves every loose shard along its spiral; over when the last one has vanished into the point. */
     private static final class VortexWave implements ShatterWave {
         private record Orbit(double radius, double angle, double height, Vector3f[] corners) {
         }
@@ -232,11 +215,9 @@ public final class VortexEffect implements ShatterEffect {
                         .add(right.x * radius * cos + up.x * radius * sin + normal.x * height,
                                 right.y * radius * cos + up.y * radius * sin + normal.y * height,
                                 right.z * radius * cos + up.z * radius * sin + normal.z * height);
-                // Spinning around the plane normal, faster as it closes in.
                 step.fromAxisAngleRad(normal.x, normal.y, normal.z, spin * (0.3f + e));
                 step.mul(shard.rot(), shard.rot());
                 if (stretch) {
-                    // Stretched along its path, most in the middle of the flight.
                     tangent.set(right).mul((float) -sin).add(up.x * (float) cos, up.y * (float) cos, up.z * (float) cos);
                     float s = MAX_STRETCH * 4f * e * (1f - e);
                     for (int k = 0; k < 3; k++) {

@@ -4,10 +4,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvent;
 
-/**
- * Sounds of the effects: vanilla sound events played as UI sounds (not positional, the GUI is in front of the player),
- * on the UI volume channel. Volume 0 plays nothing.
- */
 public final class EffectSounds {
     private EffectSounds() {
     }

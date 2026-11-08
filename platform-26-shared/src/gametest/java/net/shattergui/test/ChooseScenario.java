@@ -21,12 +21,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-/**
- * Choosing effects on the Effects tab with the real mouse ({@code -PtestOnly=choose}): the buttons under the selected
- * card, the "Opening" / "Closing" badges, the favourite star, a double click with its question, the preview's direction
- * (and its note for an effect without an opening); then the cycle key: only favourites, the effect's name in the action
- * bar, a hint without favourites, unbound by default; an old config without favourites still reads.
- */
 final class ChooseScenario {
     private ChooseScenario() {
     }
@@ -56,7 +50,6 @@ final class ChooseScenario {
             });
             context.waitTicks(10);
             shot.accept(name + "_door_selected");
-            // The buttons under the selected card, clicked with the mouse.
             click(context, button("ui.shatter_gui.assign.open"));
             check.accept(work(context).openEffect.equals("open:door"), name + ": “For opening” sets open:door, got "
                     + work(context).openEffect);
@@ -74,19 +67,16 @@ final class ChooseScenario {
             check.accept(work(context).openEffect.equals("open:door") && work(context).effect.equals("door"),
                     name + ": “For both”");
 
-            // Fly has no gathering: "For opening" means out of the block.
             context.runOnClient(mc -> ((ShatterConfigScreen) Mc26.screen()).selectEffect("fly"));
             context.waitTicks(3);
             click(context, button("ui.shatter_gui.assign.open"));
             check.accept(work(context).openEffect.equals(ShatterConfig.OPEN_FLY_FROM_BLOCK), name + ": fly opens out of the block");
 
-            // Preview direction (glass: its opening lasts long enough to catch it playing).
             context.runOnClient(mc -> ((ShatterConfigScreen) Mc26.screen()).selectEffect("glass"));
             context.waitTicks(3);
             for (String mode : List.of("open", "close", "both")) {
                 click(context, segment("ui.shatter_gui.preview.mode." + mode));
                 String phase = context.computeOnClient(mc -> ((ShatterConfigScreen) Mc26.screen()).describePreview());
-                // Openings are short (OpenTiming): the preview may still be in its pause before playing.
                 for (int i = 0; i < 40 && "open".equals(mode) && !(phase.startsWith("OPEN") && phase.contains("ReversedSim")); i++) {
                     context.waitTick();
                     phase = context.computeOnClient(mc -> ((ShatterConfigScreen) Mc26.screen()).describePreview());
@@ -99,7 +89,6 @@ final class ChooseScenario {
                 shot.accept(name + "_preview_" + mode);
             }
 
-            // The star: favourite on, off, on.
             Predicate<Widget> star = w -> w.getClass().getSimpleName().equals("FavoriteStar");
             for (int i = 0; i < 2; i++) {
                 click(context, s -> find(s, star).getFirst());
@@ -109,7 +98,6 @@ final class ChooseScenario {
             String first = work(context).favorites.isEmpty() ? "none" : work(context).favorites.getFirst();
             check.accept(work(context).favorites.size() == 1, name + ": the star marks a favourite (" + first + ")");
 
-            // Double click on the vortex card: the question, then both.
             context.runOnClient(mc -> ((ShatterConfigScreen) Mc26.screen()).selectEffect("vortex"));
             context.waitTicks(3);
             Predicate<Widget> vortexCard = w -> w instanceof net.shattergui.ui.Card && w.tooltipTitle() != null
@@ -124,8 +112,6 @@ final class ChooseScenario {
             });
             context.waitTicks(12);
             int[] at = context.computeOnClient(mc -> center(find(Mc26.screen(), vortexCard).getFirst()));
-            // A double click through the screen's own input (the real mouse in a test is too slow for the game's
-            // double-click time): first click, then the second with the double-click flag, as the game sends them.
             context.runOnClient(mc -> {
                 UiScreen s = (UiScreen) Mc26.screen();
                 var info = new net.minecraft.client.input.MouseButtonInfo(com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT, 0);
@@ -150,7 +136,6 @@ final class ChooseScenario {
             context.runOnClient(mc -> Mc26.setScreen(null));
             context.waitTicks(3);
 
-            // The cycle key: only favourites, by name; without favourites a hint.
             context.runOnClient(mc -> {
                 ShatterKeys.cycleKey().setKey(InputConstants.Type.KEYSYM.getOrCreate(InputConstants.KEY_K));
                 KeyMapping.resetMapping();
@@ -171,7 +156,6 @@ final class ChooseScenario {
                     shot.accept(name + "_key_favorite_name");
                 }
             }
-            // The list order: glass, vortex, then the shipped flip.
             check.accept(seen.equals(List.of("vortex", "flip", "glass", "vortex")), name + ": the key cycles favourites "
                     + "in list order, got " + seen);
             context.runOnClient(mc -> {
@@ -214,7 +198,6 @@ final class ChooseScenario {
                 && w.parent() instanceof net.shattergui.ui.Segmented).getFirst();
     }
 
-    /** Moves the real mouse onto the widget and clicks. */
     private static void click(ClientGameTestContext context, Finder finder) {
         context.runOnClient(mc -> {
             Widget w = finder.find(Mc26.screen());
@@ -232,7 +215,6 @@ final class ChooseScenario {
         context.getInput().pressMouse(InputConstants.MOUSE_BUTTON_LEFT);
         context.waitTicks(3);
         context.getInput().setCursorPos(2, 2);
-        // Past the double-click time, so the next click is a single one.
         context.waitTicks(6);
     }
 

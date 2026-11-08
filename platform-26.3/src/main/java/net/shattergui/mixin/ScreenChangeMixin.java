@@ -17,7 +17,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Since 26.2 the screen and the GUI's extraction live in {@code Gui}. The logic is in {@link ScreenTransition}. */
 @Mixin(Gui.class)
 public abstract class ScreenChangeMixin {
     @Shadow
@@ -29,7 +28,6 @@ public abstract class ScreenChangeMixin {
     @Final
     private GuiRenderState guiRenderState;
 
-    /** A screen made for the editor's real preview must not open anything (it is never shown). */
     @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
     private void shatterGui$blockFromPreview(Screen newScreen, CallbackInfo ci) {
         if (RealPreview.blocksSetScreen(newScreen)) {

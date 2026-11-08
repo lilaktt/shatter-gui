@@ -11,11 +11,6 @@ import net.shattergui.shatter.ShardManager;
 import java.util.List;
 import java.util.function.Supplier;
 
-/**
- * Screenshots of card flip, recede and door at 10, 30, 50, 70 and 90 % of their time, closing and opening a furnace
- * ({@code -PtestOnly=quickshots}, with {@code -PspatialGui=1.8} on Spatial GUI's plane): {@code quick_<mode>_<id>_<close|open>_<pct>.png}.
- * Frames are read back from the frame itself, so the moments are exact (no extra frame is drawn for the picture).
- */
 final class QuickShotsScenario {
     private static final List<String> IDS = List.of("flip", "recede", "door");
     private static final int[] PERCENT = {10, 30, 50, 70, 90};
@@ -30,7 +25,6 @@ final class QuickShotsScenario {
         try {
             for (String id : IDS) {
                 int duration = BundledParams.fileDuration(id);
-                // Closing.
                 config.openEffect = ShatterConfig.OPEN_NONE;
                 config.effect = id;
                 context.runOnClient(mc -> Mc26.setScreen(furnace.get()));
@@ -43,7 +37,6 @@ final class QuickShotsScenario {
                 }
                 shots(context, "quick_" + mode + "_" + id + "_close", duration);
                 clear(context);
-                // Opening (closing again with the quick pop).
                 config.effect = "pop";
                 config.openEffect = ShatterConfig.OPEN_DATA_PREFIX + id;
                 context.runOnClient(mc -> Mc26.setScreen(furnace.get()));

@@ -34,18 +34,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
-/**
- * One closed screen running a schema-2 effect: the simulation in the interface's plane, mapped to the world with the
- * plane's own axes (so it works the same on the flat GUI and on a Spatial GUI plane), the shards of every piece, and
- * the decorations the renderer draws (overlays, own sprite particles).
- */
 final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
-    /** Which piece a shard belongs to, its offset from the piece centre (plane, blocks) and its GUI uv corners. */
     record Ref(DataWave wave, FxSimulation.Piece piece, float dx, float dy, float[] guiUv, float[] uv) {
     }
 
     private final DataEffect effect;
-    /** The definition it runs (the effect's, or its "reduced" version for reduce motion). */
     private final FxDef def;
     private final ShardSource source;
     private final ParamValues params;
@@ -60,12 +53,10 @@ final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
     private final Vector3f offset = new Vector3f();
     private boolean pendingTick = true;
     private boolean reported;
-    /** Block lookups for recording an opening run (all in one tick), or -1: the shared per-tick budget. */
     private static final int RECORDING_CHECKS = 40_000;
     private int recordingChecks;
     private final Vector3d collidePos = new Vector3d();
     private final Vector3d collideVel = new Vector3d();
-    /** The close this wave belongs to: a later close may be the profiler's current one when it ends. */
     private final int closeNumber = ShatterProfiler.closeCount();
 
     DataWave(DataEffect effect, FxDef def, ShardSource source, List<Fracture.Piece> cut, float width, float height,
@@ -82,7 +73,6 @@ final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
         right = axis(plane.toWorld(b.x1(), yc).sub(plane.toWorld(b.x0(), yc)));
         up = axis(plane.toWorld(xc, b.y0()).sub(plane.toWorld(xc, b.y1())));
         normal = new Vector3f(plane.normal()).normalize();
-        // Opening runs the whole effect now to record it: its own budget, then the pieces move freely.
         recordingChecks = effect.reversed ? RECORDING_CHECKS : -1;
         sim = DataEffect.simulate(def, effect.bundled, effect.reversed, cut, width, height, this, random, params);
         if (effect.reversed) {
@@ -94,8 +84,6 @@ final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
                 overlays.add(k);
             }
         }
-        // Backwards the pieces are gone the tick the screen is shown (no uncut copy left lying in the world under it);
-        // forwards they may outlive the run a little for their sprites.
         int lifetime = sim.reversed() ? sim.length() + 1 : sim.duration + 40;
         for (FxSimulation.Piece piece : sim.pieces()) {
             float[] t = piece.triangles;
@@ -119,7 +107,6 @@ final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
         }
         recordingChecks = -1;
         if (sim.reversed()) {
-            // Gathering: the pieces start where the forward run ended.
             for (ShardInstance shard : shards) {
                 position(shard, (Ref) shard.effectState);
                 shard.prevPos().set(shard.pos());
@@ -140,7 +127,6 @@ final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
         return shards;
     }
 
-    /** Runs the simulation once per tick (the first shard ticked, or the wave itself, triggers it). */
     void advance() {
         if (pendingTick) {
             pendingTick = false;
@@ -148,7 +134,6 @@ final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
         }
     }
 
-    /** Moves a shard to its piece: centre, rotation, scaled offset; removes it when its piece is over. */
     void place(ShardInstance shard, Ref ref) {
         shard.tickStatic();
         position(shard, ref);
@@ -175,10 +160,6 @@ final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
         shard.rot().set(rot);
     }
 
-    /**
-     * Coarse pixels: the shard's texture corners move towards the texture point of its piece's centre (found from the
-     * shard's own corners, which map GUI fractions to the captured image linearly).
-     */
     private void mosaic(ShardInstance shard, Ref ref) {
         float m = sim.mosaic(1f);
         float[] uv = shard.uv();
@@ -199,7 +180,6 @@ final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
         }
     }
 
-    /** Weights of the triangle's corners (u0 v0 u1 v1 u2 v2) for the point (u, v); may lie outside it. */
     static float[] barycentric(float[] t, float u, float v) {
         float d = (t[3] - t[5]) * (t[0] - t[4]) + (t[4] - t[2]) * (t[1] - t[5]);
         if (Math.abs(d) < 1e-12f) {
@@ -210,7 +190,6 @@ final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
         return new float[]{a, b, 1 - a - b};
     }
 
-    /** Spin about the plane normal, then a tumble about an in-plane axis. */
     private void rotation(float angle, float tilt, float tiltAxis, Quaternionf out) {
         out.identity().rotateAxis(angle, normal.x, normal.y, normal.z);
         if (tilt != 0f) {
@@ -259,8 +238,6 @@ final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
         }
     }
 
-    // --- plane ↔ world ---
-
     private Vec3 toWorld(float x, float y, float z) {
         return new Vec3(origin.x + right.x * x + up.x * y + normal.x * z, origin.y + right.y * x + up.y * y + normal.y * z,
                 origin.z + right.z * x + up.z * y + normal.z * z);
@@ -273,8 +250,6 @@ final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
         return new float[]{(float) (dx * right.x + dy * right.y + dz * right.z),
                 (float) (dx * up.x + dy * up.y + dz * up.z), (float) (dx * normal.x + dy * normal.y + dz * normal.z)};
     }
-
-    // --- FxSimulation.Host ---
 
     @Override
     public float[] point(FxDef.Point.Kind kind) {
@@ -349,16 +324,13 @@ final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
     @Override
     public int move(float[] s, float radius, float bounce, float friction) {
         if (!params.fullQuality()) {
-            // Low quality: pieces move through blocks.
             return FxSimulation.Host.super.move(s, radius, bounce, friction);
         }
         ClientLevel level = Minecraft.getInstance().level;
-        // Three axes, and usually one more lookup to settle on the face it hit.
         if (level == null || !reserve(4)) {
             if (level != null && recordingChecks < 0) {
                 return SKIPPED;
             }
-            // No world, or the recording's checks are used up: the piece moves on freely.
             return FxSimulation.Host.super.move(s, radius, bounce, friction);
         }
         collidePos.set(origin.x + right.x * s[0] + up.x * s[1] + normal.x * s[2],
@@ -393,8 +365,6 @@ final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
         return BlockCollision.collides(level, at.x, at.y, at.z) ? 1 : 0;
     }
 
-    // --- WaveDecor ---
-
     @Override
     public int overlayCount() {
         return overlays.size();
@@ -406,7 +376,6 @@ final class DataWave implements ShatterWave, WaveDecor, FxSimulation.Host {
 
     @Override
     public Identifier overlayTexture(int k) {
-        // Only overlays with a GPU texture are listed (see the constructor).
         return ((net.shattergui.platform.impl.Texture26) effect.textures.get(overlay(k).texture()).gpu()).id();
     }
 

@@ -18,12 +18,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Draws a wave's {@link WaveDecor}: texture overlays on its shards (each a triangle following the shard, lifted a
- * little towards the camera) and its sprite particles (camera-facing squares). Vanilla render types except multiply
- * without a shader pack, which uses {@link ShardRenderTypes#multiply}; with a shader pack multiply falls back to normal
- * blending (shader packs only light vanilla types).
- */
 final class DecorRenderer {
     private static final float OVERLAY_LIFT = 0.006f;
     private static final int FULL_BRIGHT = 0xF000F0;
@@ -31,7 +25,6 @@ final class DecorRenderer {
     private DecorRenderer() {
     }
 
-    /** {@code part}: overlays of which shards and which sprites (settled ones are biased, see {@link Settle}). */
     static void submit(ShardRenderer.Sink sink, ShardManager.Batch batch, WaveDecor decor, CameraSpace camera,
                        Quaternionf cameraRotation, float partialTick, boolean shaders, ShardRenderer.Part part) {
         float fade = batch.fade(partialTick);
@@ -39,7 +32,6 @@ final class DecorRenderer {
         sprites(sink, decor, camera, cameraRotation, partialTick, fade, part);
     }
 
-    /** Each corner of {@code count} moved {@code bias} blocks towards the camera (the origin) along its line of sight. */
     private static void bias(float[] xyz, int count, float bias) {
         if (bias <= 0f) {
             return;
@@ -59,7 +51,6 @@ final class DecorRenderer {
         Vector3f corner = new Vector3f();
         Vector3f at = new Vector3f();
         float[] uv = new float[6];
-        // Low quality: no texture overlays.
         int overlays = batch.params().fullQuality() ? decor.overlayCount() : 0;
         for (int k = 0; k < overlays; k++) {
             WaveDecor.Blend blend = decor.overlayBlend(k);
@@ -75,7 +66,6 @@ final class DecorRenderer {
                     continue;
                 }
                 if (multiply) {
-                    // Tint premultiplied by the opacity (see the multiply pipeline's blending).
                     color = ShardRenderTypes.premultiply((Math.round(alpha * 255) << 24) | (color & 0xFFFFFF), 1f);
                 } else {
                     color = (Math.round(alpha * 255) << 24) | (color & 0xFFFFFF);
@@ -154,7 +144,6 @@ final class DecorRenderer {
         }
     }
 
-    /** Quads (a triangle is a quad with its last corner repeated): position, uv, colour, normal per vertex. */
     private static final class Mesh {
         private float[] data;
         private int[] colors;

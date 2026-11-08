@@ -15,10 +15,6 @@ import net.shattergui.platform.UiRect;
 import net.shattergui.platform.UiTexture;
 import org.joml.Matrix4f;
 
-/**
- * Core's drawing on 1.21.1's {@link GuiGraphics}, which draws at once in call order: a new stratum is a flush, the pose
- * is a 4×4 {@code PoseStack}. The textured triangles of the previews are not ported yet.
- */
 public final class GuiDrawing121 implements GuiDrawing, UiPose {
     private final GuiGraphics g;
 
@@ -65,12 +61,10 @@ public final class GuiDrawing121 implements GuiDrawing, UiPose {
         }), x, y);
     }
 
-    /** A game item (the settings' screen icons). */
     public void item(ItemStack stack, int x, int y) {
         g.renderItem(stack, x, y);
     }
 
-    /** The game's drawing object of this frame. */
     public GuiGraphics graphics() {
         return g;
     }

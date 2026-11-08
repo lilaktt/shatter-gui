@@ -11,18 +11,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.shattergui.platform.impl.Mc26;
 
-/**
- * Frames of the game read back for automatic checks: the last drawn frame of the main target (vanilla
- * {@link Screenshot#takeScreenshot}, which works with Iris too), shrunk to a {@link #W}×{@link #H} grid of averaged
- * cells. Requests return at once; the picture arrives a frame or two later ({@link #get}). Optionally saved as PNG in
- * the run's screenshots folder for looking at.
- */
 final class FrameGrab {
     static final int W = 192;
     static final int H = 108;
     private static final Map<String, Frame> RESULTS = new ConcurrentHashMap<>();
 
-    /** A shrunk frame: RGB per cell. */
     record Frame(int[] rgb) {
     }
 
@@ -49,7 +42,6 @@ final class FrameGrab {
         }));
     }
 
-    /** The frame requested as {@code name}, waiting for it up to 40 ticks; null if it never came. */
     static Frame get(ClientGameTestContext context, String name) {
         for (int i = 0; i < 40 && !RESULTS.containsKey(name); i++) {
             context.waitTick();
@@ -71,7 +63,6 @@ final class FrameGrab {
                 long g = 0;
                 long b = 0;
                 int n = 0;
-                // Every other pixel is plenty for the average.
                 for (int y = y0; y < y1; y += 2) {
                     for (int x = x0; x < x1; x += 2) {
                         int c = image.getPixel(x, y);
@@ -90,12 +81,10 @@ final class FrameGrab {
         return out;
     }
 
-    /** Share of cells whose colour differs by more than {@code threshold} in some channel. */
     static double changed(Frame a, Frame b, int threshold) {
         return changed(a, b, threshold, new double[]{0, 0, 1, 1});
     }
 
-    /** As above, within a part of the frame (fractions x0, y0, x1, y1). */
     static double changed(Frame a, Frame b, int threshold, double[] area) {
         if (a == null || b == null) {
             return Double.NaN;
@@ -120,16 +109,10 @@ final class FrameGrab {
         return count / (double) Math.max(1, cells);
     }
 
-    /**
-     * Share of cells of {@code a} that match no cell of {@code b} within one cell around (by more than {@code threshold}
-     * in some channel). A shift of a pixel or two (resampling, a camera still easing) does not count; a picture that
-     * moved further or changed brightness does.
-     */
     static double changedBeyondShift(Frame a, Frame b, int threshold) {
         return changedBeyondShift(a, b, threshold, new double[]{0, 0, 1, 1});
     }
 
-    /** As above, within a part of the frame (fractions x0, y0, x1, y1). */
     static double changedBeyondShift(Frame a, Frame b, int threshold, double[] area) {
         if (a == null || b == null) {
             return Double.NaN;
@@ -166,10 +149,6 @@ final class FrameGrab {
         return count / (double) Math.max(1, cells);
     }
 
-    /**
-     * Bounding box (cells: x0, y0, x1, y1, exclusive end) of the cells where {@code a} differs from {@code background},
-     * or null if none.
-     */
     static int[] box(Frame a, Frame background, int threshold) {
         int x0 = W;
         int y0 = H;

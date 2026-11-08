@@ -13,25 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * A code effect (glass, burn, dissolve, vortex, or a schema-1 effect on one of them) played backwards, for opening a
- * screen: its shards are cut as usual, the effect is run ahead of time with particles and sounds muted, and a few
- * moments of that run are kept. The wave then steps through them from the last to the first, so the pieces gather into
- * the interface; the last step is exactly the uncut picture, held one tick, and then the real screen replaces it (and takes input).
- *
- * <p>Long effects are not replayed whole: at most {@link #WINDOW_TICKS} of the forward run (glass
- * {@link #GLASS_WINDOW_TICKS}), shown in {@link net.shattergui.params.OpenTiming} ticks (at most 0.5 s by default),
- * with the pieces fading in over the first part (they may still be in mid-air there).
- * Schema-2 effects have their own backwards run ({@code DataEffect#reversed}).
- */
 public final class ReversedEffect implements ShatterEffect {
-    /** Ticks of the forward run that are played back. */
     static final int WINDOW_TICKS = 40;
-    /** Glass: by then its shards lie on the floor; earlier they are still in the air around the interface. */
     static final int GLASS_WINDOW_TICKS = 22;
-    /** Share of the gathering over which pieces fade in. */
     private static final float FADE_IN = 0.3f;
-    /** Never record longer than this (an effect that never ends). */
     private static final int MAX_RECORD_TICKS = 400;
 
     private final ShatterEffect forward;
@@ -41,7 +26,6 @@ public final class ReversedEffect implements ShatterEffect {
         this.forward = forward;
     }
 
-    /** The effect this one plays backwards. */
     public ShatterEffect forward() {
         return forward;
     }
@@ -68,7 +52,6 @@ public final class ReversedEffect implements ShatterEffect {
 
     @Override
     public boolean countsTowardShardLimit() {
-        // A gathered interface with pieces missing would show holes until the screen appears.
         return false;
     }
 
@@ -108,25 +91,21 @@ public final class ReversedEffect implements ShatterEffect {
         }
     }
 
-    /** Which shard of which playback. */
     private record Ref(Playback playback, int index) {
     }
 
-    /** One shard at one recorded moment. */
     private static final class Frame {
         final double x;
         final double y;
         final double z;
         final Quaternionf rot;
         final int light;
-        /** Alpha 0 when the shard was already gone at that moment. */
         final int center;
         final int edge;
         final float scale;
         final boolean unlit;
         final float glow;
         final int glowColor;
-        /** Forward time of the moment, for the face shading. */
         final float time;
 
         Frame(ShardInstance shard, ShardTint tint, boolean alive, float time) {
@@ -145,7 +124,6 @@ public final class ReversedEffect implements ShatterEffect {
         }
     }
 
-    /** The backwards wave: frames[step][shard], step 0 = the latest recorded moment, {@link #length} = the start. */
     private static final class Playback implements ShatterWave {
         final Frame[][] frames;
         final int length;
@@ -203,7 +181,6 @@ public final class ReversedEffect implements ShatterEffect {
             }
             int window = moments.size() - 1;
             int length = net.shattergui.params.OpenTiming.playback(window, false, params);
-            // Step j shows the forward moment window·(1 − j/length), rounded to a recorded tick.
             Frame[][] frames = new Frame[length + 1][];
             for (int j = 0; j <= length; j++) {
                 frames[j] = moments.get(Math.round(window * (1f - j / (float) length)));
@@ -241,14 +218,12 @@ public final class ReversedEffect implements ShatterEffect {
             shard.setLight(f.light);
         }
 
-        /** One tick: age + 1, then the shard is at step = age (held at the last one). */
         void place(ShardInstance shard, int index) {
             shard.tickStatic();
             set(shard, index, shard.age());
         }
 
         void tint(int index, int age, float partialTick, ShardTint out) {
-            // The frame interpolates from the previous step to this one.
             Frame a = frames[Math.clamp(age - 1, 0, length)][index];
             Frame b = frames[Math.min(age, length)][index];
             float t = age >= 1 && age <= length ? partialTick : 1f;

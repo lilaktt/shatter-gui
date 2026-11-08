@@ -14,14 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * The timeline under the preview: a ruler in seconds, one track per layer, emitter and sound, and the playhead.
- * A layer's or emitter's bar is its time window — drag the middle to move it, an end to change its start or length;
- * a sound is a diamond at its moment, dragged along. Layers timed by each piece's own life are drawn striped (their
- * window is relative to every piece). Clicking the ruler or empty space moves the playhead. Below, when a parameter
- * curve is shown ("show on the timeline" in the inspector), its keyframes sit over the item's window: click to add,
- * drag to move, right click to remove.
- */
 final class Timeline extends Container {
     private static final int RULER = 12;
     private static final int ROW = 12;
@@ -55,7 +47,6 @@ final class Timeline extends Container {
         closeLane.visible = false;
     }
 
-    /** Shows a parameter's curve in the lane, over the time window of {@code window} (null: the whole effect). */
     void showCurve(String path, FxSchema.Field field, JsonElement def, String window, Text title) {
         if (lane != null) {
             children().remove(lane);
@@ -128,9 +119,7 @@ final class Timeline extends Container {
     @Override
     protected void arrange() {
         if (lane != null) {
-            // The window of the item the curve belongs to.
             if (laneWindow != null && !editor.doc.has(laneWindow)) {
-                // The layer or emitter is gone.
                 hideCurve();
                 return;
             }
@@ -144,13 +133,10 @@ final class Timeline extends Container {
         }
     }
 
-    // --- drawing ---
-
     @Override
     protected void draw(Ui ui) {
         Draw.roundRect(ui, x, y, w, h, 4, 0xFF111217);
         float duration = editor.preview.duration();
-        // Ruler: ticks every 0.25 s (or coarser), labels in seconds.
         Draw.rect(ui, x, y, w, RULER, 0xFF1A1C23);
         float seconds = duration / 20f;
         float step = seconds <= 2 ? 0.25f : seconds <= 6 ? 0.5f : seconds <= 12 ? 1f : 2f;
@@ -183,7 +169,6 @@ final class Timeline extends Container {
             int barY = rowsY() + Math.round((rowsH() - barH) * (rowScroll / maxScroll));
             Draw.rect(ui, x + w - 3, barY, 2, barH, Theme.BORDER_STRONG);
         }
-        // The curve lane.
         if (lane != null) {
             int ly = y + h - laneH();
             Draw.rect(ui, x, ly, w, 1, Theme.BORDER);
@@ -193,14 +178,12 @@ final class Timeline extends Container {
                     || laneWindow.startsWith("emitters") ? windowFraction() : -1;
         }
         super.draw(ui);
-        // Playhead over everything.
         float f = Math.clamp(editor.preview.time() / Math.max(1, duration), 0f, 1f);
         int px = Math.round(sx(f));
         Draw.rect(ui, px, y, 1, h, editor.preview.time() > duration ? 0x60FFFFFF : 0xE0FFFFFF);
         Draw.rect(ui, px - 2, y, 5, 3, Theme.accent());
     }
 
-    /** The playhead inside the lane's window, 0..1 (outside: <0 or >1). */
     private float windowFraction() {
         float g = editor.preview.time() / Math.max(1, editor.preview.duration());
         if (laneWindow == null) {
@@ -244,7 +227,6 @@ final class Timeline extends Container {
         boolean local = s.kind() == Selection.Kind.LAYER && !"global".equals(editor.doc.str(track.path() + ".time", "local"));
         Draw.roundRect(ui, bx, ry + 2, bw, ROW - 4, 2, Theme.fade(color, on ? 0.95f : 0.7f));
         if (local) {
-            // Stripes: the window is relative to each piece's own life.
             ui.pushClip(bx, ry + 2, bw, ROW - 4);
             for (int sx = bx - ROW; sx < bx + bw; sx += 5) {
                 EditorUi.lines(ui, new float[]{sx, ry + ROW - 2, sx + ROW - 4, ry + 2}, 2, 1.5f, 0x40000000);
@@ -267,8 +249,6 @@ final class Timeline extends Container {
         }
         return "end".equals(editor.doc.str(path + ".at", "start")) ? 1f : 0f;
     }
-
-    // --- input ---
 
     private Track trackAt(double my) {
         if (my < rowsY() || my >= rowsY() + rowsH()) {

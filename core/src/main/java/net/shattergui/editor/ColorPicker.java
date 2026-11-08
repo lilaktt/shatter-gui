@@ -10,11 +10,6 @@ import net.shattergui.ui.Ui;
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 
-/**
- * Picks an ARGB colour: a saturation/brightness square, a hue strip, an opacity strip (over a checkerboard), a hex
- * field (#RGB, #RRGGBB, #AARRGGBB) and a palette of ready colours. Hue and saturation are kept while the colour is
- * black or grey, so dragging through them does not lose the hue.
- */
 final class ColorPicker extends Container {
     private static final int[] PALETTE = {0xFFFFFFFF, 0xFFBFBFBF, 0xFF404040, 0xFF000000, 0xFFFF5555, 0xFFFFAA00, 0xFFFFFF55,
             0xFF55FF55, 0xFF55FFFF, 0xFF5555FF, 0xFFFF55FF, 0xFFB77BFF, 0xFFFF8A2A, 0xFF1A1210};
@@ -94,7 +89,6 @@ final class ColorPicker extends Container {
         float[] hsv = hsv(argb);
         float value = hsv[2];
         float alpha = (argb >>> 24) / 255f;
-        // Saturation (left → right) and brightness (top → bottom).
         int cols = Math.max(8, w / 4);
         for (int i = 0; i < cols; i++) {
             int x0 = x + i * w / cols;
@@ -106,18 +100,15 @@ final class ColorPicker extends Container {
         int my = squareY() + Math.round((1 - value) * (SQUARE_H - 1));
         Draw.rect(ui, mx - 2, my - 2, 5, 5, 0xFFFFFFFF);
         Draw.rect(ui, mx - 1, my - 1, 3, 3, 0xFF000000 | (argb & 0xFFFFFF));
-        // Hue.
         EditorUi.hGradient(ui, x, hueY(), w, STRIP_H, i -> 0xFF000000 | rgb(i / (float) w, 1, 1));
         int hx = x + Math.round(hue * (w - 1));
         Draw.rect(ui, hx - 1, hueY() - 1, 3, STRIP_H + 2, 0xFFFFFFFF);
-        // Opacity.
         EditorUi.checker(ui, x, alphaY(), w, STRIP_H, 3);
         int opaque = 0xFF000000 | (argb & 0xFFFFFF);
         EditorUi.hGradient(ui, x, alphaY(), w, STRIP_H, i -> Theme.fade(opaque, i / (float) w));
         int ax = x + Math.round(alpha * (w - 1));
         Draw.rect(ui, ax - 1, alphaY() - 1, 3, STRIP_H + 2, 0xFFFFFFFF);
         super.draw(ui);
-        // Palette.
         int px = x;
         for (int c : PALETTE) {
             if (px + 9 > x + w) {
@@ -190,8 +181,6 @@ final class ColorPicker extends Container {
     public void mouseUp(double mx, double my, int button) {
         drag = -1;
     }
-
-    // --- colour maths ---
 
     static float[] hsv(int argb) {
         float r = ((argb >> 16) & 0xFF) / 255f;

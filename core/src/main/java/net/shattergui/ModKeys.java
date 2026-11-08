@@ -10,11 +10,6 @@ import net.shattergui.platform.Text;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Keybinds, all unbound by default: the next favourite close effect (favourites are starred on the Effects tab; with
- * none the action bar says so), switching the whole mod on or off, and the settings. Effect and switch changes show in
- * the action bar (the effect by its name) and are saved. The platform registers them ({@link KeyBindings}).
- */
 public final class ModKeys {
     public static final String CYCLE_EFFECT = "key.shatter_gui.cycle_effect";
     public static final String TOGGLE = "key.shatter_gui.toggle";
@@ -23,7 +18,6 @@ public final class ModKeys {
     private ModKeys() {
     }
 
-    /** Registers the bindings (client start). */
     public static void register() {
         KeyBindings.Binding cycle = new KeyBindings.Binding(CYCLE_EFFECT, ModKeys::cycleEffect);
         KeyBindings.Binding toggle = new KeyBindings.Binding(TOGGLE, ModKeys::toggle);
@@ -31,7 +25,6 @@ public final class ModKeys {
         Platform.get().keys().register(List.of(cycle, toggle, open), List.of(open, toggle, cycle));
     }
 
-    /** The settings, over the world only (not over another screen). */
     static void openConfig() {
         GameInfo game = Platform.get().game();
         if (!game.screenOpen()) {
@@ -61,10 +54,6 @@ public final class ModKeys {
                 Platform.get().effects().displayName(config.effect)));
     }
 
-    /**
-     * The favourite after the current close effect, in the order of the effect list (wrapping around), or null if no
-     * favourite is a loaded effect.
-     */
     public static String nextFavorite(ShatterConfig config) {
         List<String> favorites = new ArrayList<>();
         for (String id : Platform.get().effects().ids()) {
@@ -79,7 +68,6 @@ public final class ModKeys {
         return favorites.get((index + 1) % favorites.size());
     }
 
-    /** The master switch. Off: every running effect and pending capture is dropped at once. */
     public static void setEnabled(boolean enabled) {
         ShatterConfig.get().enabled = enabled;
         ShatterConfig.save();

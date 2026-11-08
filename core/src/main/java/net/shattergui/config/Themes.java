@@ -13,17 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Thematic mode: the close effect by kind of interface (a furnace burns, an enchanting table breaks into runes, …).
- * The rules are data ({@code assets/shatter_gui/themes.json}): each matches menu types and source blocks and names an
- * effect; the player can give a rule another effect, or none (then the general effect is used), in the Screens tab
- * ({@link ShatterConfig#themes}). Per-screen choices in the Screens tab still come first.
- */
 public final class Themes {
-    /** {@link ShatterConfig#themes} value: this rule uses the general effect. */
     public static final String GENERAL = "";
 
-    /** One rule: its id (for the name and the player's choice), what it matches and its effect. */
     public record Rule(String id, List<String> match, String effect) {
     }
 
@@ -32,7 +24,6 @@ public final class Themes {
     private Themes() {
     }
 
-    /** The rules shipped with the mod, in order (read once). */
     public static List<Rule> rules() {
         if (rules == null) {
             rules = load();
@@ -53,7 +44,6 @@ public final class Themes {
         }
     }
 
-    /** Reads {"rules": [{"id", "match": [...], "effect"}]}; broken rules are skipped. */
     static List<Rule> parse(String json) {
         List<Rule> out = new ArrayList<>();
         JsonObject root = JsonParser.parseString(json).getAsJsonObject();
@@ -75,15 +65,10 @@ public final class Themes {
         return List.copyOf(out);
     }
 
-    /** The effect a rule uses now: the player's choice if any (may be {@link #GENERAL}), else its own. */
     public static String effectOf(Rule rule, Map<String, String> choices) {
         return choices.getOrDefault(rule.id(), rule.effect());
     }
 
-    /**
-     * The first rule that matches the source block ({@code "block:<id>"}, may be null) or one of the screen's keys, or
-     * null if none does.
-     */
     public static Rule match(List<Rule> rules, List<String> keys, String sourceKey) {
         for (Rule rule : rules) {
             if (sourceKey != null && rule.match().contains(sourceKey)) {
@@ -98,7 +83,6 @@ public final class Themes {
         return null;
     }
 
-    /** The thematic effect for a screen, or null for the general one (no rule, or the rule says so). */
     public static String effectFor(List<Rule> rules, Map<String, String> choices, List<String> keys, String sourceKey) {
         Rule rule = match(rules, keys, sourceKey);
         if (rule == null) {

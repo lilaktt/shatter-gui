@@ -34,11 +34,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-/**
- * Detects a screen being opened over the world or closed back to it. The decision is made at RETURN, because vanilla
- * may turn {@code setScreen(null)} into another screen (title screen without a world, death screen, a restored chat
- * screen).
- */
 @Mixin(Minecraft.class)
 public abstract class MinecraftMixin {
     @Shadow
@@ -48,7 +43,6 @@ public abstract class MinecraftMixin {
     @Shadow
     public LocalPlayer player;
 
-    /** A screen made for the editor's real preview must not open anything (it is never shown). */
     @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
     private void shatterGui$blockFromPreview(Screen newScreen, CallbackInfo ci) {
         if (RealPreview.blocksSetScreen(newScreen)) {
@@ -63,7 +57,6 @@ public abstract class MinecraftMixin {
                                               @Share("spatial") LocalBooleanRef spatial,
                                               @Share("start") LocalLongRef start) {
         if (!ShatterConfig.get().enabled) {
-            // Switched off: nothing else is looked at, Spatial GUI plays its own animations.
             closing.set(null);
             opening.set(false);
             spatial.set(false);
@@ -74,13 +67,11 @@ public abstract class MinecraftMixin {
             CloseWatchdog.begin(this.screen.getClass().getSimpleName());
         }
         if (this.screen != null && newScreen != this.screen) {
-            // Closed or replaced: whatever opening it still had ends now (before Spatial GUI unhooks it).
             FlyController.endOpening(newScreen == null ? "closed" : "replaced by " + newScreen.getClass().getSimpleName());
             CloseWatchdog.step("end the opening of the screen", start.get());
         }
         closing.set(newScreen == null ? this.screen : null);
         opening.set(newScreen != null && this.screen == null);
-        // Must be asked before the screen is removed: Spatial GUI unhooks it during this call.
         spatial.set(newScreen == null && SpatialGuiCompat.isShowing(this.screen));
     }
 
@@ -90,13 +81,11 @@ public abstract class MinecraftMixin {
                                            @Share("opening") LocalBooleanRef opening,
                                            @Share("spatial") LocalBooleanRef spatial,
                                            @Share("start") LocalLongRef start) {
-        // A screen opened over the world (Spatial GUI has hooked it by now, in ScreenEvents.BEFORE_INIT).
         if (opening.get() && this.screen == newScreen && level != null && player != null) {
             FlyController.onScreenOpened(newScreen);
             return;
         }
         Screen old = closing.get();
-        // Shatter only a real close into a loaded world.
         if (old == null || this.screen != null) {
             return;
         }
@@ -117,9 +106,6 @@ public abstract class MinecraftMixin {
             return;
         }
         ShatterEffect effect = ScreenRules.effectFor(keys, config, FlyController.closedSourceKey());
-        // Fly back into the container; a screen opened without one flies off an edge (chat, signs and books fade
-        // in place instead); a container that is gone (block broken, entity dead) closes with glass.
-        // Any effect may use the container (vortex flies into it); only fly uses the edge.
         FlyTarget target = flySource != null ? FlyTarget.point(flySource.point()) : null;
         boolean flyFallback = false;
         if (effect.base() instanceof FlyEffect && flySource == null) {
@@ -143,17 +129,14 @@ public abstract class MinecraftMixin {
             ShatterProfiler.value("fly.fallback to glass", FlyController.missingReason());
         }
         if (!ShardManager.admit(ScreenCapture.busy() ? 1 : 0, "close of " + keys.getFirst())) {
-            // skipNew: the screen just closes.
             CloseWatchdog.endCall(start.get());
             return;
         }
-        // Spatial GUI's own plane if it was showing this screen, otherwise (or if that fails) the flat capture.
         stepStart = ShatterProfiler.now();
         SpatialGuiCompat.startClose(old, spatial.get(), effect, target, ParamValues.current(), false);
         CloseWatchdog.step("start the close (queue the capture or take the Spatial GUI plane)", stepStart);
         CloseWatchdog.endCall(start.get());
         ShatterProfiler.step("trigger (pick effect + snapshot camera)", triggerStart);
-        // Includes vanilla work: Screen#removed, closing the container, sending the close packet.
         ShatterProfiler.step("setScreen(null) total incl. vanilla", start.get());
     }
 }

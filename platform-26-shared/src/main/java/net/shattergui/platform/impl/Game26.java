@@ -23,9 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/** The running game on 26.1 with Fabric Loader: screens, mods, the world, the clipboard. */
 final class Game26 implements GameInfo, Desktop {
-    /** Fabric's metadata of a mod. */
     private record Meta(ModMetadata meta) implements ModMeta {
         @Override
         public String name() {
@@ -87,7 +85,6 @@ final class Game26 implements GameInfo, Desktop {
         out.put("Fabric API", version("fabric-api"));
         out.put("Iris", version("iris"));
         out.put("Sodium", version("sodium"));
-        // 1.8 is "spatial-gui", later versions "spatial_gui".
         String spatial = version("spatial_gui");
         out.put("Spatial GUI", spatial.equals("not installed") ? version("spatial-gui") : spatial);
         try {
@@ -138,8 +135,6 @@ final class Game26 implements GameInfo, Desktop {
             player.sendOverlayMessage(ComponentText.unwrap(message));
         }
     }
-
-    // --- desktop ---
 
     @Override
     public String clipboard() {

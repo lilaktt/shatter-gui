@@ -12,10 +12,6 @@ import net.shattergui.ui.Slider;
 import net.shattergui.ui.Toggle;
 import net.shattergui.ui.Ui;
 
-/**
- * Which pieces a layer moves: all of them, a part of the front (by when they start), those near the edge, a random
- * share, the region or everything outside it — as buttons, with the group's own settings below and "the opposite".
- */
 final class TargetControl extends Column {
     private final FxEditor editor;
     private final String path;
@@ -85,7 +81,6 @@ final class TargetControl extends Column {
         }
     }
 
-    /** Writes a field of the target object (a plain-string target becomes an object first). */
     private void setField(String key, Object value) {
         String group = group();
         editor.doc.edit(path + "." + key, r -> {

@@ -6,10 +6,6 @@ import net.shattergui.effect.ShatterEffect;
 import net.shattergui.fly.FlyTarget;
 import net.shattergui.params.ParamValues;
 
-/**
- * Spatial GUI on 1.21.1: not integrated yet, so every answer is "Spatial GUI is not showing this screen" and closes use
- * the flat capture. Same methods as on 26.1, so the callers are the same.
- */
 public final class SpatialGuiCompat {
     private SpatialGuiCompat() {
     }

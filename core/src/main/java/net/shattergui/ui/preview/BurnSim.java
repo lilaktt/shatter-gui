@@ -3,11 +3,6 @@ package net.shattergui.ui.preview;
 import net.shattergui.params.ParamValues;
 import net.shattergui.params.Params;
 
-/**
- * Burn: a ragged front climbs from the bottom (duration); ahead of it the sample yellows, at it the cells glow, behind
- * it they char and crumble. Flames and sparks rise from the front (flame density), smoke from the front and the burnt
- * area (smoke density), and smoke goes on for the smoke duration — as in the real effect.
- */
 final class BurnSim extends Sim {
     private static final float PREHEAT = 5f;
     private static final float EMBER = 3f;
@@ -92,7 +87,6 @@ final class BurnSim extends Sim {
                 p.dead = true;
             }
         }
-        // Rising flames and sparks across the front, smoke after.
         if (front > 0 && random.nextFloat() < 0.5f * flames * dt) {
             Piece p = pieces.get(random.nextInt(pieces.size()));
             float burning = time - p.a;

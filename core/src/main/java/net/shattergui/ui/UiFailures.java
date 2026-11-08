@@ -4,10 +4,6 @@ import net.shattergui.ShatterMod;
 
 import java.util.List;
 
-/**
- * The mod's UI failures this session, written once per kind to the game log ({@link FailureLog}). Tests read
- * {@link #count()} and {@link #kinds()}: a clean run has none.
- */
 public final class UiFailures {
     private static final FailureLog LOG = new FailureLog((where, error) ->
             ShatterMod.LOGGER.error("[ShatterUi] {} failed; it is shown as an error box and the rest keeps working",
@@ -28,13 +24,12 @@ public final class UiFailures {
         return LOG.kinds();
     }
 
-    /** "draw Slider (in Inspector)" — the widget's class and the first named class around it. */
     static String describe(String action, Widget widget) {
         StringBuilder sb = new StringBuilder(action).append(' ').append(name(widget));
         for (Widget p = widget.parent; p != null; p = p.parent) {
             String n = name(p);
             if (!n.equals("Container") && !n.equals("Column") && !n.equals("Row")) {
-                sb.append(" (in ").append(n).append(')'); // not shown: the failure log
+                sb.append(" (in ").append(n).append(')');
                 break;
             }
         }

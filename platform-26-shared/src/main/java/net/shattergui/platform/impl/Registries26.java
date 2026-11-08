@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/** Sounds and particles: the game's registries, its sound manager and its particle setting. */
 final class Registries26 {
     private Registries26() {
     }

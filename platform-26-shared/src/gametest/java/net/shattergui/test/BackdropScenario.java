@@ -18,24 +18,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.BiConsumer;
 
-/**
- * The darkened world behind a screen that does not cover the whole window (chest, furnace, inventory), frame by frame
- * ({@code -PtestOnly=backdrop}): every frame of the first {@link #TICKS} ticks of opening and of closing is read back,
- * and the mean brightness of the world around the GUI (a band above the panel, and everything outside it but the
- * hotbar) and of the panel itself is logged. The brightness around the GUI must change smoothly: no step between two
- * neighbouring frames larger than {@link #STEP_SHARE} of the whole change, and no frame off the curve its neighbours
- * draw (a flash). The opening "none" is vanilla (the darkening comes at once) and is only logged, as a reference.
- */
 final class BackdropScenario {
     static final int TICKS = 30;
-    /** Largest allowed change between neighbouring frames, as a share of the whole change (and at least MIN_STEP). */
     private static final double STEP_SHARE = 0.5;
     private static final double MIN_STEP = 6;
-    /** Largest allowed distance of a frame from the mean of its two neighbours (share of the change, at least MIN_OFF). */
     private static final double OFF_SHARE = 0.25;
     private static final double MIN_OFF = 4;
 
-    /** One series: brightness per frame of the band above the panel, of the whole outside, of the panel. */
     record Series(String name, double[] band, double[] outside, double[] panel, String[] state) {
     }
 
@@ -48,8 +37,6 @@ final class BackdropScenario {
         String effect = config.effect;
         String openEffect = config.openEffect;
         context.runOnClient(mc -> FrameAudit.enable(true));
-        // Every frame is read back: at 1920x1080 that takes long enough for an opening to run into its 5 s wall-clock
-        // limit (OpenAssemble.MAX_MS) in the middle of the gathering; a smaller window reads back quicker.
         context.getInput().resizeWindow(960, 540);
         context.waitTicks(5);
         try {
@@ -64,7 +51,6 @@ final class BackdropScenario {
             for (String open : opens) {
                 for (String target : List.of("chest", "furnace", "inventory")) {
                     if (target.equals("inventory") && open.equals(ShatterConfig.OPEN_FLY_FROM_BLOCK)) {
-                        // No container to fly from: the inventory just opens (unless the close is fly).
                         continue;
                     }
                     BlockPos at = target.equals("chest") ? chest : target.equals("furnace") ? furnace : null;
@@ -77,9 +63,6 @@ final class BackdropScenario {
                     } else {
                         FlyScenario.lookAt(context, singleplayer, feet, feet.getX() + 0.5, feet.getY() + 0.5, feet.getZ() + 3.5);
                     }
-                    // Spatial GUI's third person: Spatial GUI swings the camera out behind the player when a screen
-                    // opens and back when it closes, and draws no darkened background; the brightness around the plane
-                    // is the view moving, so it is only logged there.
                     one(context, check, name, at != null, !open.equals(ShatterConfig.OPEN_NONE) && !mode.contains("third"),
                             all);
                 }
@@ -103,7 +86,6 @@ final class BackdropScenario {
                             boolean useKey, boolean checked, List<Series> all) {
         waitUntilClear(context);
         context.waitTicks(5);
-        // Opening: from the click (or setScreen) on, every frame.
         long from = context.computeOnClient(mc -> FrameAudit.next());
         List<String> openFrames = new ArrayList<>();
         List<String> openState = new ArrayList<>();
@@ -129,7 +111,6 @@ final class BackdropScenario {
         });
         boolean opened = context.computeOnClient(mc -> Mc26.screen() != null);
         check.accept(opened, name + ": the screen must open");
-        // Closing: every frame from setScreen(null).
         List<String> closeFrames = new ArrayList<>();
         List<String> closeState = new ArrayList<>();
         context.runOnClient(mc -> Mc26.setScreen(null));
@@ -149,9 +130,6 @@ final class BackdropScenario {
             smooth(check, close);
         }
         if (name.contains("_glass_") && !name.contains("spatial")) {
-            // Glass gathers from pieces lying all around: its first frame must not already show the panel (the
-            // screen's own panel drawn as "background" while it is gathered would). Panel brightness from the world
-            // before opening to the shown screen.
             int first = -1;
             for (int k = 0; k < open.state().length && first < 0; k++) {
                 first = open.state()[k].contains("hidden") && open.state()[k].contains("open=1") ? k : -1;
@@ -167,7 +145,6 @@ final class BackdropScenario {
 
     private static String state(Minecraft mc) {
         String screen = Mc26.screen() == null ? "-" : Mc26.screen().getClass().getSimpleName().replace("Screen", "");
-        // The frame just drawn, as the audit saw it: flat GUI drawn, Spatial GUI plane opacity, waves that drew.
         List<FrameAudit.Frame> last = FrameAudit.since(FrameAudit.next() - 1);
         String drawn = last.isEmpty() ? "" : String.format(Locale.ROOT,
                 " [flat=%s plane=%.2f open=%d close=%d backdrop=%.2f]", last.getFirst().flat() ? "y" : "n",
@@ -194,7 +171,6 @@ final class BackdropScenario {
         return new Series(name, band, outside, inside, state.toArray(String[]::new));
     }
 
-    /** Mean luminance (0–255) of the cells in {@code area} and not in {@code except} (fractions x0, y0, x1, y1). */
     static double luminance(FrameGrab.Frame f, double[] area, double[] except) {
         if (f == null) {
             return Double.NaN;
@@ -219,7 +195,6 @@ final class BackdropScenario {
         return cells == 0 ? Double.NaN : sum / cells;
     }
 
-    /** Checks that the brightness around the GUI changes smoothly (the band above the panel and the whole outside). */
     static void smooth(BiConsumer<Boolean, String> check, Series s) {
         smooth(check, s.name() + " (band above the panel)", s.band());
         smooth(check, s.name() + " (outside the panel)", s.outside());

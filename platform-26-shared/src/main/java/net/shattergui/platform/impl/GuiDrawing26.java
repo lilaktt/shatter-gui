@@ -23,10 +23,6 @@ import net.shattergui.platform.UiTexture;
 import org.joml.Matrix3x2f;
 import org.joml.Matrix3x2fc;
 
-/**
- * Core's drawing on 26.1's {@link GuiGraphicsExtractor}: fills, text and items as the game's own GUI elements, the
- * editor's textured or coloured triangles as a GUI render element of their own (the effect previews).
- */
 public final class GuiDrawing26 implements GuiDrawing, UiPose {
     private final GuiGraphicsExtractor g;
 
@@ -73,7 +69,6 @@ public final class GuiDrawing26 implements GuiDrawing, UiPose {
         }), x, y);
     }
 
-    /** Any item of the game (the screen icons of the settings). */
     public void item(ItemStack stack, int x, int y) {
         g.item(stack, x, y);
     }
@@ -97,8 +92,6 @@ public final class GuiDrawing26 implements GuiDrawing, UiPose {
     public void nextStratum() {
         g.nextStratum();
     }
-
-    // --- the pose ---
 
     @Override
     public void pushMatrix() {
@@ -134,8 +127,6 @@ public final class GuiDrawing26 implements GuiDrawing, UiPose {
     public void restore(Object snapshot) {
         g.pose().set((Matrix3x2fc) snapshot);
     }
-
-    // --- triangles ---
 
     @Override
     public void triangles(UiTexture texture, boolean premultiplied, float[] data, int[] colors, int vertexCount,
@@ -181,7 +172,6 @@ public final class GuiDrawing26 implements GuiDrawing, UiPose {
                 int a = t;
                 int b = t + 1;
                 int c = t + 2;
-                // Same winding as vanilla quads (top-left, bottom-left, bottom-right): negative cross product.
                 float cross = (data[b * 4] - data[a * 4]) * (data[c * 4 + 1] - data[a * 4 + 1])
                         - (data[b * 4 + 1] - data[a * 4 + 1]) * (data[c * 4] - data[a * 4]);
                 if (cross > 0) {
@@ -189,7 +179,6 @@ public final class GuiDrawing26 implements GuiDrawing, UiPose {
                     b = c;
                     c = swap;
                 }
-                // A quad with the last vertex doubled draws exactly the triangle.
                 vertex(consumer, a, textured);
                 vertex(consumer, b, textured);
                 vertex(consumer, c, textured);

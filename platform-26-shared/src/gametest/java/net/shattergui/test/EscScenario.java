@@ -22,17 +22,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.BiConsumer;
 
-/**
- * Esc is never lost or delayed ({@code -PtestOnly=esc}; also with {@code -PspatialGui=1.8} and {@code -Pshaders}): the
- * real key closes a chest and the inventory within {@link #MAX_CLOSE_TICKS} — settled, right after opening (while the
- * opening effect plays), during the close effect of the screen before — and opens the pause menu over a running effect,
- * which shows within {@link #MAX_SHOW_TICKS} and closes again with Esc. With several open effects and with the thematic
- * mode on and off. The pause menu pauses the game: an opening must not wait for game ticks.
- */
 final class EscScenario {
-    /** Esc closes the screen in the key press itself; a few ticks of slack for the test's own input path. */
     static final int MAX_CLOSE_TICKS = 5;
-    /** The longest opening is 10 ticks at the default speed (OpenTiming), plus slack. */
     static final int MAX_SHOW_TICKS = 15;
     private static final List<String> OPENS = List.of(ShatterConfig.OPEN_FLY_FROM_BLOCK,
             ShatterConfig.OPEN_DATA_PREFIX + "pop", ShatterConfig.OPEN_DATA_PREFIX + "glass", ShatterConfig.OPEN_NONE);
@@ -80,21 +71,18 @@ final class EscScenario {
     }
 
     private void all(String set) {
-        // Settled screens.
         openChest(set + " chest");
         context.waitTicks(20);
         esc(set + " chest, settled", true);
         openInventory();
         context.waitTicks(20);
         esc(set + " inventory, settled", true);
-        // Esc during the opening effect (well under 0.5 s).
         openChest(set + " chest");
         context.waitTicks(2);
         esc(set + " chest, 2 ticks after opening", true);
         openInventory();
         context.waitTick();
         esc(set + " inventory, 1 tick after opening", true);
-        // Esc while the previous screen's close effect plays.
         openChest(set + " chest");
         context.waitTicks(15);
         esc(set + " chest before the inventory", true);
@@ -102,10 +90,8 @@ final class EscScenario {
         openInventory();
         context.waitTicks(3);
         esc(set + " inventory during the chest's close effect", true);
-        // Esc in the world while an effect plays: the pause menu (it pauses the game) shows and closes again.
         context.waitTick();
         pause(set + " pause menu during a close effect", MAX_SHOW_TICKS + 5);
-        // The pause menu closed at once, while its opening still plays.
         waitClear();
         context.getInput().pressKey(InputConstants.KEY_ESCAPE);
         check(context.computeOnClient(mc -> Mc26.screen() instanceof PauseScreen), set + ": Esc in the world must open the pause menu");
@@ -114,7 +100,6 @@ final class EscScenario {
         waitClear();
     }
 
-    /** Esc in the world: the pause menu must open and be drawn soon (not hidden by its opening), then close with Esc. */
     private void pause(String name, int settle) {
         context.getInput().pressKey(InputConstants.KEY_ESCAPE);
         boolean opened = context.computeOnClient(mc -> Mc26.screen() instanceof PauseScreen);
@@ -135,7 +120,6 @@ final class EscScenario {
         esc(name + " → Esc", true);
     }
 
-    /** True while the screen is still hidden or flying in, i.e. not yet the real screen. */
     private static boolean hidden(Screen screen) {
         return screen != null && (OpenAssemble.hides(screen) || FlyOpen.isAnimating(screen));
     }
@@ -155,7 +139,6 @@ final class EscScenario {
                 + MAX_CLOSE_TICKS + " ticks, still " + after + " after " + ticks);
         if (effect) {
             check(context.computeOnClient(mc -> ShatterProfiler.closeCount()) > closes, name + ": the close effect must start");
-            // The first frame of the effect, measured from the key press (it closes the screen in the same call).
             int frames = 0;
             while (frames < MAX_CLOSE_TICKS && context.computeOnClient(mc -> ShatterProfiler.lastCloseLatencyMs()) < 0) {
                 context.waitTick();

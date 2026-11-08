@@ -3,7 +3,6 @@ package net.shattergui.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-/** A widget with children, drawn in order, hit-tested from the top. Subclasses decide the layout. */
 public class Container extends Widget {
     protected final List<Widget> children = new ArrayList<>();
 

@@ -16,14 +16,6 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-/**
- * The interface is never on screen twice ({@code -PtestOnly=duplicates}; with {@code -PspatialGui=1.8} in the first
- * and the third person; with {@code -Pshaders}): every frame is counted by {@link FrameAudit} — the flat screen,
- * Spatial GUI's plane, opening and closing waves that drew something — and may show at most one of them. Pairs of a
- * different open and close effect: every opening with closing by glass (pop for glass), and every close effect after
- * opening with {@code fly_from_block} and with pop; each closed during the opening, right after it, and 2 s later.
- * After the close effect nothing is left: no wave, no plane.
- */
 final class DuplicateScenario {
     enum Moment {
         DURING, RIGHT_AFTER, LATER
@@ -32,7 +24,6 @@ final class DuplicateScenario {
     private DuplicateScenario() {
     }
 
-    /** Built-in and shipped effects (the test pack's are covered by the gathering test). */
     static List<String> shipped(List<String> ids) {
         List<String> out = new ArrayList<>();
         String only = System.getProperty("shatter.test.dupOnly", "");
@@ -119,7 +110,6 @@ final class DuplicateScenario {
                 return;
             }
         }
-        // After the close effect: nothing at all.
         for (FrameAudit.Frame f : frames.subList(Math.max(0, frames.size() - 3), frames.size())) {
             if (f.instances() > 0 || f.planeVisible()) {
                 failures.add(name + ": something is left after the close effect: " + f);

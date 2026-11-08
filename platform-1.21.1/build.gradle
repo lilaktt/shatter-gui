@@ -1,6 +1,3 @@
-// Minecraft 1.21.1, Fabric. Everything here may use Minecraft 1.21.1, Fabric, Iris and Spatial GUI for 1.21.1; the
-// shared code is compiled in from core (see below). 1.21.1 is obfuscated, hence Loom's remapping plugin and Mojang's
-// mappings. Versions: gradle.properties of this module.
 plugins {
     id 'net.fabricmc.fabric-loom-remap'
 }
@@ -19,15 +16,12 @@ sourceSets {
         java.srcDir core.file('src/main/java')
         resources.srcDir core.file('src/main/resources')
     }
-    // Fabric API for 1.21.1 has no client game tests (fabric-client-gametest-api-v1 came later), so the tests are a
-    // small harness of our own: a second mod, loaded only by the runClientTest run below, never part of the jar.
     gametest {
         compileClasspath += main.compileClasspath + main.output
         runtimeClasspath += main.runtimeClasspath + main.output
     }
 }
 
-// Development-only mods (compile against their APIs, dev runs with them) come from the Modrinth Maven; never bundled.
 repositories {
     exclusiveContent {
         forRepository {
@@ -42,7 +36,6 @@ repositories {
     }
 }
 
-// Versions on Modrinth for 1.21.1.
 def spatialGuiVersion = { String v -> "maven.modrinth:spatial-gui:${v}-fabric+1.21.1" }
 def irisVersion = "maven.modrinth:iris:1.8.8+1.21.1-fabric"
 def sodiumVersion = "maven.modrinth:sodium:mc1.21.1-0.6.13-fabric"
@@ -59,8 +52,6 @@ loom {
         }
     }
     runs {
-        // ./gradlew :platform-1.21.1:runClientTest -Pmc=1.21.1 [-PtestOnly=glass,...]: the harness in src/gametest
-        // starts a fresh world, plays the scenarios, writes screenshots to build/run/clientTest/screenshots and exits.
         clientTest {
             client()
             name = "Client Test"
@@ -92,11 +83,9 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-    // Optional integrations: compiled against their APIs, never bundled.
     modCompileOnly(modMenuVersion) { transitive = false }
     modCompileOnly(irisVersion) { transitive = false }
 
-    // Dev runs with shaders: -Pshaders adds Iris + Sodium (the test installs the pack, see -PshaderPack).
     if (project.hasProperty("shaders")) {
         modRuntimeOnly(irisVersion) { transitive = false }
         modRuntimeOnly(sodiumVersion) { transitive = false }
@@ -110,7 +99,6 @@ dependencies {
     }
 }
 
-// Each test run starts from nothing: a new world, the default config, no old screenshots.
 tasks.matching { it.name == "runClientTest" }.configureEach {
     doFirst {
         def dir = file("build/run/clientTest")
@@ -119,8 +107,6 @@ tasks.matching { it.name == "runClientTest" }.configureEach {
     }
 }
 
-// The game itself runs on Java 21 when -PrunJavaHome=<a Java 21 home> is given (players of 1.21.1 have Java 21);
-// otherwise on the JVM Gradle runs on.
 if (project.hasProperty("runJavaHome")) {
     tasks.matching { it.name.startsWith("run") && it instanceof JavaExec }.configureEach {
         def exe = org.gradle.internal.os.OperatingSystem.current().isWindows() ? "java.exe" : "java"
@@ -160,7 +146,6 @@ jar {
     }
 }
 
-// The remapped jar is the one the game loads: shatter-gui-<version>+mc1.21.1-fabric.jar. A stub, not part of dist/.
 remapJar {
     archiveVersion = jarVersion
     destinationDirectory = layout.buildDirectory.dir('tmp/distInput')

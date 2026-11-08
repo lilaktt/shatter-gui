@@ -14,29 +14,9 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-/**
- * The GUI of a screen that just opened flies out of the container it was opened from: it starts small at the
- * container and eases out to its normal place and size within {@code flyDurationTicks}. A screen without a container
- * flies in from beyond an edge or corner of the screen instead, slightly rolled and smaller, straightening out as it
- * lands.
- *
- * <ul>
- *   <li>Flat GUI: the container is projected onto the screen and the GUI's pose is moved and scaled from there
- *       ({@link #pushFlatTransform}); the darkened background stays in place.</li>
- *   <li>Spatial GUI: its plane is moved and scaled from the container in camera-relative world space
- *       ({@link #spatialMatrix}) and faded in ({@link #spatialAlpha}); its own open animation is cancelled.</li>
- * </ul>
- *
- * <p>Time is client ticks + partial tick ({@link EffectClock}), so the animation is smooth, runs at the same speed as
- * the shards and also plays while the game is paused (the pause menu).
- * While it runs, clicks are ignored and nothing is hovered (the GUI is not where the mouse coordinates point).
- */
 public final class FlyOpen {
-    /** Size of the GUI at the container, relative to its normal size. */
     private static final float START_SCALE = 0.05f;
-    /** Projected container points are kept within this many screen halves of the centre (behind the camera, far off screen). */
     private static final float MAX_NDC = 1.5f;
-    /** Closer than this in front of the camera, the projection is replaced by a direction towards the screen edge. */
     private static final double MIN_DEPTH = 0.05;
 
     private static Screen screen;
@@ -44,14 +24,12 @@ public final class FlyOpen {
     private static boolean spatial;
     private static boolean drawingFlat;
     private static int duration;
-    /** Game time of the first frame of the animation; NaN until that frame. */
     private static double startTime = Double.NaN;
     private static long ticks;
 
     private FlyOpen() {
     }
 
-    /** @param origin the container (point), or, for the fly effect on screens without one, the screen edge */
     public static void start(Screen opened, FlyTarget origin, boolean onSpatialPlane, int durationTicks) {
         screen = opened;
         from = origin;
@@ -60,7 +38,6 @@ public final class FlyOpen {
         startTime = Double.NaN;
     }
 
-    /** A fly-in is running (for the limit of effects at once). */
     public static boolean running() {
         return screen != null;
     }
@@ -70,20 +47,14 @@ public final class FlyOpen {
         from = null;
     }
 
-    /** END_CLIENT_TICK, also while the game is paused. */
     public static void tick() {
         ticks++;
     }
 
-    /** True while {@code s} is still flying in: its input is ignored and nothing in it is hovered. */
     public static boolean isAnimating(Screen s) {
         return s != null && s == screen && progress() < 1f;
     }
 
-    /**
-     * HEAD of {@code Screen#renderWithTooltip}: moves and scales the flat GUI. Returns true if a
-     * matrix was pushed, which the caller pops at RETURN.
-     */
     public static boolean pushFlatTransform(Screen s, GuiGraphics graphics) {
         if (s != screen || spatial) {
             return false;
@@ -118,25 +89,15 @@ public final class FlyOpen {
         return true;
     }
 
-    /** RETURN of {@code Screen#renderWithTooltip}, if {@link #pushFlatTransform} pushed. */
     public static void popFlatTransform(GuiGraphics graphics) {
         graphics.pose().popPose();
         drawingFlat = false;
     }
 
-    /**
-     * True while a flying flat GUI is being drawn. The player model in the inventory is clipped by a scissor in fixed
-     * GUI coordinates that ignores the pose, so it would be cut off while the GUI flies: it is left out of those frames
-     * and appears when it lands (26.1: the picture in picture stays in place, same remedy).
-     */
     public static boolean hidesPictureInPicture() {
         return drawingFlat;
     }
 
-    /**
-     * For Spatial GUI's plane: the transform to put in front of its own, in camera-relative world space, given where its
-     * plane's centre is now ({@code planeCenter}, relative to the camera). Null when no animation runs on its plane.
-     */
     public static Matrix4f spatialMatrix(Vector3fc planeCenter) {
         if (screen == null || !spatial) {
             return null;
@@ -159,7 +120,6 @@ public final class FlyOpen {
                 .translate(-planeCenter.x(), -planeCenter.y(), -planeCenter.z());
     }
 
-    /** Opacity of Spatial GUI's plane while it flies in (multiplies its own). */
     public static float spatialAlpha() {
         if (screen == null || !spatial) {
             return 1f;
@@ -167,14 +127,12 @@ public final class FlyOpen {
         return Math.min(1f, progress() * 2f);
     }
 
-    /** For tests and the profile log: game time now and the animation's progress (1 = none running). */
     public static String describeProgress() {
         Minecraft mc = Minecraft.getInstance();
         return String.format(java.util.Locale.ROOT, "ticks=%d partial=%.3f start=%.3f progress=%.3f", ticks,
                 EffectClock.partialTick(), startTime, progress());
     }
 
-    /** 0 at the first frame, 1 when done (and from then on, also with no animation at all). */
     private static float progress() {
         if (screen == null) {
             return 1f;
@@ -196,13 +154,11 @@ public final class FlyOpen {
         return Math.max(0f, t);
     }
 
-    /** Ease-out (quadratic): fast out of the container, slowing down into place. */
     private static float easeOut(float t) {
         float u = 1f - t;
         return 1f - u * u;
     }
 
-    /** World point → GUI coordinates on the current camera, kept near the screen if it is off screen or behind. */
     private static float[] projectToGui(Vec3 world, int guiWidth, int guiHeight) {
         Minecraft mc = Minecraft.getInstance();
         Camera camera = mc.gameRenderer.getMainCamera();
@@ -221,7 +177,6 @@ public final class FlyOpen {
             ndcX = (float) (right / (depth * tanHalf * aspect));
             ndcY = (float) (above / (depth * tanHalf));
         } else {
-            // Beside or behind the camera: come in from the screen edge on that side.
             double length = Math.max(1e-6, Math.hypot(right, above));
             ndcX = (float) (right / length * MAX_NDC);
             ndcY = (float) (above / length * MAX_NDC);

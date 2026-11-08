@@ -8,7 +8,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Leaves pictures in pictures out of a flying flat GUI; see {@link FlyOpen#hidesPictureInPicture}. */
 @Mixin(GuiRenderState.class)
 public abstract class GuiRenderStateMixin {
     @Inject(method = "addPicturesInPictureState", at = @At("HEAD"), cancellable = true)

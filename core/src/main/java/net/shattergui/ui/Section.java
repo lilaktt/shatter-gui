@@ -8,12 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/**
- * A group of settings as a card: a slightly lighter surface with a 1-pixel border and rounded corners, a header with
- * a small icon, the title and a chevron, a thin line under it, and the rows inside separated by thin lines. A click on
- * the header (or Enter/Space when focused) folds the card; the fold state is remembered for the session by its key.
- * Folding and unfolding glide.
- */
 public class Section extends Container {
     public static final int HEADER = 18;
     public static final int PAD = 6;
@@ -27,17 +21,14 @@ public class Section extends Container {
     private final Anim open;
     private Supplier<Text> badge = () -> null;
     private int badgeColor = Theme.TEXT_FAINT;
-    /** The "?" in the header (a longer explanation; a click opens the help), or null. */
     private HelpBadge help;
 
-    /** A "?" in the header: hovering shows {@code text} under {@code title}, a click (or Enter) runs {@code open}. */
     public Section help(Text title, Text text, Runnable open) {
         help = new HelpBadge(title, text, open);
         super.add(help);
         return this;
     }
 
-    /** The round "?" of a card's header. */
     public static final class HelpBadge extends Widget {
         private final Runnable open;
 
@@ -79,10 +70,6 @@ public class Section extends Container {
         }
     }
 
-    /**
-     * @param key            remembers the fold state for the session (null: not foldable)
-     * @param foldedByDefault the state before the player changes it
-     */
     public Section(String key, Icon icon, Supplier<Text> title, boolean foldedByDefault) {
         this(key, icon, title, foldedByDefault, 4);
     }
@@ -106,14 +93,12 @@ public class Section extends Container {
         this(key, icon, () -> title, foldedByDefault, gap);
     }
 
-    /** Text on the right of the header (a count, problems), or null. */
     public Section badge(Supplier<Text> value, int color) {
         badge = value;
         badgeColor = color;
         return this;
     }
 
-    /** Adds a row to the card's body. */
     @Override
     public <T extends Widget> T add(T child) {
         return body.add(child);
@@ -140,7 +125,6 @@ public class Section extends Container {
         FOLDED.put(key, value);
     }
 
-    /** Forgets every remembered fold state (tests). */
     public static void forgetFolds() {
         FOLDED.clear();
     }
@@ -150,7 +134,6 @@ public class Section extends Container {
         return foldable;
     }
 
-    /** The header's tooltip (fold, unfold) is about the card, not about its rows. */
     @Override
     public boolean tooltipCoversChildren() {
         return false;
@@ -176,7 +159,6 @@ public class Section extends Container {
         if (focus.value() > 0.05f) {
             Draw.roundOutline(ui, x, y, w, h, Theme.RADIUS_CARD, Theme.accentAlpha(Math.round(180 * focus.value())));
         }
-        // Header: icon, title, badge, chevron.
         int tx = x + PAD;
         if (icon != null) {
             Draw.icon(ui, icon, tx, y + (HEADER - Icon.SIZE) / 2, 1, Theme.accentHover());
@@ -201,7 +183,6 @@ public class Section extends Container {
         Text b = badge.get();
         Text t = title.get();
         if (b != null && ui.font.width(t) + 6 + ui.font.width(b) > right - tx) {
-            // Too narrow for both: the title wins (the badge is a detail).
             b = null;
         }
         if (b != null) {
@@ -218,7 +199,6 @@ public class Section extends Container {
         if (o < 0.01f) {
             return;
         }
-        // The body, with a line under the header and thin lines between rows; clipped while folding.
         Draw.rect(ui, x + 1, y + HEADER - 1, w - 2, 1, Theme.fade(Theme.BORDER, o));
         ui.pushClip(x + 1, y + HEADER, w - 2, h - HEADER - 1);
         Widget previous = null;

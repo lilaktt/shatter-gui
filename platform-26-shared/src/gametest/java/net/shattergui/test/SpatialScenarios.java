@@ -19,13 +19,7 @@ import java.lang.reflect.Field;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-/**
- * Spatial GUI scenarios, run only when Spatial GUI is loaded ({@code ./gradlew runClientGameTest -PspatialGui=1.8}).
- * Spatial GUI's config is changed by reflection because it moved between 1.8 ({@code SpatialGUI.config}) and 1.9
- * ({@code ConfigManager.config()}).
- */
 final class SpatialScenarios {
-    /** Long enough for Spatial GUI's open animation (300 ms) and third-person camera move (300 ms). */
     private static final int OPEN_WAIT = 30;
 
     private final ClientGameTestContext context;
@@ -43,7 +37,6 @@ final class SpatialScenarios {
         config.effect = "glass";
         config.spatialGuiIntegration = true;
 
-        // Third person is Spatial GUI's default (camera moves out, plane in front of the player).
         setSpatial("firstPersonModeInventory", false);
         setSpatial("firstPersonModeContainers", false);
         alignmentShots("third");
@@ -53,10 +46,8 @@ final class SpatialScenarios {
         BurnScenario.run(context, check, context::takeScreenshot, "spatial_third_burn",
                 () -> new InventoryScreen(Minecraft.getInstance().player));
 
-        // First person: plane close to the eyes, no camera move.
         setSpatial("firstPersonModeInventory", true);
         setSpatial("firstPersonModeContainers", true);
-        // Reference: where Spatial GUI itself draws its plane right after a first-person close.
         config.spatialGuiIntegration = false;
         context.setScreen(() -> new InventoryScreen(Minecraft.getInstance().player));
         context.waitTicks(OPEN_WAIT);
@@ -70,17 +61,14 @@ final class SpatialScenarios {
         closeWithSpatial("spatial_first_inventory", () -> new InventoryScreen(Minecraft.getInstance().player), OPEN_WAIT, true);
         closeWithSpatial("spatial_first_during_open", () -> new InventoryScreen(Minecraft.getInstance().player), 2, true);
 
-        // Curved screen (first person only): shards use the flat tangent plane for now.
         setSpatial("curvedScreenEnabled", true);
         closeWithSpatial("spatial_first_curved", () -> new InventoryScreen(Minecraft.getInstance().player), OPEN_WAIT, true);
         setSpatial("curvedScreenEnabled", false);
         setSpatial("firstPersonModeInventory", false);
         setSpatial("firstPersonModeContainers", false);
 
-        // Pause menu is not shown by Spatial GUI by default: the flat effect runs, Spatial GUI is not touched.
         closeWithSpatial("spatial_pause_not_hooked", () -> new PauseScreen(true), 10, false);
 
-        // Integration off: our flat shards, and Spatial GUI plays its own close animation as before.
         config.spatialGuiIntegration = false;
         context.setScreen(() -> new InventoryScreen(Minecraft.getInstance().player));
         context.waitTicks(OPEN_WAIT);
@@ -92,7 +80,6 @@ final class SpatialScenarios {
         context.waitTicks(100);
         config.spatialGuiIntegration = true;
 
-        // Mod switched off: Spatial GUI untouched, its own close animation plays.
         context.runOnClient(mc -> ShatterKeys.setEnabled(false));
         context.setScreen(() -> new InventoryScreen(Minecraft.getInstance().player));
         context.waitTicks(OPEN_WAIT);
@@ -110,7 +97,6 @@ final class SpatialScenarios {
         context.waitTicks(100);
     }
 
-    /** Physics frozen: the first frame after closing must show the shards exactly where the plane was. */
     private void alignmentShots(String mode) {
         ShatterConfig config = ShatterConfig.get();
         float burst = config.get(Params.GLASS_BURST);
@@ -124,7 +110,6 @@ final class SpatialScenarios {
             context.waitTicks(OPEN_WAIT);
             context.takeScreenshot("spatial_" + mode + "_align_before");
             context.runOnClient(mc -> Mc26.setScreen(null));
-            // Shards replace the plane from the frame after the close; one tick later they have not moved.
             context.waitTick();
             context.takeScreenshot("spatial_" + mode + "_align_after");
             context.waitTicks(100);
@@ -144,7 +129,6 @@ final class SpatialScenarios {
         }
         int closes = context.computeOnClient(mc -> ShatterProfiler.closeCount());
         context.runOnClient(mc -> Mc26.setScreen(null));
-        // The Spatial GUI plane is replaced in the next frame.
         context.waitTick();
         long elapsedLeft = context.computeOnClient(mc -> closeStartElapsed());
         int shards = context.computeOnClient(mc -> ShardManager.liveShardCount());
@@ -168,7 +152,6 @@ final class SpatialScenarios {
         context.waitTicks(100);
     }
 
-    /** Spatial GUI's remaining open-animation time at close; 0 means its plane is no longer drawn. */
     private static long closeStartElapsed() {
         try {
             InventoryRenderer inventory = SpatialGUIClient.renderer().getInventoryRenderer();
@@ -185,7 +168,6 @@ final class SpatialScenarios {
             try {
                 Class<?> type = spatialConfig.getClass();
                 if (field.startsWith("firstPersonMode") && java.util.Arrays.stream(type.getFields()).noneMatch(f -> f.getName().equals(field))) {
-                    // 1.10 has one view mode for all screens instead of a switch per kind of screen.
                     type.getField("autoDetectCameraMode").set(spatialConfig, false);
                     java.lang.reflect.Field mode = type.getField("viewMode");
                     Object[] modes = mode.getType().getEnumConstants();
@@ -204,7 +186,6 @@ final class SpatialScenarios {
         try {
             return Class.forName("org.tastytrash.spatialGUI.SpatialGUI").getField("config").get(null);
         } catch (ReflectiveOperationException | RuntimeException e) {
-            // 1.9 moved it.
         }
         try {
             return Class.forName("org.tastytrash.spatialGUI.config.ConfigManager").getMethod("config").invoke(null);

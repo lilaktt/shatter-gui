@@ -16,39 +16,17 @@ import net.shattergui.shatter.ShardManager;
 import java.util.Locale;
 import java.util.function.BiConsumer;
 
-/**
- * Settled pieces and blocks ({@code -PtestOnly=settle}; also with Spatial GUI and with a shader pack). A screen painted
- * all magenta is closed with glass; its pieces fall and come to rest on the ground. Then:
- *
- * <ul>
- *   <li>Transition (alwaysOnTop on): the same frame with the pieces still over the blocks (settling held back) and once
- *       they are settled, drawn in the world's depth: the magenta pixels must not change (no jump in place or
- *       brightness).</li>
- *   <li>Wall: the player steps back and a stone wall goes up between the player and the pieces. No magenta may show
- *       (on and off), and the frame must be the same as with the pieces gone: 0 changed pixels behind the wall.</li>
- * </ul>
- *
- * The flight through a wall is {@link OnTopScenario}. Screenshots {@code settle_<mode>_<on|off>_*}.
- */
 final class SettleScenario {
     static final int MAGENTA = 0xFFFF00FF;
-    /** The frame above the hotbar and the hand. */
     private static final double[] VIEW = {0, 0, 1, 0.86};
-    /**
-     * Where settling is compared: above the hand. With a shader pack the pieces over the blocks are drawn over the
-     * player's hand (Iris draws the hand in its own pass, NOTES.md), the settled ones under it, as without one.
-     */
     private static final double[] ABOVE_HAND = {0, 0, 1, 0.74};
-    /** The part of the frame the wall fills (the ground in front of it shows below). */
     private static final double[] WALL_VIEW = {0.02, 0.02, 0.98, 0.7};
     private static final int LIFETIME = 900;
-    /** {@code Settle.STILL_TICKS} (not referenced: the scenario also runs on the code before settling, for comparison). */
     static final int SETTLE_TICKS = 4;
 
     private SettleScenario() {
     }
 
-    /** A screen that is one colour, so its pieces can be told from the world. Does not pause the game. */
     static final class SolidScreen extends Screen {
         private final int color;
 
@@ -77,7 +55,6 @@ final class SettleScenario {
         int lifetime = config.get(Params.GLASS_LIFETIME);
         BlockPos feet = context.computeOnClient(mc -> mc.player.blockPosition());
         command(singleplayer, "gamerule random_tick_speed 0");
-        // The same light in every frame compared.
         command(singleplayer, "gamerule advance_time false");
         command(singleplayer, "time set 6000");
         try {
@@ -121,7 +98,6 @@ final class SettleScenario {
         context.waitTicks(5);
         context.runOnClient(mc -> Mc26.setScreen(null));
         int still = waitStill(context, 240);
-        // The face shading has eased in long before (10 ticks).
         context.waitTicks(12);
         int shards = context.computeOnClient(mc -> ShardManager.liveShardCount());
         ShatterGuiClient.LOGGER.info("[ShatterTest] {}: {} shards at rest after {} ticks", name, shards, still);
@@ -155,7 +131,6 @@ final class SettleScenario {
                     + "screen (%.4f of their pixels changed, largest difference %d)", name, jump[0], (int) jump[1]));
         }
 
-        // Step back and put a wall between the player and the pieces.
         double minZ = context.computeOnClient(mc -> {
             double min = Double.MAX_VALUE;
             for (ShardManager.Batch batch : ShardManager.batches()) {
@@ -186,8 +161,6 @@ final class SettleScenario {
 
         int visible = noWall == null ? -1 : FullFrame.blob(noWall, FullFrame::magenta, VIEW).count();
         int through = wall == null ? -1 : FullFrame.blob(wall, FullFrame::magenta, VIEW).count();
-        // A shader pack's own noise from frame to frame (temporal filtering) reaches about 30 per channel without any
-        // pieces; a piece over stone differs by far more than that.
         boolean pack = context.computeOnClient(mc -> net.shattergui.compat.iris.IrisCompat.shaderPackInUse());
         double[] behind = FullFrame.changed(wall, empty, pack ? 48 : 8, WALL_VIEW, null);
         ShatterGuiClient.LOGGER.info("[ShatterTest] {}: {} shards; magenta pixels without the wall {}, with it {}; pixels "
@@ -199,7 +172,6 @@ final class SettleScenario {
                 + "pieces (%.5f changed, largest difference %d)", name, behind[0], (int) behind[1]));
     }
 
-    /** Ticks until every shard has stopped for 3 ticks in a row, or -1 after {@code limit}. */
     static int waitStill(ClientGameTestContext context, int limit) {
         int row = 0;
         for (int tick = 0; tick < limit; tick++) {
@@ -228,18 +200,15 @@ final class SettleScenario {
         return -1;
     }
 
-    /** Holds settling back (tests); absent before settling existed, then nothing. */
     static void hold(ClientGameTestContext context, boolean held) {
         context.runOnClient(mc -> {
             try {
                 ShardManager.class.getMethod("holdSettledForTests", boolean.class).invoke(null, held);
             } catch (ReflectiveOperationException e) {
-                // Before settled pieces existed: everything is over the blocks anyway.
             }
         });
     }
 
-    /** Settled shards now, or -1 before settling existed. */
     static int settledCount(ClientGameTestContext context) {
         return context.computeOnClient(mc -> {
             try {
@@ -250,7 +219,6 @@ final class SettleScenario {
         });
     }
 
-    /** Teleports the player onto the middle of block column x, z (also for negative coordinates), at height y. */
     static void tp(TestSingleplayerContext singleplayer, int x, int y, int z, float yaw, float pitch) {
         command(singleplayer, "tp @p %.1f %d %.1f %.3f %.3f", x + 0.5, y, z + 0.5, yaw, pitch);
     }

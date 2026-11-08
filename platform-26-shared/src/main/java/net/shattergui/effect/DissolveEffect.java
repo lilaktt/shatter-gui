@@ -17,28 +17,14 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
-/**
- * The GUI stays where it is and comes apart into small squares (about 8 GUI pixels each). A noisy wave runs from an
- * edge, a corner or the centre: each square in turn lights up cold white at its edges, comes loose, drifts up and to
- * the side with a little turbulence, shrinks and fades within ~0.6 s. No gravity, no particles.
- *
- * <p>Like burn: a grid of cells, each with its own start time ({@link ShardInstance#effectData}) and stages computed
- * from the time since then (intact, glowing, loose, gone); the glow is the same emissive layer. A square is two
- * triangles; both keep their offset from the square centre in {@link ShardInstance#vel()} and {@link DissolveWave}
- * places them around the drifting centre, scaled, so the square shrinks as one.
- */
 public final class DissolveEffect implements ShatterEffect {
     public static final String ID = "dissolve";
 
-    /** More squares than this get bigger instead (a GUI-filling screen at a small GUI scale). */
     private static final int MAX_SQUARES = 2500;
-    /** Ticks from coming loose to gone (0.6 s). */
     private static final float LIFE = 12f;
-    /** Ticks before and after coming loose that the square glows. */
     private static final float GLOW_SPAN = 2f;
     private static final float GLOW_MAX = 0.55f;
     private static final int GLOW_COLOR = (205 << 16) | (230 << 8) | 255;
-    /** Share of the wave spent on the noise that makes its front ragged. */
     private static final float RAGGEDNESS = 0.3f;
     private static final float NOISE_SCALE = 6f;
     private static final int[][] ORIGINS_EDGE = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}, {-1, -1}, {1, -1}, {-1, 1}, {1, 1}};
@@ -53,7 +39,6 @@ public final class DissolveEffect implements ShatterEffect {
         ParamValues params = source.params();
         RandomSource random = source.random();
         Window window = Minecraft.getInstance().getWindow();
-        // More shards (cinematic preset) = smaller squares.
         float pixels = params.i(Params.DISSOLVE_PIXEL_SIZE) / (float) Math.sqrt(params.shardScale());
         int cols = Math.max(1, Math.round((float) (source.bounds().width() * window.getGuiScaledWidth() / pixels)));
         int rows = Math.max(1, Math.round((float) (source.bounds().height() * window.getGuiScaledHeight() / pixels)));
@@ -79,7 +64,6 @@ public final class DissolveEffect implements ShatterEffect {
             release = Math.clamp(release, 0f, duration);
             ShardInstance a = shards.get(2 * k);
             ShardInstance b = shards.get(2 * k + 1);
-            // The two triangles split the square along a diagonal: their centroids average to its centre.
             center.set(a.pos()).add(b.pos()).mul(0.5);
             for (ShardInstance shard : new ShardInstance[]{a, b}) {
                 shard.vel().set(shard.pos()).sub(center);
@@ -115,7 +99,6 @@ public final class DissolveEffect implements ShatterEffect {
 
     @Override
     public void tint(ShardInstance shard, float partialTick, ParamValues params, ShardTint out) {
-        // Rendering interpolates the position between ticks, i.e. shows time age - 1 + partialTick.
         float since = shard.age() - 1 + partialTick - shard.effectData;
         float t = progress(since, shard.lifetime() - 1 - shard.effectData);
         out.unlit = true;
@@ -131,7 +114,6 @@ public final class DissolveEffect implements ShatterEffect {
         return LIFE * params.durationScale();
     }
 
-    /** 0 while intact, then 0..1 over the drift. */
     static float progress(float since, float life) {
         return since <= 0f ? 0f : Math.clamp(since / Math.max(1f, life), 0f, 1f);
     }
@@ -140,7 +122,6 @@ public final class DissolveEffect implements ShatterEffect {
         return Mth.lerp(smoothstep(0f, 1f, t), 1f, 0.15f);
     }
 
-    /** {-1, 0, 1} per axis (0, 0 = centre). "random": an edge, a corner or the centre; "edge": an edge or a corner. */
     private static int[] origin(String setting, RandomSource random) {
         if ("center".equals(setting)) {
             return new int[]{0, 0};
@@ -151,7 +132,6 @@ public final class DissolveEffect implements ShatterEffect {
         return ORIGINS_EDGE[random.nextInt(ORIGINS_EDGE.length)];
     }
 
-    /** 0 at the origin, 1 at the farthest point of the GUI (u, v in 0..1). */
     private static float distance(float u, float v, int[] origin) {
         if (origin[0] == 0 && origin[1] == 0) {
             return (float) (Math.hypot(u - 0.5, v - 0.5) / Math.sqrt(0.5));
@@ -172,7 +152,6 @@ public final class DissolveEffect implements ShatterEffect {
         return t * t * (3 - 2 * t);
     }
 
-    /** Moves every loose square: up and to one side, with turbulence, shrinking around its centre. */
     private static final class DissolveWave implements ShatterWave {
         private final ShardInstance[] first;
         private final ShardInstance[] second;
@@ -196,7 +175,6 @@ public final class DissolveEffect implements ShatterEffect {
             this.phase = new float[squares];
             this.life = life;
             RandomSource random = source.random();
-            // Sizes relative to the GUI, so the drift looks the same for the flat GUI and a Spatial GUI plane.
             double size = shards.getFirst().pos().distance(shards.getLast().pos());
             boolean calm = source.params().reduceMotion();
             this.rise = (float) (size * (calm ? 0.12 : 0.25));

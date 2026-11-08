@@ -10,11 +10,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * What the effect editor remembers between sessions ({@code config/shatter_gui/editor.json}): whether the short tour
- * was seen, the sample interface, the last effect opened. Separate from the mod's settings, so it never makes them
- * "unsaved".
- */
 final class EditorState {
     boolean tourDone;
     String sample = "chest";

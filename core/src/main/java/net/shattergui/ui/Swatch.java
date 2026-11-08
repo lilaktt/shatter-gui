@@ -6,7 +6,6 @@ import net.shattergui.platform.Text;
 
 import java.util.function.BooleanSupplier;
 
-/** A round colour choice; the chosen one has a ring and a check mark. */
 public class Swatch extends Widget {
     private final int color;
     private final BooleanSupplier chosen;

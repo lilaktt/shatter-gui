@@ -17,14 +17,6 @@ import java.util.Deque;
 import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * The effect being edited: its JSON tree (the editor changes the data itself, so every field of the format, known or
- * not, survives), an undo/redo history of whole snapshots, and the parser's verdict on the current state (cached until
- * the next change). Paths are the parser's: {@code layers[2].params.strength.keys[1]}.
- *
- * <p>Edits with the same merge key that follow each other closely (a slider being dragged, typing) become one undo
- * step. Nothing here throws on odd data: wrong types read as the default, paths through missing parts are created.
- */
 public final class FxDoc {
     private static final int MAX_HISTORY = 120;
     private static final long MERGE_MILLIS = 900;
@@ -47,7 +39,6 @@ public final class FxDoc {
         savedText = text;
     }
 
-    /** Replaces the whole document (open another effect): history cleared, counted as saved. */
     public void load(String json) {
         root = readObject(json);
         text = GSON.toJson(root);
@@ -66,7 +57,6 @@ public final class FxDoc {
                 return element.getAsJsonObject();
             }
         } catch (RuntimeException e) {
-            // Not JSON: start from an empty effect.
         }
         JsonObject empty = new JsonObject();
         empty.addProperty("schema", 2);
@@ -77,12 +67,10 @@ public final class FxDoc {
         return root;
     }
 
-    /** The current JSON text (pretty-printed). */
     public String json() {
         return text;
     }
 
-    /** Changes with every edit, undo, redo and load (views compare it to know when to refresh). */
     public int version() {
         return version;
     }
@@ -91,7 +79,6 @@ public final class FxDoc {
         return !text.equals(savedText);
     }
 
-    /** Changed since it was loaded (for a new effect that was never saved: is there anything to lose?). */
     public boolean changedSinceLoad() {
         return !text.equals(loadedText);
     }
@@ -100,19 +87,12 @@ public final class FxDoc {
         savedText = text;
     }
 
-    // --- editing ---
-
-    /**
-     * Applies a change to the tree. One undo step, unless {@code key} is the same as the previous edit's and that was
-     * less than a second ago (continuous edits of one field). A change that changes nothing is not recorded.
-     */
     public void edit(String key, Consumer<JsonObject> change) {
         String before = text;
         JsonObject copy = root.deepCopy();
         try {
             change.accept(copy);
         } catch (RuntimeException e) {
-            // A change that cannot apply to this data (odd types): nothing happens.
             return;
         }
         String after = GSON.toJson(copy);
@@ -135,7 +115,6 @@ public final class FxDoc {
         version++;
     }
 
-    /** Ends merging: the next edit is its own undo step (a drag was released). */
     public void breakMerge() {
         mergeKey = null;
     }
@@ -193,7 +172,6 @@ public final class FxDoc {
         edit(null, r -> delete(r, path));
     }
 
-    /** A number as JSON: whole numbers without a fraction, others rounded to 4 decimals (no float noise). */
     public static JsonPrimitive number(double value) {
         if (!Double.isFinite(value)) {
             value = 0;
@@ -204,8 +182,6 @@ public final class FxDoc {
         }
         return new JsonPrimitive(rounded);
     }
-
-    // --- reading ---
 
     public JsonElement get(String path) {
         return get(root, path);
@@ -231,15 +207,11 @@ public final class FxDoc {
         return e != null && !e.isJsonNull();
     }
 
-    /** Size of the list at {@code path} (0 if it is missing or not a list). */
     public int size(String path) {
         JsonElement e = get(path);
         return e != null && e.isJsonArray() ? e.getAsJsonArray().size() : 0;
     }
 
-    // --- lists (layers, emitters, sounds, overlays) ---
-
-    /** Appends an item to the list at {@code path} (created if missing). Returns its index. */
     public int append(String path, JsonElement item) {
         int index = size(path);
         edit(null, r -> {
@@ -253,7 +225,6 @@ public final class FxDoc {
         return index;
     }
 
-    /** Moves item {@code from} of the list to position {@code to}. */
     public void move(String path, int from, int to) {
         if (from == to) {
             return;
@@ -278,7 +249,6 @@ public final class FxDoc {
         });
     }
 
-    /** Inserts a copy of item {@code index} right after it. Returns the copy's index (or -1). */
     public int duplicate(String path, int index) {
         JsonElement list = get(path);
         if (list == null || !list.isJsonArray() || index < 0 || index >= list.getAsJsonArray().size()) {
@@ -297,9 +267,6 @@ public final class FxDoc {
         return index + 1;
     }
 
-    // --- parser ---
-
-    /** What the parser makes of the current state (cached). */
     public FxParser.Result result() {
         if (parsed == null || !text.equals(parsedText)) {
             parsedText = text;
@@ -314,7 +281,6 @@ public final class FxDoc {
         return parsed;
     }
 
-    /** Problems about the field at {@code path} or anything inside it. */
     public List<FxProblems.Problem> problems(String path) {
         return under(result().problems().all(), path);
     }
@@ -333,9 +299,6 @@ public final class FxDoc {
         return path.equals(prefix) || prefix.isEmpty() || path.startsWith(prefix + ".") || path.startsWith(prefix + "[");
     }
 
-    // --- paths ---
-
-    /** Path tokens: keys (String) and indices (Integer). */
     static List<Object> tokens(String path) {
         List<Object> out = new ArrayList<>();
         StringBuilder key = new StringBuilder();
@@ -384,7 +347,6 @@ public final class FxDoc {
         return current;
     }
 
-    /** Sets the value at a path, creating objects on the way; a list index may be one past the end (append). */
     public static void put(JsonObject root, String path, JsonElement value) {
         List<Object> tokens = tokens(path);
         JsonElement current = root;
@@ -434,7 +396,6 @@ public final class FxDoc {
         }
     }
 
-    /** Removes the field or list item at a path (nothing if it is not there). */
     public static void delete(JsonObject root, String path) {
         List<Object> tokens = tokens(path);
         if (tokens.isEmpty()) {
@@ -458,7 +419,6 @@ public final class FxDoc {
         }
     }
 
-    /** Pretty JSON of any tree (the format the editor writes). */
     public static String pretty(JsonElement element) {
         return GSON.toJson(element);
     }

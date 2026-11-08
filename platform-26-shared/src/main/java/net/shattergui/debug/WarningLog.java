@@ -8,11 +8,6 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.Property;
 
-/**
- * Keeps the mod's own warnings and errors of this session for the diagnostics ({@link RecentWarnings}): an appender on
- * the root logger of the game's Log4j that only looks at the mod's logger. (Attached to the mod's logger itself, Log4j
- * gives that logger its own configuration, and its lines no longer reached the game's log.)
- */
 public final class WarningLog {
     private static boolean installed;
 
@@ -41,7 +36,6 @@ public final class WarningLog {
             LoggerContext context = (LoggerContext) LogManager.getContext(false);
             context.getConfiguration().getRootLogger().addAppender(appender, Level.WARN, null);
         } catch (Throwable t) {
-            // Another logging backend: the diagnostics simply have no warnings.
             ShatterMod.LOGGER.debug("Recent warnings are not collected", t);
         }
     }

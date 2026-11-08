@@ -13,17 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Registry of effects by config name: the built-in ones, then the custom ones ({@link #setCustom}). This order is the
- * order the keybind cycles through and the order of every effect list in the editor.
- */
 public final class ShatterEffects {
     private static final Map<String, ShatterEffect> BUILT_IN = new LinkedHashMap<>();
     private static final Map<String, CustomEffect> CUSTOM = new LinkedHashMap<>();
-    /** Schema-2 effects (net.shattergui.fx). */
     private static final Map<String, ShatterEffect> DATA = new LinkedHashMap<>();
     private static final Set<String> WARNED = new HashSet<>();
-    /** Backwards versions of code effects, made on first use (dropped when the custom effects change). */
     private static final Map<ShatterEffect, ReversedEffect> REVERSED = new java.util.IdentityHashMap<>();
 
     static {
@@ -41,7 +35,6 @@ public final class ShatterEffects {
         BUILT_IN.put(effect.id(), effect);
     }
 
-    /** Replaces the custom effects (loading, reloading, the editor's Save). Ids of built-in effects are not taken. */
     public static void setCustom(Collection<CustomEffectDef> defs) {
         CUSTOM.clear();
         for (CustomEffectDef def : defs) {
@@ -54,7 +47,6 @@ public final class ShatterEffects {
         WARNED.clear();
     }
 
-    /** Replaces the schema-2 effects (loading, F3+T, the editor's reload). Ids of built-in or custom effects are not taken. */
     public static void setData(Collection<? extends ShatterEffect> effects) {
         DATA.clear();
         for (ShatterEffect effect : effects) {
@@ -65,7 +57,6 @@ public final class ShatterEffects {
         WARNED.clear();
     }
 
-    /** Ids of the schema-2 effects. */
     public static List<String> dataIds() {
         return List.copyOf(DATA.keySet());
     }
@@ -74,12 +65,10 @@ public final class ShatterEffects {
         return DATA.get(id);
     }
 
-    /** A built-in effect (bases of custom effects). */
     public static ShatterEffect builtIn(String id) {
         return BUILT_IN.get(id);
     }
 
-    /** The named effect (built-in or custom), or null (with a one-time warning) if there is none. */
     public static ShatterEffect byName(String name) {
         ShatterEffect effect = BUILT_IN.get(name);
         if (effect == null) {
@@ -94,13 +83,11 @@ public final class ShatterEffects {
         return effect;
     }
 
-    /** The named effect, or glass if the name is unknown. */
     public static ShatterEffect resolve(String name) {
         ShatterEffect effect = byName(name);
         return effect != null ? effect : BUILT_IN.get(GlassEffect.ID);
     }
 
-    /** Built-in ids, then custom (schema 1) ids, then schema-2 ids. */
     public static List<String> ids() {
         List<String> ids = new ArrayList<>(BUILT_IN.keySet());
         ids.addAll(CUSTOM.keySet());
@@ -116,17 +103,14 @@ public final class ShatterEffects {
         return BUILT_IN.containsKey(id);
     }
 
-    /** One of the effects shipped with the mod as data files (translated, its own settings, cloned to edit). */
     public static boolean isBundled(String id) {
         return DATA.get(id) instanceof net.shattergui.fx.game.DataEffect data && data.bundled;
     }
 
-    /** Ids that a player's effect may not take: the built-in and the shipped ones (loaded or not). */
     public static boolean isReserved(String id) {
         return BUILT_IN.containsKey(id) || net.shattergui.params.BundledParams.ids().contains(id);
     }
 
-    /** Name for the GUI: translated for built-in effects, the player's name for custom ones. */
     public static Component displayName(String id) {
         CustomEffect custom = CUSTOM.get(id);
         if (custom != null) {
@@ -138,10 +122,6 @@ public final class ShatterEffects {
         return Component.translatable("effect.shatter_gui." + id);
     }
 
-    /**
-     * The effect {@code id} played backwards, for opening a screen, or null if it has no opening: unknown, a schema-2
-     * effect without {@code "open": true}, or fly (and effects on it), which opens by flying out of the block instead.
-     */
     public static ShatterEffect opening(String id) {
         ShatterEffect effect = id == null ? null : BUILT_IN.containsKey(id) ? BUILT_IN.get(id)
                 : CUSTOM.containsKey(id) ? CUSTOM.get(id) : DATA.get(id);
@@ -154,12 +134,10 @@ public final class ShatterEffects {
         return REVERSED.computeIfAbsent(effect, ReversedEffect::new);
     }
 
-    /** Whether {@link #opening} has something for {@code id}. */
     public static boolean canOpen(String id) {
         return opening(id) != null;
     }
 
-    /** Ids that can open screens, in list order. */
     public static List<String> openIds() {
         List<String> ids = new ArrayList<>();
         for (String id : ids()) {
@@ -170,7 +148,6 @@ public final class ShatterEffects {
         return ids;
     }
 
-    /** The effect after {@code current}, wrapping around. */
     public static String next(String current) {
         List<String> ids = ids();
         int index = ids.indexOf(current);

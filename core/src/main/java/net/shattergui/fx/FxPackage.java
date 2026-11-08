@@ -15,11 +15,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-/**
- * The {@code .shatterfx} package (a ZIP with {@code effect.json} and {@code textures/*.png}) and safe file writing.
- * Reading is bounded (entry count, unpacked size, no paths leaving the package); writing goes through a temporary file
- * that is renamed over the target, so a crash never leaves a half-written effect.
- */
 public final class FxPackage {
     public static final String EFFECT = "effect.json";
     public static final String TEXTURES = "textures/";
@@ -27,11 +22,6 @@ public final class FxPackage {
     private FxPackage() {
     }
 
-    /**
-     * Reads a package safely: at most {@link FxLimits#MAX_PACKAGE_ENTRIES} entries and
-     * {@link FxLimits#MAX_PACKAGE_BYTES} unpacked, only {@code effect.json} and {@code textures/*.png}, no paths that
-     * leave the package. Other entries are skipped.
-     */
     public static Map<String, byte[]> read(Path file) throws IOException {
         Map<String, byte[]> out = new LinkedHashMap<>();
         long total = 0;
@@ -71,7 +61,6 @@ public final class FxPackage {
         return out;
     }
 
-    /** Writes a package: the effect and its textures (name without ".png" → PNG bytes). Atomic. */
     public static void write(Path file, String json, Map<String, byte[]> textures) throws IOException {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         try (ZipOutputStream zip = new ZipOutputStream(bytes)) {
@@ -87,7 +76,6 @@ public final class FxPackage {
         writeAtomic(file, bytes.toByteArray());
     }
 
-    /** Width and height from a PNG's IHDR, or null if it is not a PNG. */
     public static int[] pngSize(byte[] b) {
         byte[] signature = {(byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'};
         if (b == null || b.length < 24) {
@@ -106,15 +94,10 @@ public final class FxPackage {
         return new int[]{w, h};
     }
 
-    /** Writes text (UTF-8) atomically. */
     public static void writeAtomic(Path file, String text) throws IOException {
         writeAtomic(file, text.getBytes(StandardCharsets.UTF_8));
     }
 
-    /**
-     * Writes bytes to a temporary file next to the target, then renames it over the target (atomically where the file
-     * system allows, otherwise a plain replace). The target is either the old or the complete new file, never a part.
-     */
     public static void writeAtomic(Path file, byte[] data) throws IOException {
         Path dir = file.toAbsolutePath().getParent();
         Files.createDirectories(dir);

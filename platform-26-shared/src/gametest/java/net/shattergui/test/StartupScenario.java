@@ -15,11 +15,6 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-/**
- * The mod starts and works with whatever optional mods are present (none, Mod Menu, Spatial GUI, Iris + Sodium, all):
- * all 19 effects are there, the shipped ones load without messages, a furnace closes with glass and with a shipped
- * effect, and with Mod Menu its config button opens the settings. Runs first in every game test run.
- */
 final class StartupScenario {
     private StartupScenario() {
     }

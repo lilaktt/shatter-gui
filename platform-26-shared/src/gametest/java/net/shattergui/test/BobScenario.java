@@ -26,33 +26,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
-/**
- * Settled pieces and view bobbing ({@code -PtestOnly=bob}; also with Spatial GUI and with a shader pack). One magenta
- * piece lies on the ground, a red block next to it; the player looks at them from a platform. With view bobbing on, the
- * walk (and sprint) bobbing is driven on the spot (no camera motion, no parallax), then the player is hurt.
- *
- * <p>Check: the piece must move on the screen exactly as the world does. For each frame the expected motion comes from
- * vanilla's own formulas ({@code GameRenderer#bobHurt}/{@code bobView} on that frame's camera state, read when the frame
- * is requested): the piece's and the block's centroids of the first frame are put back into the world on their lines of
- * sight and projected with each frame's matrices. The measured offset piece − block minus the expected one must stay
- * within ±0.5 pixel of the first frame's. Screenshots {@code bob_<mode>_*}.
- */
 final class BobScenario {
     private static final int LIFETIME = 1100;
-    /** Allowed drift of the piece against the world (pixels). */
     private static final double TOLERANCE = 0.5;
-    /**
-     * How much worse than vanilla's own drawing of the same piece the mod's may measure (pixels). The measurement itself
-     * has a floor: with the camera moving by fractions of a pixel the rasterized shapes change a little, so even
-     * vanilla's drawing of the piece "drifts" by about 0.6 px at the peaks of the bobbing.
-     */
     private static final double MARGIN = 0.15;
-    /** The whole frame: the HUD and the hand are hidden (a hurt hand turns red). */
     private static final double[] VIEW = {0, 0, 1, 1};
-    /** The height of a carpet (blocks). */
     private static final double CARPET = 1 / 16.0;
 
-    /** What a frame was drawn with: the full level matrix (projection × bobbing × camera rotation) and the camera. */
     private record Pose(Matrix4f matrix, Vec3 camera, int width, int height, float bob, float hurt) {
     }
 
@@ -71,12 +51,9 @@ final class BobScenario {
         int columns = config.get(Params.GLASS_COLUMNS);
         int rows = config.get(Params.GLASS_ROWS);
         boolean bobbing = context.computeOnClient(mc -> mc.options.bobView().get());
-        // The game mode to come back to: hurting needs survival, and a test world starts in survival (left in creative, an
-        // InventoryScreen turns into the creative inventory as it opens, and later scenarios see no opening at all).
         String gameMode = context.computeOnClient(mc -> mc.gameMode.getPlayerMode().getName());
         BlockPos feet = context.computeOnClient(mc -> mc.player.blockPosition());
         SettleScenario.command(singleplayer, "gamerule random_tick_speed 0");
-        // The same light in every frame: the sun stands still at noon.
         SettleScenario.command(singleplayer, "gamerule advance_time false");
         SettleScenario.command(singleplayer, "time set 6000");
         BlockPos red = null;
@@ -87,7 +64,6 @@ final class BobScenario {
             config.effect = "glass";
             config.alwaysOnTop = true;
             config.set(Params.GLASS_LIFETIME, LIFETIME);
-            // Big pieces: one is easy to find and to measure.
             config.set(Params.GLASS_COLUMNS, 4);
             config.set(Params.GLASS_ROWS, 3);
             SettleScenario.command(singleplayer, "fill %d %d %d %d %d %d minecraft:air", feet.getX() - 8, feet.getY(),
@@ -102,8 +78,6 @@ final class BobScenario {
             context.runOnClient(mc -> Mc26.setScreen(null));
             int still = SettleScenario.waitStill(context, 240);
             context.waitTicks(SettleScenario.SETTLE_TICKS + 12);
-            // Keep one piece, lying as flat as possible near two blocks ahead (from above a flat piece shows the most
-            // pixels); the rest go.
             Vector3d target = new Vector3d(feet.getX() + 0.5, feet.getY(), feet.getZ() + 2.5);
             Vector3d anchor = context.computeOnClient(mc -> {
                 ShardInstance best = null;
@@ -138,15 +112,12 @@ final class BobScenario {
                 check.accept(false, name + ": a piece must come to rest on the ground");
                 return;
             }
-            // A red carpet on each side of the piece: the piece is measured against one, the other block against it too
-            // (world against world: how exact the measurement itself is). Red reads as red with a shader pack as well.
             red = BlockPos.containing(anchor.x + 2.2, feet.getY(), anchor.z + 0.5);
             blue = BlockPos.containing(anchor.x - 2.2, feet.getY(), anchor.z + 0.5);
             SettleScenario.command(singleplayer, "setblock %d %d %d minecraft:red_carpet", red.getX(), red.getY(), red.getZ());
             SettleScenario.command(singleplayer, "setblock %d %d %d minecraft:red_carpet", blue.getX(), blue.getY(),
                     blue.getZ());
             Vec3 pieceCentre = new Vec3(anchor.x, anchor.y, anchor.z);
-            // The player on a stone pillar 7 blocks back and 4 up, looking at the piece (from where the eyes really are).
             platform = BlockPos.containing(anchor.x, feet.getY(), anchor.z - 7);
             SettleScenario.command(singleplayer, "fill %d %d %d %d %d %d minecraft:stone", platform.getX(), platform.getY(),
                     platform.getZ(), platform.getX(), platform.getY() + 3, platform.getZ());
@@ -168,17 +139,13 @@ final class BobScenario {
             ShatterGuiClient.LOGGER.info("[ShatterTest] {}: player at {}, eyes at {} before turning, looking {} / {}", name,
                     standing, eye, yaw, pitch);
 
-            // The same bobbing twice: first with the piece drawn by vanilla in the level (alwaysOnTop off: what the
-            // pixels can show at best), then by the mod's pass for settled pieces.
             Drift[] results = new Drift[2];
             for (boolean on : new boolean[]{false, true}) {
                 config.alwaysOnTop = on;
                 context.waitTicks(10);
                 String run = name + (on ? "_on" : "_vanilla");
                 List<String> frames = new ArrayList<>();
-                // At rest first (no bobbing): the frame every other one is compared with.
                 drive(context, run + "_rest", 2, 0f, false, frames);
-                // Walking: about 0.22 blocks a tick; sprinting: about 0.28 and the sprint's wider field of view.
                 drive(context, run + "_walk", 18, 0.22f, false, frames);
                 drive(context, run + "_sprint", 14, 0.28f, true, frames);
                 context.runOnClient(mc -> mc.player.setSprinting(false));
@@ -188,7 +155,6 @@ final class BobScenario {
                 drive(context, run + "_hurt", 10, 0f, false, frames);
                 SettleScenario.command(singleplayer, "gamemode %s @p", gameMode);
                 SettleScenario.command(singleplayer, "effect give @p minecraft:instant_health 1 5 true");
-                // The bobbing settles and the view comes back to rest before the next run.
                 context.waitTicks(30);
                 results[on ? 1 : 0] = measure(context, check, run, frames, pieceCentre, red, blue);
             }
@@ -235,11 +201,6 @@ final class BobScenario {
         }
     }
 
-    /**
-     * {@code ticks} frames: each tick the walk distance grows by {@code step} and the bob is pushed up as when walking
-     * (both read by vanilla's bobbing, the player does not move), then the last drawn frame is read back with the
-     * camera state it was drawn with.
-     */
     private static void drive(ClientGameTestContext context, String name, int ticks, float step, boolean sprint,
                               List<String> frames) {
         for (int i = 0; i < ticks; i++) {
@@ -253,7 +214,6 @@ final class BobScenario {
                     mc.player.avatarState().updateBob(0.1f);
                     mc.player.avatarState().updateBob(0.1f);
                 }
-                // At the end of the next frame: its picture and the camera state it was drawn with.
                 net.shattergui.debug.FrameAudit.atFrameEnd(() -> {
                     POSES.put(frame, pose(mc));
                     FullFrame.grab(mc, frame, save, BobScenario::blobs);
@@ -263,7 +223,6 @@ final class BobScenario {
         }
     }
 
-    /** The matrices the last frame's level was drawn with, by vanilla's formulas (GameRenderer#renderLevel). */
     private static Pose pose(Minecraft mc) {
         GameRenderState state = McTest.renderState(mc);
         CameraRenderState camera = state.levelRenderState.cameraRenderState;
@@ -279,10 +238,6 @@ final class BobScenario {
                 camera.entityRenderState.bob, camera.entityRenderState.hurtTime);
     }
 
-    /**
-     * {@code GameRenderer#bobHurt} (26.1–26.3, the same code; there on a {@code PoseStack}, whose {@code mulPose} and
-     * {@code rotateDegrees} multiply on the right, as {@code Matrix4f#rotateZ} does).
-     */
     private static void bobHurt(CameraRenderState camera, double tiltStrength, Matrix4f pose) {
         if (camera.entityRenderState.isLiving) {
             float hurt = camera.entityRenderState.hurtTime;
@@ -303,7 +258,6 @@ final class BobScenario {
         }
     }
 
-    /** {@code GameRenderer#bobView} (26.1–26.3, the same code). */
     private static void bobView(CameraRenderState camera, Matrix4f pose) {
         if (camera.entityRenderState.isPlayer) {
             float walk = camera.entityRenderState.backwardsInterpolatedWalkDistance;
@@ -315,7 +269,6 @@ final class BobScenario {
         }
     }
 
-    /** Screen position (pixels from the top left) of a world point, or null behind the camera. */
     private static double[] project(Pose pose, Vec3 world) {
         Vector4f clip = pose.matrix.transform(new Vector4f((float) (world.x - pose.camera.x),
                 (float) (world.y - pose.camera.y), (float) (world.z - pose.camera.z), 1f));
@@ -325,13 +278,10 @@ final class BobScenario {
         return new double[]{(clip.x / clip.w * 0.5 + 0.5) * pose.width, (0.5 - clip.y / clip.w * 0.5) * pose.height};
     }
 
-    /** What a blob shows: the point where a line of sight through it meets it. */
     interface Surface {
-        /** The first point of the line from {@code origin} along {@code dir} (unit) on it, or null. */
         Vec3 hit(Vec3 origin, Vec3 dir);
     }
 
-    /** A block: the line enters its box. */
     static Surface box(BlockPos pos) {
         return (origin, dir) -> {
             double near = -Double.MAX_VALUE;
@@ -355,15 +305,10 @@ final class BobScenario {
         };
     }
 
-    /** A flat piece lying at height {@code y}. */
     static Surface level(double y) {
         return (origin, dir) -> Math.abs(dir.y) < 1e-9 ? null : origin.add(dir.scale((y - origin.y) / dir.y));
     }
 
-    /**
-     * The world point a pixel shows on {@code surface}: the line of sight through the pixel (from the frame's matrices,
-     * view bobbing included) met with it; if it misses (an edge pixel), the nearest point of the line to {@code fallback}.
-     */
     private static Vec3 unproject(Pose pose, double sx, double sy, Surface surface, Vec3 fallback) {
         Matrix4f inverse = new Matrix4f(pose.matrix).invert();
         float nx = (float) (sx / pose.width * 2 - 1);
@@ -373,7 +318,6 @@ final class BobScenario {
         Vec3 pa = pose.camera.add(a.x / a.w, a.y / a.w, a.z / a.w);
         Vec3 pb = pose.camera.add(b.x / b.w, b.y / b.w, b.z / b.w);
         Vec3 dir = pb.subtract(pa).normalize();
-        // The line of sight goes away from the camera.
         if (dir.dot(pa.subtract(pose.camera)) < 0) {
             dir = dir.scale(-1);
         }
@@ -385,7 +329,6 @@ final class BobScenario {
         return origin.add(dir.scale(fallback.subtract(origin).dot(dir)));
     }
 
-    /** How one blob moves against another, against what the frames' matrices expect (see the class comment). */
     private static final class Drift {
         Vec3 aWorld;
         Vec3 bWorld;
@@ -399,7 +342,6 @@ final class BobScenario {
             return frames == 0 ? 0 : Math.sqrt(squares / frames);
         }
 
-        /** Adds a frame; false if it could not be measured. */
         boolean add(Pose pose, FullFrame.Blob a, FullFrame.Blob b, Surface aSurface, Surface bSurface, Vec3 aCentre,
                     Vec3 bCentre, String label) {
             if (aWorld == null) {
@@ -425,7 +367,6 @@ return true;
         }
     }
 
-    /** The piece and the carpets left and right of it in a frame (+x is on the left when looking south). */
     private static FullFrame.Blob[] blobs(FullFrame.Image image) {
         FullFrame.Blob magenta = FullFrame.weighted(image, FullFrame::magentaWeight, VIEW);
         double split = Double.isNaN(magenta.x()) ? 0.5 : magenta.x() / image.width();
@@ -433,11 +374,8 @@ return true;
                 FullFrame.weighted(image, FullFrame::redWeight, new double[]{split, 0, 1, 1})};
     }
 
-    /** Measures a run's frames; the piece's drift against the left carpet. */
     private static Drift measure(ClientGameTestContext context, BiConsumer<Boolean, String> check, String name,
                                 List<String> frames, Vec3 piece, BlockPos blockPos, BlockPos controlPos) {
-        // Carpets: flat like the piece (a block's faces show in other proportions as the bobbing moves the eye, and its
-        // centroid drifts by itself).
         Vec3 block = new Vec3(blockPos.getX() + 0.5, blockPos.getY() + CARPET, blockPos.getZ() + 0.5);
         Vec3 control = new Vec3(controlPos.getX() + 0.5, controlPos.getY() + CARPET, controlPos.getZ() + 0.5);
         Surface pieceSurface = level(piece.y);
@@ -487,7 +425,6 @@ return true;
                 + frames.size() + ")");
         check.accept(blockTravel >= 3, String.format(Locale.ROOT, "%s: the view must bob (the block moved %.2f px)", name,
                 blockTravel));
-        // A sanity check of the measurement itself (world against world); its floor is about 0.5 px.
         check.accept(reference.worst <= 1.0, String.format(Locale.ROOT, "%s: the measurement must hold a carpet against "
                 + "a carpet (%.2f px)", name, reference.worst));
         return main;

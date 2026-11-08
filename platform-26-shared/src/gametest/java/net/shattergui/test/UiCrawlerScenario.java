@@ -45,27 +45,16 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/**
- * The UI crawler: goes through the settings and the effect editor and does everything a player could — every tab,
- * every drop-down opened and every option chosen, sliders to their minimum and maximum and nonsense typed into their
- * exact-value boxes, toggles flipped, text fields fed odd text, buttons pressed (except those that leave the screen or
- * open a folder), and a click, drag, right click, double click and scroll on everything else, through the screen's real
- * input path. Then: every module added, changed and removed, every sample interface, export/import, undo/redo
- * storms, the keyboard, broken mouse positions (NaN, infinity), GUI scales 1–4 and several window sizes. Passes when
- * no widget failed ({@link UiFailures}: no error boxes, nothing in the log).
- */
 final class UiCrawlerScenario {
     private static final int PAGE_BUDGET = 120;
     private static final List<String> POKED = List.of("ItemRow", "SectionRow", "Timeline", "TexturePanel", "GradientEditor",
             "ColorPicker", "SearchList", "CurveEditor", "Scrubber", "Box", "TargetControl", "Swatch", "Thumb", "LiveBox");
     private static int actions;
-    /** Failures caused on purpose by the canary (not counted against the run). */
     private static int canary;
 
     private UiCrawlerScenario() {
     }
 
-    /** The main pages only (the version matrix): the settings' tabs, without the editor, dialogs, files and scales. */
     static void runMain(ClientGameTestContext context, BiConsumer<Boolean, String> check, Consumer<String> shot, String name) {
         int failuresBefore = UiFailures.count();
         int scaleBefore = context.computeOnClient(mc -> mc.options.guiScale().get());
@@ -110,7 +99,6 @@ final class UiCrawlerScenario {
             EditorScenario.setScale(context, 2);
             context.getInput().setCursorPos(3, 3);
 
-            // --- the settings ---
             settingsTabs(context, shot, name);
             context.runOnClient(mc -> {
                 settings(mc).selectTab(ShatterConfigScreen.Tab.CUSTOM);
@@ -121,8 +109,6 @@ final class UiCrawlerScenario {
             context.runOnClient(mc -> settings(mc).setClassicCustom(false));
             context.waitTicks(3);
 
-            // --- the editor inside the settings, then on the whole screen ---
-            // The classic page's effect cards open the Effects tab: back to Custom for the editor.
             context.runOnClient(mc -> {
                 settings(mc).selectTab(ShatterConfigScreen.Tab.CUSTOM);
                 settings(mc).setClassicCustom(false);
@@ -141,7 +127,6 @@ final class UiCrawlerScenario {
             brokenMouse(context);
             canary = canary(context, check, shot, name);
 
-            // --- scales and window sizes ---
             context.runOnClient(mc -> ((FxEditorScreen) Mc26.screen()).back());
             context.waitTicks(2);
             context.runOnClient(mc -> Mc26.screen().onClose());
@@ -161,7 +146,6 @@ final class UiCrawlerScenario {
                 try {
                     Files.deleteIfExists(p);
                 } catch (IOException ignored) {
-                    // Test run folder only.
                 }
             }
             cleanEffects();
@@ -171,8 +155,6 @@ final class UiCrawlerScenario {
         ShatterGuiClient.LOGGER.info("[ShatterTest] {}: {} actions, UI failures {} {}", name, actions, failures, UiFailures.kinds());
         check.accept(failures == 0, name + ": no widget may fail; failures: " + UiFailures.kinds());
     }
-
-    // --- pages of the editor ---
 
     private static void crawlEditor(ClientGameTestContext context, Consumer<String> shot, String label, boolean light,
                                     Class<? extends UiScreen> screen) {
@@ -226,14 +208,12 @@ final class UiCrawlerScenario {
         });
         shot.accept(label + "_textures");
         context.runOnClient(mc -> editor(Mc26.screen()).showLeftTab(0));
-        // Every template once on screen.
         for (String template : Templates.IDS) {
             context.runOnClient(mc -> editor(Mc26.screen()).newEffect(template));
             context.waitTicks(4);
         }
     }
 
-    /** Sets a page up, then crawls it. */
     private static void page(ClientGameTestContext context, String label, Function<UiScreen, Widget> scope,
                              Class<? extends UiScreen> screen, Consumer<FxEditor> setup) {
         context.runOnClient(mc -> setup.accept(editor(Mc26.screen())));
@@ -241,9 +221,6 @@ final class UiCrawlerScenario {
         crawl(context, label, scope, screen);
     }
 
-    // --- the crawl itself ---
-
-    /** Exercises every widget of the scope, one action per tick (the screen redraws in between). */
     private static void crawl(ClientGameTestContext context, String label, Function<UiScreen, Widget> scope,
                               Class<? extends UiScreen> screen) {
         int before = UiFailures.count();
@@ -265,7 +242,6 @@ final class UiCrawlerScenario {
             }
             exercise(context, target);
             done++;
-            // Inside the settings the editor's "Format 1" switches to the classic page: back to the editor.
             boolean restored = context.computeOnClient(mc -> {
                 if (screen == ShatterConfigScreen.class && Mc26.screen() instanceof ShatterConfigScreen s && label.contains("_embedded")) {
                     if (s.classicCustom() || s.tab() != ShatterConfigScreen.Tab.CUSTOM) {
@@ -277,7 +253,6 @@ final class UiCrawlerScenario {
                 return false;
             });
             if (restored) {
-                // The editor is placed (and shown) by the next frame's layout.
                 context.waitTicks(2);
             }
             if (!context.computeOnClient(mc -> screen.isInstance(Mc26.screen()))) {
@@ -358,7 +333,6 @@ final class UiCrawlerScenario {
                 }
             }
             case TabNav nav -> {
-                // Navigation tabs change the page: the pages are visited on purpose instead.
             }
             default -> {
                 String type = w.getClass().getSimpleName();
@@ -373,7 +347,6 @@ final class UiCrawlerScenario {
         }
     }
 
-    /** A click, a drag, a right click, a double click and a scroll in the middle of the widget, via the screen. */
     private static void poke(ClientGameTestContext context, Widget w) {
         double cx = w.x + w.w / 2.0;
         double cy = w.y + w.h / 2.0;
@@ -416,20 +389,16 @@ final class UiCrawlerScenario {
             s.mouseReleased(new MouseButtonEvent(cx, cy, new MouseButtonInfo(com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT, 0)));
             s.mouseScrolled(cx, cy, 0, 1);
             s.mouseScrolled(cx, cy, 0, -1);
-            // A rename may have started: focus elsewhere ends it (Esc would close the screen).
             s.setFocus(null);
         });
         context.waitTick();
     }
 
-    /** Closes lists and dialogs (a modal question is answered with "no"). */
     private static void closeOverlays(UiScreen screen) {
         for (UiScreen.Overlay overlay : List.copyOf(screen.overlays())) {
             screen.closeOverlay(overlay);
         }
     }
-
-    // --- the rest ---
 
     private static void dialogs(ClientGameTestContext context, Consumer<String> shot, String name) {
         String[] kinds = {"catalog", "gallery", "import", "menu", "tour"};
@@ -449,7 +418,6 @@ final class UiCrawlerScenario {
             });
             context.waitTicks(6);
             shot.accept(name + "_dialog_" + kind);
-            // Click into the dialog: its first element, the middle, a corner.
             for (int[] f : new int[][]{{50, 50}, {30, 30}, {70, 80}}) {
                 context.runOnClient(mc -> {
                     UiScreen s = (UiScreen) Mc26.screen();
@@ -464,7 +432,6 @@ final class UiCrawlerScenario {
                     s.mouseScrolled(x, y, 0, -2);
                 });
                 context.waitTicks(3);
-                // An import may ask first: answer no.
                 context.runOnClient(mc -> {
                     if (Mc26.screen() instanceof UiScreen s && s.hasOverlay()
                             && s.overlays().getLast() instanceof net.shattergui.ui.ConfirmDialog) {
@@ -481,7 +448,6 @@ final class UiCrawlerScenario {
             });
             context.waitTicks(2);
             if (!context.computeOnClient(mc -> Mc26.screen() instanceof FxEditorScreen)) {
-                // A dialog led away (e.g. an import asked nothing and opened): come back.
                 context.runOnClient(mc -> ShatterGuiClient.LOGGER.info("[ShatterTest] dialog {} left the screen: {}", kind,
                         Mc26.screen() == null ? "none" : Mc26.screen().getClass().getSimpleName()));
                 break;
@@ -501,7 +467,6 @@ final class UiCrawlerScenario {
                     if (Mc26.screen() instanceof FxEditorScreen s) {
                         s.keyPressed(new KeyEvent(k[0], 0, k[1]));
                         s.charTyped(new CharacterEvent('q'));
-                        // A rename or a list: back out.
                         if (s.hasOverlay()) {
                             s.keyPressed(new KeyEvent(InputConstants.KEY_ESCAPE, 0, 0));
                         }
@@ -543,7 +508,6 @@ final class UiCrawlerScenario {
         context.waitTicks(2);
         boolean imported = context.computeOnClient(mc -> exported != null && editor(Mc26.screen()).importPackage(exported).ok());
         check.accept(imported, name + ": export, delete and import back");
-        // Garbage in the clipboard, then a real code.
         context.runOnClient(mc -> {
             mc.keyboardHandler.setClipboard("not a code at all \u0000￿");
             editor(Mc26.screen()).importClipboard();
@@ -553,11 +517,6 @@ final class UiCrawlerScenario {
         context.waitTicks(4);
     }
 
-    /**
-     * Proof that a broken widget cannot take the game down: a widget that throws when drawn and when clicked is put
-     * on the editor screen. Expected: one log entry per kind (not one per frame), an error box in its place, the rest
-     * of the screen still drawing and answering. Returns how many failures it caused.
-     */
     private static int canary(ClientGameTestContext context, BiConsumer<Boolean, String> check, Consumer<String> shot, String name) {
         int before = UiFailures.count();
         Widget[] made = new Widget[2];
@@ -592,7 +551,6 @@ final class UiCrawlerScenario {
             UiScreen s = (UiScreen) Mc26.screen();
             s.mouseClicked(new MouseButtonEvent(60, 80, new MouseButtonInfo(com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT, 0)), false);
             s.mouseReleased(new MouseButtonEvent(60, 80, new MouseButtonInfo(com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT, 0)));
-            // Clicking it again: a broken widget takes no input, so no second failure.
             s.mouseClicked(new MouseButtonEvent(60, 80, new MouseButtonInfo(com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT, 0)), false);
             s.mouseReleased(new MouseButtonEvent(60, 80, new MouseButtonInfo(com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT, 0)));
         });
@@ -600,7 +558,6 @@ final class UiCrawlerScenario {
         shot.accept(name + "_canary_error_boxes");
         int caused = UiFailures.count() - before;
         boolean boxes = context.computeOnClient(mc -> made[0].broken() && made[1].broken());
-        // The rest still works: the editor keeps drawing and taking changes.
         context.runOnClient(mc -> editor(Mc26.screen()).doc.set("duration", 33));
         context.waitTicks(3);
         boolean alive = context.computeOnClient(mc -> Mc26.screen() instanceof FxEditorScreen
@@ -617,7 +574,6 @@ final class UiCrawlerScenario {
         return caused;
     }
 
-    /** NaN and infinite mouse positions, also in the middle of a drag. */
     private static void brokenMouse(ClientGameTestContext context) {
         double[] bad = {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1e300};
         context.runOnClient(mc -> {
@@ -630,7 +586,6 @@ final class UiCrawlerScenario {
                 s.mouseScrolled(v, v, v, v);
                 s.mouseScrolled(10, 10, 0, v);
             }
-            // A drag on the timeline that goes off to infinity.
             FxEditor e = editor(s);
             double x = e.x + e.w / 2.0;
             double y = e.y + e.h - 30;
@@ -666,7 +621,6 @@ final class UiCrawlerScenario {
                             new Selection(Selection.Kind.SOUND, 0)}) {
                         context.runOnClient(mc -> editor(Mc26.screen()).select(part));
                         context.waitTicks(2);
-                        // Every drop-down of the page opened once (where the sample list crashed before).
                         openEveryList(context);
                     }
                     if (size[0] == 1920) {
@@ -714,8 +668,6 @@ final class UiCrawlerScenario {
         return out;
     }
 
-    // --- helpers ---
-
     private static ShatterConfigScreen settings(Minecraft mc) {
         return EditorScenario.editor(mc);
     }
@@ -731,7 +683,6 @@ final class UiCrawlerScenario {
         return editor((net.minecraft.client.gui.screens.Screen) screen);
     }
 
-    /** Good and broken textures in the library: a mask, a sprite, a bad name, not a PNG, a picture too large. */
     private static Path[] textures() throws IOException {
         Files.createDirectories(FxEffects.TEXTURES);
         Path mask = FxEffects.TEXTURES.resolve("crawl_mask.png");
@@ -743,7 +694,6 @@ final class UiCrawlerScenario {
         copy("/assets/shatter_gui_test/shatter_gui/textures/raindrop.png", drop);
         copy("/assets/shatter_gui_test/shatter_gui/textures/raindrop.png", badName);
         Files.writeString(notPng, "hello, I am not a picture", StandardCharsets.UTF_8);
-        // Only a header saying 4000×4000: refused before decoding.
         byte[] header = {(byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n', 0, 0, 0, 13, 'I', 'H', 'D', 'R',
                 0, 0, 0x0F, (byte) 0xA0, 0, 0, 0x0F, (byte) 0xA0, 8, 6, 0, 0, 0};
         Files.write(large, header);
@@ -764,7 +714,6 @@ final class UiCrawlerScenario {
             try {
                 Files.deleteIfExists(FxEffects.EFFECTS.resolve(id + ".json"));
             } catch (IOException ignored) {
-                // Test run folder only.
             }
         }
         try (var files = Files.list(FxEffects.EFFECTS)) {
@@ -774,12 +723,10 @@ final class UiCrawlerScenario {
                 }
             }
         } catch (IOException ignored) {
-            // No folder.
         }
         try {
             Files.deleteIfExists(FxEffects.EXPORTS.resolve("crawl_fx.shatterfx"));
         } catch (IOException ignored) {
-            // Test run folder only.
         }
     }
 }

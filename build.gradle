@@ -1,3 +1,2 @@
-// The modules have their own scripts; the root only has the run over every version.
 apply from: 'gradle/version-matrix.gradle'
 apply from: 'gradle/dist.gradle'

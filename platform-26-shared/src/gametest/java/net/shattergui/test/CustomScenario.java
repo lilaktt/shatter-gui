@@ -23,12 +23,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * Custom effects: the example file written on first start, resource-pack effects (with bad entries skipped, a broken
- * file ignored, the config winning on the same id), reload with the resources (F3+T), and in the editor (Ukrainian):
- * create from a built-in effect, rename, change a parameter, export to the clipboard, delete, import back, a bad code
- * rejected, preview, Save, then closing a real screen with the new effect. The effects folder is restored afterwards.
- */
 final class CustomScenario {
     private static final String EXAMPLE = "example_ember_swirl";
 
@@ -41,7 +35,6 @@ final class CustomScenario {
         Map<Path, String> folder = snapshot();
         EditorScenario.setLanguage(context, "uk_ua");
         try {
-            // Loading.
             check.accept(Files.exists(CustomEffects.DIRECTORY.resolve(EXAMPLE + ".json")),
                     name + ": the example file must be written on first start");
             boolean example = context.computeOnClient(mc -> ShatterEffects.ids().contains(EXAMPLE));
@@ -60,7 +53,6 @@ final class CustomScenario {
                             && pulse.get(Params.DISSOLVE_DURATION) == 12,
                     name + ": unknown particle/sound/parameter skipped, the rest kept");
 
-            // F3+T: a file added to the folder appears after the resource reload.
             Files.writeString(CustomEffects.DIRECTORY.resolve("test_reload.json"),
                     "{\"schema\":1,\"id\":\"test_reload\",\"name\":\"Reload test\",\"base\":\"glass\",\"params\":{\"gravity\":0.2}}",
                     StandardCharsets.UTF_8);
@@ -74,14 +66,12 @@ final class CustomScenario {
             Files.deleteIfExists(CustomEffects.DIRECTORY.resolve("test_garbage.json"));
             context.runOnClient(mc -> CustomEffects.reloadConfig());
 
-            // Editor: the Custom tab with the example.
             context.setScreen(() -> new ShatterConfigScreen(null));
             context.waitTicks(3);
             context.runOnClient(mc -> editor(mc).selectTab(ShatterConfigScreen.Tab.CUSTOM));
             context.waitTicks(2);
             shot.accept(name + "_tab_custom_example");
 
-            // Create from the vortex, rename, change a parameter.
             String created = context.computeOnClient(mc -> {
                 ShatterConfigScreen editor = editor(mc);
                 editor.setCloneFrom("vortex");
@@ -95,7 +85,6 @@ final class CustomScenario {
             context.waitTicks(2);
             shot.accept(name + "_created");
 
-            // Export, delete, import back.
             String code = context.computeOnClient(mc -> editor(mc).exportSelected());
             String clipboard = context.computeOnClient(mc -> mc.keyboardHandler.getClipboard());
             context.waitTicks(2);
@@ -113,7 +102,6 @@ final class CustomScenario {
                             && imported.get(Params.VORTEX_TURNS) == 4f && "player".equals(imported.get(Params.VORTEX_TARGET)),
                     name + ": import must give back the exported effect (" + (imported == null ? null : imported.toJsonString()) + ")");
 
-            // A bad code: rejected with a message, nothing added.
             int before = context.computeOnClient(mc -> editor(mc).customs().size());
             context.runOnClient(mc -> mc.keyboardHandler.setClipboard("definitely not an effect code"));
             CustomEffectDef bad = context.computeOnClient(mc -> editor(mc).importClipboard());
@@ -126,7 +114,6 @@ final class CustomScenario {
             ShatterGuiClient.LOGGER.info("[ShatterTest] {}: bad import status '{}'", name, status);
             check.accept(bad == null && huge == null && after == before, name + ": bad codes must be rejected");
 
-            // Preview the unsaved effect.
             String id = imported != null ? imported.id() : created;
             context.runOnClient(mc -> {
                 editor(mc).selectCustom(id);
@@ -142,7 +129,6 @@ final class CustomScenario {
             context.waitFor(mc -> Mc26.screen() instanceof ShatterConfigScreen, 200);
             context.waitTicks(2);
 
-            // Save: written to the folder and selectable everywhere; choose it as the close effect.
             context.runOnClient(mc -> {
                 editor(mc).working().effect = id;
                 editor(mc).save();
@@ -155,7 +141,6 @@ final class CustomScenario {
                     name + ": Save must write and register the effect (file=" + saved + ", registered=" + registered
                             + ", chosen=" + chosen + ")");
 
-            // A real close with it.
             context.setScreen(furnace);
             context.waitTicks(15);
             context.runOnClient(mc -> Mc26.setScreen(null));

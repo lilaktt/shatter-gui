@@ -22,19 +22,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Every screen the mod has seen, with what the editor shows for it: the title it had the first time it was seen (in
- * the language of that moment, e.g. "Chest", "Furnace", a renamed chest's name), the mod it belongs to and its class.
- * Kept in {@code config/shatter_gui/screens.json} across sessions; only for display, the config itself still uses the
- * screen keys.
- */
 public final class ScreenCatalog {
     public static final String MINECRAFT = "minecraft";
     private static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("shatter_gui").resolve("screens.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final int MAX_TITLE = 64;
 
-    /** A seen screen: its key (menu id or class name), title, owning mod id and class name. */
     public record Entry(String key, String title, String modId, String className) {
     }
 
@@ -66,7 +59,6 @@ public final class ScreenCatalog {
         }
     }
 
-    /** Called when a screen opens or closes: adds it the first time it is seen (later titles do not replace it). */
     public static void record(Screen screen, List<String> keys) {
         String key = keys.getFirst();
         if (ENTRIES.containsKey(key)) {
@@ -88,15 +80,10 @@ public final class ScreenCatalog {
         return ENTRIES.get(key);
     }
 
-    /** The display name of a mod id ("Minecraft" for vanilla), or the id itself if no such mod is loaded. */
     public static String modName(String modId) {
         return FabricLoader.getInstance().getModContainer(modId).map(c -> c.getMetadata().getName()).orElse(modId);
     }
 
-    /**
-     * The mod a screen belongs to: the namespace of a menu id ("minecraft:furnace" → minecraft), otherwise the mod whose
-     * jar or folder the screen's class was loaded from.
-     */
     public static String owner(String key, Class<?> type) {
         int colon = key.indexOf(':');
         if (colon > 0) {
@@ -105,7 +92,6 @@ public final class ScreenCatalog {
         return ownerOfClass(type);
     }
 
-    /** As {@link #owner(String, Class)} for a key alone (a configured screen that was never seen). */
     public static String ownerOfKey(String key) {
         int colon = key.indexOf(':');
         if (colon > 0) {
@@ -136,7 +122,6 @@ public final class ScreenCatalog {
                 }
             }
         } catch (URISyntaxException | RuntimeException e) {
-            // Unknown origin: shown as an unknown mod.
         }
         return "?";
     }

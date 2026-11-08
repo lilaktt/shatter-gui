@@ -12,13 +12,7 @@ import net.shattergui.ui.UiScreen;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * "Help": short pages about the editor's ideas — layers, targets, time and curves, the timeline, textures, particles,
- * limits, sharing an effect. Page buttons on the left, the page on the right (the wheel scrolls a long one). Opened
- * from the top bar or from a card's "?" at that card's page.
- */
 public final class HelpDialog extends UiScreen.Overlay {
-    /** The pages, in order; each has ui.shatter_gui.fx.help.<id>.title and .text. */
     public static final List<String> PAGES = List.of("layers", "targets", "timing", "timeline", "textures", "particles",
             "limits", "sharing");
 
@@ -62,7 +56,6 @@ public final class HelpDialog extends UiScreen.Overlay {
         return Text.translatable(PAGE_KEY + id + ".text");
     }
 
-    /** Opens the help at a page ("layers", …; null or unknown: the first). */
     public static void open(String pageId) {
         int index = Math.max(0, pageId == null ? 0 : PAGES.indexOf(pageId));
         HelpDialog dialog = new HelpDialog(index);
@@ -70,7 +63,6 @@ public final class HelpDialog extends UiScreen.Overlay {
         UiScreen.active().setFocus(dialog.pageButtons.get(index));
     }
 
-    /** A card's "?": hover text (the page's text) and a click that opens the page. */
     public static void attach(net.shattergui.ui.Section section, String pageId) {
         section.help(title(pageId), text(pageId), () -> open(pageId));
     }

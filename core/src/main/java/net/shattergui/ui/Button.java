@@ -5,11 +5,6 @@ import net.shattergui.platform.Keys;
 import net.shattergui.platform.Platform;
 import net.shattergui.platform.Text;
 
-/**
- * A button: primary (accent), secondary (raised), ghost (flat until hovered) or danger. Text and/or an icon; with only
- * an icon it is square. Hover lightens, pressing sinks it by a pixel and shrinks it slightly; Enter or Space presses it
- * when focused.
- */
 public class Button extends Widget {
     public enum Kind {
         PRIMARY, SECONDARY, GHOST, DANGER
@@ -22,17 +17,13 @@ public class Button extends Widget {
     private final Anim press = new Anim(0f, Theme.SPEED_PRESS);
     private boolean down;
     private boolean selected;
-    /** A platform's colour that fills the button on hover and keyboard focus (0: none). */
     private int brand;
-    /** Draws the icon instead of {@link #icon} (a picture or one of the caller's). */
     private IconPainter painter;
 
-    /** An icon the caller draws: at x, y ({@link Icon#SIZE} square), {@code fill} 0–1 how filled the button is. */
     public interface IconPainter {
         void paint(Ui ui, int x, int y, int color, float fill);
     }
 
-    /** How much of the platform's colour a fully hovered or focused button takes (all of it). */
     private static final float BRAND_FILL = 1f;
 
     public Button(Text text, Icon icon, Kind kind, Runnable action) {
@@ -69,7 +60,6 @@ public class Button extends Widget {
         return kind;
     }
 
-    /** Marks a button that leaves this screen or opens something outside the game (a folder). */
     public Button leavesScreen(boolean value) {
         leavesScreen = value;
         return this;
@@ -79,10 +69,6 @@ public class Button extends Widget {
         return leavesScreen;
     }
 
-    /**
-     * A secondary button that fills with {@code argb} on hover and keyboard focus, smoothly; its text switches to whichever
-     * colour stays readable on the fill (see {@link #brandColors}).
-     */
     public Button brand(int argb) {
         brand = argb;
         return this;
@@ -97,16 +83,10 @@ public class Button extends Widget {
         return this;
     }
 
-    /** How far the platform's colour fills the button now, 0–1 (hover or keyboard focus). */
     public float brandFill() {
         return brand == 0 ? 0f : Math.max(hover.value(), focus.value());
     }
 
-    /**
-     * Fill, text and border colour of a secondary button with platform colour {@code brand} at {@code hover} and
-     * {@code focus} (0–1) and {@code press} (0–1). The text keeps the theme's colour while it is readable (4.5:1) on the
-     * fill, then takes white or near-black, whichever reads better.
-     */
     public static int[] brandColors(int brand, float hover, float focus, float press) {
         float t = Math.max(hover, focus);
         int base = Theme.mix(Theme.mix(Theme.RAISED, Theme.RAISED_HOVER, hover), Theme.CARD, press);
@@ -115,7 +95,6 @@ public class Button extends Widget {
         return new int[]{fill, Contrast.readableOn(fill, Theme.TEXT), border};
     }
 
-    /** Drawn as pressed-in (a toggled tool button). */
     public Button selected(boolean value) {
         selected = value;
         return this;
@@ -125,7 +104,6 @@ public class Button extends Widget {
         return text;
     }
 
-    /** Natural width: text and icon plus padding. */
     public int naturalWidth() {
         var font = Platform.get().texts().font();
         int width = 12;
@@ -215,7 +193,6 @@ public class Button extends Widget {
         if (text != null) {
             int room = x + w - 4 - cx;
             ui.textFit(text, cx, cy, room, textColor);
-            // A shortened label: the tooltip says it in full.
             if (ui.font.width(text) > room && tooltipTitle() == null) {
                 tooltip(text, null);
             }

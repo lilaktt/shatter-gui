@@ -9,11 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** The collide module without the game: a host with a flat floor and a budget of checks per tick. */
 class FxCollideTest {
     static final float FLOOR = -1.2f;
 
-    /** A floor at y = FLOOR (a "block" below it); {@code budget} checks per tick, counted like the world's. */
     static final class FloorHost implements FxSimulation.Host {
         int moves;
         int budget = Integer.MAX_VALUE;
@@ -65,7 +63,6 @@ class FxCollideTest {
                 s[1] = ny;
                 return MOVED;
             }
-            // Like BlockCollision: settles on the face it hit.
             s[1] = FLOOR + radius + 0.001f;
             boolean landed = s[4] < 0;
             s[4] = -s[4] * bounce;

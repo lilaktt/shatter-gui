@@ -3,11 +3,6 @@ package net.shattergui.ui.preview;
 import net.shattergui.params.ParamValues;
 import net.shattergui.params.Params;
 
-/**
- * Vortex: 14×9 shards come loose in a short wave from the centre, spiral around the point (spiral turns, pull,
- * shard spin) faster and closer, turn violet then white and shrink to nothing in the point (centre, the chest, or in
- * front of the player). Nothing follows.
- */
 final class VortexSim extends Sim {
     private static final int VIOLET = 0xAA50FF;
     private final float flight;
@@ -34,7 +29,6 @@ final class VortexSim extends Sim {
             tx = stage.centerX();
             ty = stage.centerY();
         } else {
-            // In front of the player: below the centre, towards the viewer.
             tx = stage.w() / 2;
             ty = stage.sy() + stage.sh() * 0.85f;
         }

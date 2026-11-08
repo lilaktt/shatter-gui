@@ -16,7 +16,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** The editor's document: paths, edits, undo/redo with merging, lists, parsing, and robustness against odd data. */
 class FxDocTest {
     private static FxDoc doc() {
         return new FxDoc(Templates.json("glass"));
@@ -29,14 +28,12 @@ class FxDocTest {
         assertEquals(0.5f, doc.num("layers[0].params.spread", 0), 1e-6);
         doc.set("layers[0].params.spread", 0.75f);
         assertEquals(0.75f, doc.num("layers[0].params.spread", 0), 1e-6);
-        // Missing parts are created.
         doc.set("modifiers.edge.direction", "left");
         assertEquals("left", doc.str("modifiers.edge.direction", null));
         doc.set("appearance.overlays[0].texture", "lines");
         assertEquals("lines", doc.str("appearance.overlays[0].texture", null));
         doc.remove("modifiers.edge");
         assertFalse(doc.has("modifiers.edge"));
-        // Wrong types read as the default.
         assertEquals(7f, doc.num("layers[0].module", 7), 0);
         assertEquals("x", doc.str("duration", "x"));
         assertNull(doc.get("layers[99].module"));
@@ -53,7 +50,6 @@ class FxDocTest {
     void undoRedoAndMerging() {
         FxDoc doc = doc();
         assertFalse(doc.canUndo());
-        // A drag: many edits of one field are one step.
         for (int i = 0; i < 20; i++) {
             doc.set("duration", 30 + i);
         }
@@ -71,11 +67,9 @@ class FxDocTest {
         assertTrue(doc.redo());
         assertEquals("Other", doc.str("name", null));
         assertFalse(doc.redo());
-        // A new edit clears the redo history.
         doc.undo();
         doc.set("description", "x");
         assertFalse(doc.canRedo());
-        // No change, no step.
         int version = doc.version();
         doc.set("description", "x");
         assertEquals(version, doc.version());
@@ -85,7 +79,6 @@ class FxDocTest {
     void lists() {
         FxDoc doc = doc();
         int added = doc.append("layers", JsonParser.parseString("{\"module\": \"drag\"}"));
-        // The glass template has 4 layers (burst, fall, tumble, land).
         assertEquals(4, added);
         assertEquals("drag", doc.str("layers[4].module", null));
         doc.move("layers", 4, 0);
@@ -97,12 +90,10 @@ class FxDocTest {
         assertEquals(6, doc.size("layers"));
         doc.remove("layers[0]");
         assertEquals(5, doc.size("layers"));
-        // Out-of-range moves and duplicates do nothing.
         int version = doc.version();
         doc.move("layers", 0, 40);
         assertEquals(-1, doc.duplicate("layers", 40));
         assertEquals(version, doc.version());
-        // A list created from nothing.
         doc.append("sounds", JsonParser.parseString("{\"sound\": \"minecraft:block.glass.break\"}"));
         assertEquals(2, doc.size("sounds"));
     }
@@ -177,7 +168,6 @@ class FxDocTest {
 
     @Test
     void schemaRangesMatchTheParser() {
-        // Every module parameter: a huge value is clamped to the schema's maximum, a tiny one to its minimum.
         for (var entry : FxSchema.MODULE_PARAMS.entrySet()) {
             for (FxSchema.Field field : entry.getValue()) {
                 String module = FxSchema.moduleName(entry.getKey());
@@ -194,7 +184,6 @@ class FxDocTest {
                 }
             }
         }
-        // Emitter and appearance numbers.
         String json = "{\"schema\": 2, \"id\": \"x\", \"layers\": [], \"emitters\": [{\"particle\": \"flame\", \"rate\": 999, "
                 + "\"life\": 999, \"size\": 9, \"spread\": 9}], \"appearance\": {\"emissive\": 9}}";
         FxParser.Result result = FxParser.parse(json);

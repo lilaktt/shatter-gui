@@ -1,27 +1,18 @@
-// Everything the 26.x platform modules have in common. Each module (platform-26, platform-26.2, ...) has only its
-// gradle.properties, the classes that differ (src/main/java: Mc26, ImmediateDraw, version mixins) and, if classes were
-// renamed, source-renames.txt. The rest of the code is ../platform-26-shared, compiled again for each version, as core is.
 base {
     archivesName = project.archives_base_name
     group = project.maven_group
 }
-// The mod's own version (fabric.mod.json, "About") stays mod_version; the jar says which game and loader it is for.
 version = project.mod_version
 def jarVersion = "${project.mod_version}+mc${project.minecraft_label}-${project.mod_loader}"
 
-// Core is compiled again here, against this Minecraft's libraries and Java: the classes of this jar are built for this
-// version, and core's own build (../core) checks that it needs no Minecraft at all.
 evaluationDependsOn(':core')
 def core = project(':core')
 def shared = rootProject.file('platform-26-shared/src')
 
-// Classes that only changed their name (source-renames.txt, "old -> new", whole words): the shared sources are written
-// for the oldest version and renamed on the way to the compiler, instead of being copied or wrapped in adapters.
 def renamesFile = file('source-renames.txt')
 def renames = renamesFile.exists() ? renamesFile.readLines('UTF-8').findAll { it.trim() && !it.startsWith('#') }.collectMany { line ->
     def parts = line.split('->')*.trim()
     def rules = [[~('(?<![\\w.])' + java.util.regex.Pattern.quote(parts[0]) + '(?![\\w])'), parts[1]]]
-    // The same class in a mixin target string: Lcom/mojang/...;
     if (parts[0].contains('.')) {
         rules << [~(java.util.regex.Pattern.quote(parts[0].replace('.', '/')) + '(?![\\w])'), parts[1].replace('.', '/')]
     }
@@ -35,7 +26,6 @@ def sharedSource = { String part ->
         from new File(shared, "${part}/java")
         into layout.buildDirectory.dir("generated/shared/${part}")
         filteringCharset = 'UTF-8'
-        // Gradle does not see inside the filter closure.
         inputs.property 'renameRules', renames.collect { "${it[0]} -> ${it[1]}".toString() }
         filter { String line ->
             renames.inject(line) { text, rule -> text.replaceAll(rule[0], java.util.regex.Matcher.quoteReplacement(rule[1])) }
@@ -51,13 +41,11 @@ sourceSets {
         resources.srcDir new File(shared, 'main/resources')
     }
 }
-// Loom makes this source set in fabricApi.configureTests below.
 sourceSets.matching { it.name == 'gametest' }.configureEach {
     java.srcDir sharedSource('gametest')
     resources.srcDir new File(shared, 'gametest/resources')
 }
 
-// Development-only mods (compile against their APIs, dev runs with them) come from the Modrinth Maven; never bundled.
 repositories {
     exclusiveContent {
         forRepository {
@@ -72,14 +60,12 @@ repositories {
     }
 }
 
-// Versions on Modrinth (byte for byte the jars the integrations were written and tested against).
 def spatialGuiVersion = { String v -> "maven.modrinth:spatial-gui:${v}-${project.spatial_suffix}" }
 def irisVersion = "maven.modrinth:iris:${project.iris_version}"
 def sodiumVersion = "maven.modrinth:sodium:${project.sodium_version}"
 def modMenuVersion = "maven.modrinth:modmenu:${project.modmenu_version}"
 def yaclVersion = "maven.modrinth:yacl:${project.yacl_version}"
 
-// Client game tests in src/gametest (not part of the mod jar). Run with ./gradlew runClientGameTest
 fabricApi {
     configureTests {
         createSourceSet = true
@@ -89,43 +75,33 @@ fabricApi {
     }
 }
 
-// The game test run directory is wiped before each run, so the test installs the shader pack itself:
-// ./gradlew runClientGameTest -Pshaders -PshaderPack=C:/path/to/Pack.zip
 loom {
     runs.configureEach {
         if (name == "clientGameTest" && project.hasProperty("shaderPack")) {
             vmArg "-Dshatter.test.shaderPack=${project.property('shaderPack')}"
         }
-        // Only some scenarios (e.g. -PtestOnly=crawler,shots): the full run takes minutes.
         if (name == "clientGameTest" && project.hasProperty("testOnly")) {
             vmArg "-Dshatter.test.only=${project.property('testOnly')}"
         }
-        // A label for the screenshots of the "shots" scenario (before/after).
         if (name == "clientGameTest" && project.hasProperty("shotsLabel")) {
             vmArg "-Dshatter.test.shotsLabel=${project.property('shotsLabel')}"
         }
-        // Only these effects in the "duplicates" scenario (e.g. -PdupOnly=door,glass), for a quick check.
         if (name == "clientGameTest" && project.hasProperty("dupOnly")) {
             vmArg "-Dshatter.test.dupOnly=${project.property('dupOnly')}"
         }
-        // Only one Spatial GUI camera mode in the "duplicates" and "thematic" scenarios: -PspatialMode=first|third.
         if (name == "clientGameTest" && project.hasProperty("spatialMode")) {
             vmArg "-Dshatter.test.spatialMode=${project.property('spatialMode')}"
         }
-        // The chosen scenarios several times in one run (e.g. -PtestOnly=ontop,collide -Prepeat=5).
         if (name == "clientGameTest" && project.hasProperty("repeat")) {
             vmArg "-Dshatter.test.repeat=${project.property('repeat')}"
         }
-        // The game's heap, for runs one after another (runVersionMatrix).
         if (name == "clientGameTest" && project.hasProperty("gameHeap")) {
             vmArg "-Xmx${project.property('gameHeap')}"
         }
-        // The graphics backend, where the game has a choice (26.3: -PgraphicsBackend=vulkan).
         if (name == "clientGameTest" && project.hasProperty("graphicsBackend")) {
             programArgs "--graphicsBackend", project.property('graphicsBackend').toString()
             vmArg "-Dshatter.test.keepWindow=true"
         }
-        // Languages of the "lang" scenario (e.g. -Plang=ja_jp), one per run keeps the memory low.
         if (name == "clientGameTest" && project.hasProperty("lang")) {
             vmArg "-Dshatter.test.lang=${project.property('lang')}"
         }
@@ -138,18 +114,14 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-    // Optional Spatial GUI integration: never bundled.
     compileOnly(spatialGuiVersion(project.spatial_compile)) { transitive = false }
     gametestCompileOnly(spatialGuiVersion(project.spatial_compile)) { transitive = false }
 
-    // Optional Iris (shaders) support: only its public API, never bundled.
-    // Mod Menu (optional): only its API interface, for the config button; loaded by Mod Menu only when installed.
     compileOnly(modMenuVersion) { transitive = false }
     gametestCompileOnly(modMenuVersion) { transitive = false }
     compileOnly(irisVersion) { transitive = false }
     gametestCompileOnly(irisVersion) { transitive = false }
 
-    // Dev runs with shaders: -Pshaders adds Iris + Sodium (the game test installs the pack, see -PshaderPack).
     if (project.hasProperty("shaders")) {
         runtimeOnly(irisVersion) { transitive = false }
         runtimeOnly(sodiumVersion) { transitive = false }
@@ -157,12 +129,10 @@ dependencies {
         runtimeOnly "io.github.llamalad7:mixinextras-fabric:${project.runtime_mixinextras}"
     }
 
-    // Dev runs with Mod Menu: -PmodMenu (checks the config button and that the mod starts with it).
     if (project.hasProperty("modMenu")) {
         runtimeOnly(modMenuVersion) { transitive = false }
     }
 
-    // Dev runs with Spatial GUI: ./gradlew runClient -PspatialGui=1.8 (or 1.9). Without the property it is absent.
     if (project.hasProperty("spatialGui")) {
         runtimeOnly(spatialGuiVersion(project.property('spatialGui').toString())) { transitive = false }
         runtimeOnly(yaclVersion) { transitive = false }
@@ -184,7 +154,6 @@ processResources {
     }
 }
 
-// Core's unit tests run in core (./gradlew build runs them); this module only has the client game tests.
 check.dependsOn core.tasks.named('check')
 
 tasks.withType(JavaCompile).configureEach {
@@ -199,7 +168,6 @@ java {
 
 jar {
     archiveVersion = jarVersion
-    // Apache 2.0 §4: the license and the NOTICE travel with the jar.
     ["LICENSE", "NOTICE", "THIRD_PARTY.md"].each { name ->
         from(rootProject.layout.projectDirectory.file(name)) {
             rename { "${it}_${project.base.archivesName.get()}" }

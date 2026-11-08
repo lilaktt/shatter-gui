@@ -3,10 +3,6 @@ package net.shattergui.ui.preview;
 import net.shattergui.custom.CustomEffectDef;
 import net.shattergui.ui.Ui;
 
-/**
- * A custom effect: its base effect plus its extra particles (at the start, during, at the end), drawn as dots in a
- * colour that suggests the particle (flames orange, smoke grey, end rods white, …).
- */
 final class ExtrasSim extends Sim {
     private final Sim base;
     private final CustomEffectDef def;
@@ -81,7 +77,6 @@ final class ExtrasSim extends Sim {
         return spec.path();
     }
 
-    /** A colour that suggests the vanilla particle. */
     static int colorOf(String path) {
         if (path.contains("soul")) {
             return 0x5FE3E8;

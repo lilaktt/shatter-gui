@@ -11,13 +11,6 @@ import net.shattergui.shatter.ShardManager;
 
 import java.util.function.BiConsumer;
 
-/**
- * The limit of effects at once ({@code -PtestOnly=budget}): 20 quick opens and closes of the inventory in a row, with an
- * opening that gathers and a close effect (glass; burn, whose smoke outlives its pieces), for both policies and limits 1
- * and 2. The most effects playing at once — counted by the mod whenever a wave starts, plus every tick here — must stay
- * within {@code maxConcurrentEffects}. "finishOldest": the new effects do start, and an effect that makes room is gone
- * within {@link ShardManager#FINISH_TICKS} (+1); "skipNew": some do not start, and none is cut short.
- */
 final class BudgetScenario {
     private static final int CYCLES = 20;
 
@@ -94,7 +87,6 @@ final class BudgetScenario {
         waitClear(context);
     }
 
-    /** {@code out[0]}: most effects playing; {@code out[1]}: longest time a wave has been finishing (-1: none ever). */
     private static void sample(ClientGameTestContext context, int[] out) {
         out[0] = Math.max(out[0], context.computeOnClient(mc -> ShardManager.playingCount()));
         out[1] = Math.max(out[1], context.computeOnClient(mc -> ShardManager.longestFinishing()));

@@ -7,17 +7,10 @@ import net.shattergui.platform.impl.Mc26;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 
-/**
- * Where a screen's picture is: the centre of its plane, its axes (right, up, and forward = away from the camera, all
- * unit length) and half its size. The centre is either a world position or relative to the camera (in world axes),
- * depending on who asks.
- */
 public record PlaneBasis(Vector3d center, Vector3f right, Vector3f up, Vector3f forward, float halfWidth,
                          float halfHeight) {
-    /** Distance of the flat GUI's plane from the camera (the same as {@link CameraPlane}). */
     public static final double FLAT_DISTANCE = 1.0;
 
-    /** The flat GUI's plane of a camera snapshot: centre in world coordinates. */
     public static PlaneBasis flat(CameraSnapshot camera) {
         Vector3f f = camera.forward();
         Vector3d center = new Vector3d(camera.x() + f.x() * FLAT_DISTANCE, camera.y() + f.y() * FLAT_DISTANCE,
@@ -28,7 +21,6 @@ public record PlaneBasis(Vector3d center, Vector3f right, Vector3f up, Vector3f 
                 halfWidth, halfHeight);
     }
 
-    /** The flat GUI's plane in front of the live camera of this frame: centre relative to the camera. */
     public static PlaneBasis flatNow() {
         Minecraft mc = Minecraft.getInstance();
         Camera camera = Mc26.camera();
@@ -39,7 +31,6 @@ public record PlaneBasis(Vector3d center, Vector3f right, Vector3f up, Vector3f 
                 new Vector3f(camera.leftVector()).negate(), new Vector3f(camera.upVector()), f, halfWidth, halfHeight);
     }
 
-    /** The point (x, y) of the picture (fractions, y down), with this basis's centre as origin. */
     public Vector3d point(double x, double y) {
         double r = (x - 0.5) * 2 * halfWidth;
         double u = (0.5 - y) * 2 * halfHeight;

@@ -22,24 +22,10 @@ import org.joml.Vector3d;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * The GUI flies back into the block or entity it was opened from: the whole plane eases in towards it within the fly
- * duration, shrinking to a dot, and ends in a small puff. For a screen opened without one it leaves through an edge of
- * the screen instead ({@link EdgeTransition}). Without any target (never from the mod's own paths) it just shrinks and
- * fades where it is.
- *
- * <p>The plane is cut into a few pieces that move as one rigid plane: each keeps its offset from the plane centre in
- * {@link ShardInstance#vel()} (unused otherwise, nothing here is simulated), and {@link FlyWave} places them every tick.
- * Rendering interpolates between ticks, i.e. it shows time {@code age - 1 + partialTick}; the corner scale in
- * {@link #tint} uses the same time. The flight shape per shard is in {@link ShardInstance#effectData}: 0 = into a
- * point, 1 = out through an edge, 2 = in place.
- */
 public final class FlyEffect implements ShatterEffect {
     public static final String ID = "fly";
 
-    /** The plane is not broken, so a handful of pieces is enough. */
     private static final int CELLS = 12;
-    /** Size at the container, relative to the GUI's size. */
     private static final float END_SCALE = 0.03f;
     private static final int PUFF_PARTICLES = 6;
     private static final float INTO_POINT = 0f;
@@ -60,7 +46,6 @@ public final class FlyEffect implements ShatterEffect {
         for (ShardInstance shard : layout.shards()) {
             shard.vel().set(shard.pos()).sub(layout.center());
             shard.effectData = shape;
-            // Alive until it has been drawn at the end of the flight (time = duration, see the class comment).
             shard.setLifetime(duration + 1);
         }
         return layout.shards();
@@ -109,7 +94,6 @@ public final class FlyEffect implements ShatterEffect {
         out.set((Math.round(alpha * 255) << 24) | 0xFFFFFF);
     }
 
-    /** Ease-in: slow start, fastest at the end. */
     static float eased(float time, int duration) {
         float t = Math.clamp(time / Math.max(1, duration), 0f, 1f);
         return t * t;
@@ -119,7 +103,6 @@ public final class FlyEffect implements ShatterEffect {
         if (shape == INTO_POINT) {
             return Mth.lerp(eased, 1f, END_SCALE);
         }
-        // Edge exits and in-place fades share the exit shape of the modifier (direction does not matter for it).
         return EXIT_SHAPE.exitScale(eased);
     }
 
@@ -127,10 +110,8 @@ public final class FlyEffect implements ShatterEffect {
         return EXIT_SHAPE.exitAlpha(eased);
     }
 
-    /** Scale and fade of an exit do not depend on the direction. */
     private static final EdgeTransition EXIT_SHAPE = new EdgeTransition(0, 0, false);
 
-    /** Places the pieces along the flight every tick; at a container it leaves a puff when they arrive. */
     private static final class FlyWave implements ShatterWave {
         private final Vector3d start;
         private final Vector3d end;
@@ -165,7 +146,6 @@ public final class FlyEffect implements ShatterEffect {
             return true;
         }
 
-        /** A few small poofs, scaled down when close to the camera like the burn particles. */
         private void puff(ParamValues params) {
             Minecraft mc = Minecraft.getInstance();
             int count = Math.round(PUFF_PARTICLES * params.particleScale());

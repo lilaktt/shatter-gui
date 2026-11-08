@@ -27,7 +27,6 @@ public final class ShatterGuiClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // First, so a warning while starting up is kept for the diagnostics too.
         net.shattergui.debug.WarningLog.install();
         ShatterConfig.load();
         ScreenCatalog.load();
@@ -54,11 +53,8 @@ public final class ShatterGuiClient implements ClientModInitializer {
             FlyOpen.tick();
             PreviewRunner.tick();
             ShardManager.tick();
-            // After the waves: an opening that just ended unlocks input in this same tick.
             OpenAssemble.tick();
         });
-        // 1.21.1 draws the level at once: the shards go in at the end of the level (after the translucent layers,
-        // Fabulous' composite, clouds and weather), before the hand (see OnTopPass).
         WorldRenderEvents.END.register(ShardRenderer::render);
     }
 }

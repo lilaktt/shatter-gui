@@ -14,15 +14,8 @@ import net.shattergui.ui.preview.Sim;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/**
- * Plays the effect being edited on a sample interface, with a clock the editor controls: play, pause, seek, speed and
- * loop. The same engine as in the world ({@link FxSim}), with a fixed seed so the same moment always looks the same.
- * Seeking back rebuilds the run and catches up to the moment within a small time budget per frame (never a freeze;
- * a long effect may take a few frames to arrive).
- */
 public final class EditorPreview {
     private static final long BUDGET_NANOS = 6_000_000;
-    /** Ticks shown after the effect's end (particles finishing). */
     static final int TAIL = 24;
     static final float[] SPEEDS = {0.25f, 0.5f, 1f, 1.5f, 2f};
 
@@ -37,7 +30,6 @@ public final class EditorPreview {
     private boolean playing = true;
     private boolean loop = true;
     private float speed = 1f;
-    /** Plays the effect backwards, as it opens an interface (with the opening's own, shorter length). */
     private boolean opening;
     private SampleImage.Kind sample = SampleImage.Kind.CHEST;
     private long seed = 7;
@@ -48,8 +40,6 @@ public final class EditorPreview {
         this.values = values;
         this.textures = textures;
     }
-
-    // --- state ---
 
     void setDef(FxDef value) {
         if (value != def) {
@@ -62,7 +52,6 @@ public final class EditorPreview {
         return def;
     }
 
-    /** Throws the run away (a texture changed). */
     void invalidate() {
         sim = null;
     }
@@ -118,7 +107,6 @@ public final class EditorPreview {
         }
     }
 
-    /** A new random run (other piece shapes). */
     void reseed() {
         seed++;
         sim = null;
@@ -132,10 +120,6 @@ public final class EditorPreview {
         time = Math.clamp(ticks, 0, length());
     }
 
-    /**
-     * The effect's own duration with the player's speed settings (ticks); backwards the opening's length, which
-     * openSpeed shortens ({@link net.shattergui.params.OpenTiming}).
-     */
     public float duration() {
         if (def == null) {
             return 40;
@@ -145,7 +129,6 @@ public final class EditorPreview {
                 net.shattergui.params.OpenTiming.quick(def.id, false, def.duration), values.get()) : natural;
     }
 
-    /** Duration plus the tail in which particles finish (an opening has none: the interface is then shown). */
     public float length() {
         return duration() + (opening ? 4 : TAIL);
     }
@@ -162,7 +145,6 @@ public final class EditorPreview {
         return peakSprites;
     }
 
-    /** Advances the clock by real time (seconds). */
     void frame(float seconds) {
         if (!playing || def == null) {
             return;
@@ -179,11 +161,8 @@ public final class EditorPreview {
         }
     }
 
-    // --- drawing ---
-
     void render(Ui ui, int x, int y, int w, int h, boolean decorated) {
         if (w < 16 || h < 16) {
-            // Not laid out yet (or squeezed to nothing): a stage this small would make no sense.
             return;
         }
         if (stage == null || w != stageW || h != stageH) {
@@ -269,7 +248,6 @@ public final class EditorPreview {
         Draw.rect(ui, x, horizon, w, 1, 0x40FFFFFF);
     }
 
-    /** Sample size and place for a box; the block it was opened from sits below it (not for the inventory). */
     static Sim.Stage stage(int w, int h, SampleImage.Kind sample) {
         float aspect = (float) SampleImage.WIDTH / SampleImage.HEIGHT;
         float sw = Math.min(w * 0.62f, h * 0.68f * aspect);

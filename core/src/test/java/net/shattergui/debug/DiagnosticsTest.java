@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** The copied diagnostics have every field a bug report needs and nothing that identifies the player. */
 class DiagnosticsTest {
     private static final String HOME = "C:\\Users\\alice";
     private static final String USER = "alice";
@@ -30,7 +29,6 @@ class DiagnosticsTest {
 
     @Test
     void ordinaryValuesStay() {
-        // GPU strings have slashes but are not paths; versions, URLs and relative config names stay readable.
         assertEquals("NVIDIA GeForce RTX 3070/PCIe/SSE2", Diagnostics.sanitize("NVIDIA GeForce RTX 3070/PCIe/SSE2", HOME, USER));
         assertEquals("4.6.0 NVIDIA 560.94", Diagnostics.sanitize("4.6.0 NVIDIA 560.94", HOME, USER));
         assertEquals("0.155.3+26.1.2", Diagnostics.sanitize("0.155.3+26.1.2", HOME, USER));

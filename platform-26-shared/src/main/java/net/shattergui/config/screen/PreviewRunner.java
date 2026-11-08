@@ -15,16 +15,8 @@ import net.shattergui.params.Params;
 import net.shattergui.platform.impl.Mc26;
 import net.shattergui.shatter.ShardManager;
 
-/**
- * The editor's preview: the editor hides (it is excluded from the mod's own effects, so closing it does nothing), the
- * chosen effect plays on a snapshot of the editor itself with the editor's unsaved settings, and the editor comes back
- * when the effect is over, with everything still as the player left it. The fly effect leaves through an edge (there is
- * no container). Needs a loaded world.
- */
 public final class PreviewRunner {
-    /** Give up waiting for the effect after this long (e.g. a very long smoke tail). */
     private static final int MAX_TICKS = 20 * 8;
-    /** Ticks before checking whether the effect has ended (the capture happens in the next frame). */
     private static final int START_TICKS = 3;
     private static final RandomSource RANDOM = RandomSource.create();
 
@@ -34,7 +26,6 @@ public final class PreviewRunner {
     private PreviewRunner() {
     }
 
-    /** False if there is no world to play the effect in. */
     public static boolean start(Screen screen, ShatterEffect effect, ParamValues params) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) {
@@ -57,7 +48,6 @@ public final class PreviewRunner {
         return editor != null;
     }
 
-    /** END_CLIENT_TICK: brings the editor back once the preview has ended. */
     public static void tick() {
         if (editor == null) {
             return;
@@ -70,7 +60,6 @@ public final class PreviewRunner {
         }
         Screen screen = editor;
         editor = null;
-        // Only if the player has not opened something else meanwhile.
         if (Mc26.screen() == null && mc.level != null) {
             Mc26.setScreen(screen);
         }

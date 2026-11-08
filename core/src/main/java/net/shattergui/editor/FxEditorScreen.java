@@ -8,20 +8,11 @@ import net.shattergui.ui.Ui;
 import net.shattergui.ui.UiScreen;
 import net.shattergui.ui.Widget;
 
-/**
- * The effect editor on the whole screen. It shows the same editor as the settings' "Custom" tab (nothing is lost
- * going back and forth); Esc or the full-screen button returns to the settings. Like every editor screen of the mod
- * it never gets an effect itself.
- */
 public final class FxEditorScreen extends UiScreen {
     private final UiScreen parent;
     private final FxEditor editor;
     private final Runnable onReturn;
 
-    /**
-     * @param parent   where Esc goes back to (the settings)
-     * @param onReturn called before going back (the settings take the editor back)
-     */
     public FxEditorScreen(UiScreen parent, FxEditor editor, Runnable onReturn) {
         super(Text.translatable("ui.shatter_gui.fx.screen_title"));
         this.parent = parent;

@@ -21,14 +21,6 @@ import java.util.Locale;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-/**
- * Screenshots with Iris ({@code ./gradlew runClientGameTest -Pshaders [-PshaderPack=C:/path/Pack.zip]}). Without a pack
- * the shaders stay off, which gives the "Iris installed, no shaders" reference. The visual result is checked by looking
- * at the screenshots in the run's screenshots folder; here it only asserts that shards exist.
- *
- * <p>Screenshots use vanilla {@link Screenshot#grab} on the last drawn frame: the game test's own screenshot renders an
- * extra frame outside the normal loop, which Sodium rejects ("Global terrain uniforms have not been updated").
- */
 final class ShaderScenarios {
     private static final String PACK_PROPERTY = "shatter.test.shaderPack";
 
@@ -40,7 +32,6 @@ final class ShaderScenarios {
         this.check = check;
     }
 
-    /** Before the world loads: installs the pack given by -PshaderPack (the run directory is wiped every run). */
     static void selectPack(ClientGameTestContext context) {
         String source = System.getProperty(PACK_PROPERTY);
         context.runOnClient(mc -> {
@@ -60,7 +51,6 @@ final class ShaderScenarios {
         });
     }
 
-    /** Short pack name for screenshot names, or "off". */
     static String packTag() {
         String source = System.getProperty(PACK_PROPERTY);
         if (source == null) {
@@ -72,7 +62,6 @@ final class ShaderScenarios {
     }
 
     void run(String tag, Supplier<Screen> furnace, TestSingleplayerContext singleplayer) {
-        // Shader packs compile and warm up after the world loads.
         context.waitTicks(100);
         boolean packInUse = context.computeOnClient(mc -> IrisApi.getInstance().isShaderPackInUse());
         String packName = context.computeOnClient(mc -> String.valueOf(Iris.getCurrentPackName()));
@@ -98,7 +87,6 @@ final class ShaderScenarios {
         }
     }
 
-    /** Screenshot of the open screen, then at each given tick after closing. */
     private void shots(String name, Supplier<Screen> screen, int[] ticks) {
         context.setScreen(screen);
         context.waitTicks(30);

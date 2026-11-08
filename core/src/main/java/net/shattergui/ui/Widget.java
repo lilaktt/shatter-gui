@@ -7,12 +7,6 @@ import net.shattergui.platform.Text;
 
 import java.util.List;
 
-/**
- * Base of every editor widget. Layout is top-down each frame: the parent calls {@link #layout(int, int, int)} with a
- * position and width and the widget sets its height ({@link #measure}). Input arrives from {@link UiScreen}: the
- * topmost widget under the mouse gets the click (bubbling to its parents until one takes it), the focused widget gets
- * the keys. Hover and focus are animated ({@link #hover}, {@link #focus}, 0..1).
- */
 public abstract class Widget {
     public int x;
     public int y;
@@ -25,11 +19,9 @@ public abstract class Widget {
     private Text tipText;
     protected final Anim hover = new Anim(0f, Theme.SPEED_HOVER);
     protected final Anim focus = new Anim(0f, Theme.SPEED_HOVER);
-    /** Threw while drawing, laying out or handling input: shown as an error box, gets no more input. */
     boolean broken;
     private String failure;
 
-    /** A tooltip: a short title and a one or two sentence description (either may be null). */
     public Widget tooltip(Text title, Text text) {
         tipTitle = title;
         tipText = text;
@@ -44,7 +36,6 @@ public abstract class Widget {
         return tipText;
     }
 
-    /** Whether this tooltip also explains the widgets inside it that have none (a field's row: yes; a card: no). */
     public boolean tooltipCoversChildren() {
         return true;
     }
@@ -53,7 +44,6 @@ public abstract class Widget {
         return false;
     }
 
-    /** Places the widget; its height comes from {@link #measure}. */
     public void layout(int x, int y, int w) {
         this.x = x;
         this.y = y;
@@ -69,7 +59,6 @@ public abstract class Widget {
         this.h = Math.max(this.h, BROKEN_HEIGHT);
     }
 
-    /** Places the widget with a fixed size. */
     public void setBounds(int x, int y, int w, int h) {
         this.x = x;
         this.y = y;
@@ -85,15 +74,12 @@ public abstract class Widget {
         }
     }
 
-    /** Height a broken widget keeps, so its error box can be seen. */
     static final int BROKEN_HEIGHT = 14;
 
-    /** True once it failed (it is then drawn as an error box). */
     public boolean broken() {
         return broken;
     }
 
-    /** Marks it broken; the failure is written to the log once per kind ({@link UiFailures}). */
     void markBroken(RuntimeException e, String action) {
         if (broken) {
             return;
@@ -103,12 +89,10 @@ public abstract class Widget {
         UiFailures.report(UiFailures.describe(action, this), e);
     }
 
-    /** Height for a width; by default the current height. */
     protected int measure(int width) {
         return h;
     }
 
-    /** Re-positions children after {@link #setBounds}; nothing for leaf widgets. */
     protected void arrange() {
     }
 
@@ -126,14 +110,12 @@ public abstract class Widget {
             focus.target(ui.isFocused(this)).tick();
             draw(ui);
         } catch (RuntimeException e) {
-            // Undo what the failed drawing left open (clips, transforms), then show the error box instead.
             ui.restore(state);
             markBroken(e, "draw");
             drawBroken(ui);
         }
     }
 
-    /** The error box in the widget's place: a dark red frame, a warning sign and what failed. */
     private void drawBroken(Ui ui) {
         if (w < 4 || h < 4) {
             return;
@@ -152,7 +134,6 @@ public abstract class Widget {
                         Text.literal(failure));
             }
         } catch (RuntimeException ignored) {
-            // Even the error box could not be drawn: leave the space empty.
         }
     }
 
@@ -162,7 +143,6 @@ public abstract class Widget {
         return mx >= x && my >= y && mx < x + w && my < y + h;
     }
 
-    /** The deepest visible widget at the point, or null. */
     public Widget hit(double mx, double my) {
         return visible && contains(mx, my) ? this : null;
     }
@@ -177,8 +157,6 @@ public abstract class Widget {
         return parent;
     }
 
-    // --- input (all return true when handled) ---
-
     public boolean mouseDown(double mx, double my, int button) {
         return false;
     }
@@ -186,7 +164,6 @@ public abstract class Widget {
     public void mouseUp(double mx, double my, int button) {
     }
 
-    /** The second click of a double click (instead of {@link #mouseDown}); true if handled. */
     public boolean doubleClicked(double mx, double my) {
         return false;
     }
@@ -213,7 +190,6 @@ public abstract class Widget {
         Platform.get().sounds().buttonClick();
     }
 
-    /** The click of a pop-up closing: quieter and a little higher than {@link #click()}. */
     protected static void closeClick() {
         Platform.get().sounds().closeClick();
     }

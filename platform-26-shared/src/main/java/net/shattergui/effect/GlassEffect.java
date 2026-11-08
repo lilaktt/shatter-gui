@@ -10,7 +10,6 @@ import net.shattergui.shatter.ShardSource;
 
 import java.util.List;
 
-/** The original effect: shards burst outward, spin, fall, bounce off blocks and fade. */
 public final class GlassEffect implements ShatterEffect {
     public static final String ID = "glass";
 
@@ -25,7 +24,6 @@ public final class GlassEffect implements ShatterEffect {
         int cells = Math.max(1, Math.round(params.i(Params.GLASS_COLUMNS) * params.i(Params.GLASS_ROWS)
                 * params.shardScale()));
         ShardMesh.Layout layout = ShardMesh.build(source, cells);
-        // reduceMotion: a gentler burst and much less spin.
         float burst = params.f(Params.GLASS_BURST) * (params.reduceMotion() ? 0.5f : 1f);
         float spin = params.f(Params.GLASS_SPIN) * (params.reduceMotion() ? 0.3f : 1f);
         for (ShardInstance shard : layout.shards()) {

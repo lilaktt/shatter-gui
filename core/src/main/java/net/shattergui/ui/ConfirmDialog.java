@@ -5,10 +5,6 @@ import net.shattergui.platform.Keys;
 import net.shattergui.platform.Platform;
 import net.shattergui.platform.Text;
 
-/**
- * A modal question with two answers. Opens with a short fade and scale; Enter confirms, Esc cancels, Tab moves
- * between the two buttons.
- */
 public class ConfirmDialog extends UiScreen.Overlay {
     private final Text title;
     private final Text message;
@@ -41,7 +37,6 @@ public class ConfirmDialog extends UiScreen.Overlay {
 
     @Override
     public void outsideClick() {
-        // Modal: a click outside does nothing.
     }
 
     @Override

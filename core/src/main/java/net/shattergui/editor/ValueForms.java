@@ -8,10 +8,6 @@ import net.shattergui.fx.Easing;
 import net.shattergui.fx.FxSchema;
 import net.shattergui.fx.Value;
 
-/**
- * The five ways a number can be written (a number, a random range, an easing curve, a Bézier, keyframes) and the
- * conversions between them that keep the value's shape as well as they can. Pure JSON work, no game classes.
- */
 public final class ValueForms {
     public enum Form {
         NUMBER, RANDOM, CURVE, BEZIER, KEYS
@@ -37,7 +33,6 @@ public final class ValueForms {
         return Form.RANDOM;
     }
 
-    /** The value as the engine reads it (without per-piece jitter, for drawing); {@code def} if missing. */
     public static Value read(JsonElement e, JsonElement def, FxSchema.Field field) {
         JsonElement source = e == null || e.isJsonNull() ? def : e;
         if (source != null && source.isJsonObject() && source.getAsJsonObject().has("jitter")) {
@@ -47,7 +42,6 @@ public final class ValueForms {
         return Value.fromJson(source, field.def(), field.min(), field.max());
     }
 
-    /** Converts to another form, keeping start, end and jitter where it can. */
     public static JsonElement convert(JsonElement e, JsonElement def, FxSchema.Field field, Form to) {
         Value v = read(e, def, field);
         float a = v.at(0, 0.5f);
@@ -122,7 +116,6 @@ public final class ValueForms {
         return pair;
     }
 
-    /** Keyframes [time, value] of a keys object (empty if it is not one). */
     public static float[][] keys(JsonElement e) {
         if (e == null || !e.isJsonObject() || !e.getAsJsonObject().has("keys") || !e.getAsJsonObject().get("keys").isJsonArray()) {
             return new float[0][];
@@ -145,7 +138,6 @@ public final class ValueForms {
         return out;
     }
 
-    /** Writes keyframes back (sorted by time). */
     public static JsonArray keysJson(float[][] keys) {
         float[][] sorted = keys.clone();
         java.util.Arrays.sort(sorted, (p, q) -> Float.compare(p[0], q[0]));
@@ -156,7 +148,6 @@ public final class ValueForms {
         return array;
     }
 
-    /** The 4 Bézier numbers of a bezier object (a default if odd). */
     public static float[] bezier(JsonElement e) {
         try {
             JsonArray p = e.getAsJsonObject().getAsJsonArray("bezier");
@@ -174,7 +165,6 @@ public final class ValueForms {
         return a;
     }
 
-    /** A number field of an object, or the default. */
     public static float num(JsonElement e, String key, float def) {
         try {
             JsonElement v = e.getAsJsonObject().get(key);
@@ -193,7 +183,6 @@ public final class ValueForms {
         }
     }
 
-    /** A random range [lo, hi] of a random/value object. */
     public static float[] range(JsonElement e, float def) {
         try {
             JsonObject o = e.getAsJsonObject();

@@ -1,6 +1,5 @@
 package net.shattergui.effect;
 
-/** Ids of the built-in (code) effects, as written in the config. */
 public final class EffectIds {
     public static final String GLASS = "glass";
     public static final String BURN = "burn";

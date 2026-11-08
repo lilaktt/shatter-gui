@@ -3,10 +3,6 @@ package net.shattergui.ui.preview;
 import net.shattergui.params.ParamValues;
 import net.shattergui.params.Params;
 
-/**
- * Glass: the sample breaks into the configured grid, shards burst from the centre (burst), tumble (spin), fall
- * (gravity), slow down (air drag), bounce on the floor (bounce) and fade (lifetime, fade start), like the real effect.
- */
 final class GlassSim extends Sim {
     private final float gravity;
     private final float drag;
@@ -41,7 +37,6 @@ final class GlassSim extends Sim {
             p.flipSpeed = spin * (0.3f + random.nextFloat() * 0.7f) * (random.nextBoolean() ? 1 : -1);
             p.life = Math.max(1f, lifetime * (0.8f + random.nextFloat() * 0.4f));
             p.a = fadeStart;
-            // Away from the viewer along the view (the interface is about a block in front of the camera).
             p.b = burst * 0.5f;
             p.wx = p.cx - stage.centerX();
             p.wy = p.cy - stage.centerY();
@@ -72,7 +67,6 @@ final class GlassSim extends Sim {
             p.flip += p.flipSpeed * dt;
             p.c += p.b * dt;
             p.b *= keep;
-            // Perspective: farther away is smaller and moves less on screen.
             float depth = 1f + p.c;
             p.scale = 1f / depth;
             p.cx = stage.centerX() + p.wx / depth;

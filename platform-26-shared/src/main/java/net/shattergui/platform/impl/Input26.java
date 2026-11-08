@@ -5,12 +5,10 @@ import net.minecraft.client.input.KeyEvent;
 import net.shattergui.platform.CharInput;
 import net.shattergui.platform.KeyInput;
 
-/** The game's input events in core's terms; every answer is the game's own. */
 public final class Input26 {
     private Input26() {
     }
 
-    /** A key press. */
     public record Key(KeyEvent event) implements KeyInput {
         @Override
         public int key() {
@@ -78,7 +76,6 @@ public final class Input26 {
         }
     }
 
-    /** A typed character. */
     public record Char(CharacterEvent event) implements CharInput {
         @Override
         public int codepoint() {

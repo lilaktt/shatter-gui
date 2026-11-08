@@ -21,19 +21,12 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-/**
- * The settings editor (in Ukrainian): every tab at GUI scales 2, 3 and 4 and the "too small" notice, an open drop-down
- * list, a tooltip under the real mouse, keyboard focus, typing into the screen search, the live preview reacting to a
- * change, the in-world preview with unsaved values, the discard question on Esc, Save, clamping of typed values, and
- * that the editor itself never gets an effect.
- */
 final class EditorScenario {
     private EditorScenario() {
     }
 
     static void run(ClientGameTestContext context, BiConsumer<Boolean, String> check, Consumer<String> shot, String name) {
         setLanguage(context, "uk_ua");
-        // Save replaces the live config object; the rest of the test keeps a reference to this one.
         ShatterConfig original = ShatterConfig.get();
         int originalScale = context.computeOnClient(mc -> mc.options.guiScale().get());
         try {
@@ -45,7 +38,6 @@ final class EditorScenario {
             context.setScreen(() -> new ShatterConfigScreen(null));
             context.waitTicks(5);
 
-            // Every tab at three GUI scales (1920×1080: 960×540, 640×360, 480×270).
             for (int scale : new int[]{2, 3, 4}) {
                 setScale(context, scale);
                 for (ShatterConfigScreen.Tab tab : ShatterConfigScreen.Tab.values()) {
@@ -61,8 +53,6 @@ final class EditorScenario {
                     }
                 }
             }
-            // The game caps the scale to what fits (at least 320×240), so a narrow window shows the notice:
-            // 760×960 at scale 2 = 380×480, narrower than the editor's 400.
             setScale(context, 2);
             context.getInput().resizeWindow(760, 960);
             context.waitTicks(4);
@@ -76,13 +66,11 @@ final class EditorScenario {
             context.waitTicks(4);
             setScale(context, 3);
 
-            // Frame rate on the busiest tab (many animated miniatures).
             context.runOnClient(mc -> editor(mc).selectTab(ShatterConfigScreen.Tab.EFFECTS));
             context.waitTicks(60);
             int fps = context.computeOnClient(Minecraft::getFps);
             ShatterGuiClient.LOGGER.info("[ShatterTest] {}: {} fps on the Effects tab at GUI scale 3", name, fps);
 
-            // A drop-down list open (General: close effect, with animated miniatures).
             context.runOnClient(mc -> editor(mc).selectTab(ShatterConfigScreen.Tab.GENERAL));
             context.waitTicks(4);
             context.runOnClient(mc -> {
@@ -100,7 +88,6 @@ final class EditorScenario {
             boolean closedList = context.computeOnClient(mc -> Mc26.screen() instanceof ShatterConfigScreen e && !e.hasOverlay());
             check.accept(overlay && closedList, name + ": a drop-down must open and close with Esc without closing the editor");
 
-            // Real clicks on the header: the first opens, the second closes (it used to reopen with a fresh animation).
             int guiScale = context.computeOnClient(mc -> (int) mc.getWindow().getGuiScale());
             int[] header = context.computeOnClient(mc -> {
                 Dropdown<?> d = dropdowns(editor(mc)).get(1);
@@ -120,7 +107,6 @@ final class EditorScenario {
             check.accept(openedByClick && closedByHeader && !"OPENING".equals(afterSecond) && !"OPEN".equals(afterSecond),
                     name + ": a click on the header of an open list must close it (opened " + openedByClick + ", after the second click "
                             + afterSecond + ", closed " + closedByHeader + ")");
-            // Open again, then a click far outside closes it.
             context.getInput().pressMouse(InputConstants.MOUSE_BUTTON_LEFT);
             context.waitTicks(6);
             context.getInput().setCursorPos(3 * guiScale, 3 * guiScale);
@@ -130,7 +116,6 @@ final class EditorScenario {
                     name + ": a click outside must close the list");
             context.getInput().setCursorPos(5, 5);
 
-            // Tooltip under the real mouse (over the "Effects" tab), then a real click on it.
             int scale = context.computeOnClient(mc -> (int) mc.getWindow().getGuiScale());
             int[] tabCenter = context.computeOnClient(mc -> editor(mc).tabCenter(ShatterConfigScreen.Tab.EFFECTS));
             context.getInput().setCursorPos(tabCenter[0] * scale, tabCenter[1] * scale);
@@ -142,7 +127,6 @@ final class EditorScenario {
             check.accept(clicked, name + ": clicking the Effects tab must open it");
             context.getInput().setCursorPos(5, 5);
 
-            // Keyboard focus.
             context.getInput().pressKey(InputConstants.KEY_TAB);
             context.getInput().pressKey(InputConstants.KEY_TAB);
             context.waitTicks(4);
@@ -150,7 +134,6 @@ final class EditorScenario {
             shot.accept(name + "_keyboard_focus");
             check.accept(focused, name + ": Tab must focus a widget");
 
-            // Typing into the screens search.
             context.runOnClient(mc -> {
                 editor(mc).selectTab(ShatterConfigScreen.Tab.SCREENS);
                 editor(mc).focusSearch();
@@ -162,7 +145,6 @@ final class EditorScenario {
             check.accept("furn".equals(typed), name + ": typed text must reach the search field, got '" + typed + "'");
             context.runOnClient(mc -> editor(mc).setSearch(""));
 
-            // Clamping: typed nonsense never reaches an effect.
             ShatterConfig scratch = ShatterConfig.get().copy();
             float huge = scratch.set(Params.GLASS_GRAVITY, "1e9");
             float junk = scratch.set(Params.GLASS_GRAVITY, "abc");
@@ -170,7 +152,6 @@ final class EditorScenario {
             check.accept(huge == 0.3f && junk == 0.04f && negative == 5,
                     name + ": values must be clamped/validated (" + huge + ", " + junk + ", " + negative + ")");
 
-            // The live preview restarts on a change and plays the burn with the unsaved values.
             context.runOnClient(mc -> {
                 ShatterConfigScreen editor = editor(mc);
                 editor.selectTab(ShatterConfigScreen.Tab.EFFECTS);
@@ -185,7 +166,6 @@ final class EditorScenario {
             shot.accept(name + "_live_burn_t40");
             ShatterGuiClient.LOGGER.info("[ShatterTest] {}: live preview {}", name, livePhase);
 
-            // In-world preview with the unsaved burn; the editor comes back with the edit still there.
             context.runOnClient(mc -> editor(mc).preview());
             context.waitTicks(10);
             shot.accept(name + "_world_preview_t10");
@@ -199,7 +179,6 @@ final class EditorScenario {
             check.accept(previewRunning, name + ": the in-world preview must play an effect");
             check.accept(kept == 15 && live == 30, name + ": unsaved value kept in the editor, live config untouched");
 
-            // Esc with unsaved changes asks first; Enter discards.
             context.getInput().pressKey(InputConstants.KEY_ESCAPE);
             context.waitTicks(8);
             boolean asked = context.computeOnClient(mc -> Mc26.screen() instanceof ShatterConfigScreen e && e.hasOverlay());
@@ -211,7 +190,6 @@ final class EditorScenario {
             check.accept(asked, name + ": Esc with unsaved changes must ask first");
             check.accept(closed && afterCancel == 30, name + ": discarding must close without saving");
 
-            // Save.
             context.setScreen(() -> new ShatterConfigScreen(null));
             context.waitTicks(3);
             context.runOnClient(mc -> {
@@ -239,7 +217,6 @@ final class EditorScenario {
         return screen;
     }
 
-    /** Every drop-down in the editor, in layout order. */
     static List<Dropdown<?>> dropdowns(UiScreen screen) {
         List<Dropdown<?>> out = new ArrayList<>();
         collect(screen.rootWidget(), out);

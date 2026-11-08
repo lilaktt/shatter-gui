@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Every icon pattern is 9×9 and draws something (a broken row would fail when the enum loads). */
 class IconTest {
     @Test
     void iconsLoad() {

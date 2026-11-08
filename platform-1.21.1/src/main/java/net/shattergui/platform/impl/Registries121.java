@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/** Sounds and particles: the game's registries, its sound manager and its particle setting. */
 final class Registries121 {
     private Registries121() {
     }
@@ -23,7 +22,6 @@ final class Registries121 {
     static final class Sounds implements SoundPlayer {
         @Override
         public void buttonClick() {
-            // The sound of 1.21.1's buttons (AbstractWidget#playDownSound).
             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
         }
 

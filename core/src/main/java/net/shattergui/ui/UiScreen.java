@@ -11,11 +11,6 @@ import net.shattergui.platform.TextLine;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A screen made of {@link Widget}s: lays out and draws its root every frame, then the overlays (drop-down lists,
- * dialogs) above it and the tooltip above everything. Owns focus (Tab/Shift+Tab, arrows when the focused widget does
- * not use them), mouse capture while a button is held, and a minimum size below which it only shows a notice.
- */
 public abstract class UiScreen extends PlatformScreen {
     public static final int MIN_WIDTH = 400;
     public static final int MIN_HEIGHT = 230;
@@ -29,43 +24,31 @@ public abstract class UiScreen extends PlatformScreen {
     private Widget lastHovered;
     private double hoverSince;
     private final Anim tooltipAlpha = new Anim(0f, 12f);
-    /** Focus was last moved with the keyboard (its tooltip shows); a click ends that. */
     private boolean keyboardFocus;
     private double focusSince;
 
-    /** A layer above the root: a drop-down list or a dialog. */
     public abstract static class Overlay extends Container {
-        /** Blocks everything below (dialogs). */
         public boolean modal() {
             return false;
         }
 
-        /** A click outside: by default the overlay closes. */
         public void outsideClick() {
             UiScreen.active().closeOverlay(this);
         }
 
-        /** Places the overlay for the current screen size. */
         public abstract void place(int screenWidth, int screenHeight);
 
-        /** Esc while it is on top; by default closes it. */
         public void escape() {
             UiScreen.active().closeOverlay(this);
         }
 
-        /** After it was removed, by any path. */
         protected void onClosed() {
         }
 
-        /**
-         * A click here belongs to the overlay's own opener (a drop-down's header, a menu's button): it is not an outside
-         * click, so the opener can toggle it instead of it closing and at once reopening.
-         */
         public boolean ownsClick(double mx, double my) {
             return false;
         }
 
-        /** Animating out: still drawn, but takes no input and is not the top overlay. */
         public boolean closing() {
             return false;
         }
@@ -75,15 +58,12 @@ public abstract class UiScreen extends PlatformScreen {
         super(title);
     }
 
-    /** The UiScreen being shown (widgets use it to open overlays, move focus, play sounds). */
     public static UiScreen active() {
         return active;
     }
 
-    /** Lays out {@link #root} for the current size (called every frame). */
     protected abstract void layoutRoot(int width, int height);
 
-    /** Esc when no overlay is open: by default closes the screen. */
     protected void escape() {
         onClose();
     }
@@ -92,13 +72,10 @@ public abstract class UiScreen extends PlatformScreen {
         return width < MIN_WIDTH || height < MIN_HEIGHT;
     }
 
-    // --- overlays and focus ---
-
     public void openOverlay(Overlay overlay) {
         try {
             overlay.place(width, height);
         } catch (RuntimeException e) {
-            // A dialog or list that cannot even be placed is not opened.
             overlay.markBroken(e, "open");
             return;
         }
@@ -119,17 +96,14 @@ public abstract class UiScreen extends PlatformScreen {
         }
     }
 
-    /** The root of the widget tree (tests walk it). */
     public Container rootWidget() {
         return root;
     }
 
-    /** Whether an overlay is open (one that is only animating out does not count). */
     public boolean hasOverlay() {
         return topOverlay() != null;
     }
 
-    /** The topmost overlay that is not closing, or null. */
     public Overlay topOverlay() {
         for (int i = overlays.size() - 1; i >= 0; i--) {
             if (!overlays.get(i).closing()) {
@@ -168,7 +142,6 @@ public abstract class UiScreen extends PlatformScreen {
         }
     }
 
-    /** Called when focus moves to a widget (scroll views bring it into sight). */
     protected void revealed(Widget widget) {
         for (Widget p = widget.parent; p != null; p = p.parent) {
             if (p instanceof ScrollView scroll) {
@@ -186,7 +159,6 @@ public abstract class UiScreen extends PlatformScreen {
         return false;
     }
 
-    /** Widgets Tab can reach: those of the top modal overlay, otherwise of the top overlay and the root. */
     private List<Widget> focusables() {
         List<Widget> out = new ArrayList<>();
         Overlay top = topOverlay();
@@ -212,8 +184,6 @@ public abstract class UiScreen extends PlatformScreen {
         keyboardFocus = true;
         focusSince = UiClock.time();
     }
-
-    // --- frame ---
 
     @Override
     protected void init() {
@@ -253,7 +223,6 @@ public abstract class UiScreen extends PlatformScreen {
         }
     }
 
-    /** A widget inside a broken one counts as the broken one (its error box), which takes no input. */
     private static Widget outermostBroken(Widget hit) {
         Widget result = hit;
         for (Widget w = hit; w != null; w = w.parent) {
@@ -264,10 +233,6 @@ public abstract class UiScreen extends PlatformScreen {
         return result;
     }
 
-    /**
-     * Runs a widget's handler; if it throws, the widget becomes an error box (logged once) and the event counts as
-     * handled. A broken widget handles nothing.
-     */
     private static boolean guard(Widget widget, String action, java.util.function.BooleanSupplier handler) {
         if (widget.broken) {
             return false;
@@ -280,7 +245,6 @@ public abstract class UiScreen extends PlatformScreen {
         }
     }
 
-    /** A failure of the screen itself (not of one widget): logged once per kind, the screen goes on. */
     protected void reportScreen(String action, RuntimeException e) {
         UiFailures.report(action + " " + getClass().getSimpleName(), e);
     }
@@ -289,7 +253,6 @@ public abstract class UiScreen extends PlatformScreen {
     protected void renderUi(GuiDrawing graphics, int rawMouseX, int rawMouseY, float partialTick) {
         active = this;
         UiClock.frame();
-        // A position that is not one (NaN or infinity from another mod): no mouse, and a drag in progress ends.
         boolean mouse = MouseGuard.valid(rawMouseX, rawMouseY);
         int mouseX = mouse ? rawMouseX : MouseGuard.NONE;
         int mouseY = mouse ? rawMouseY : MouseGuard.NONE;
@@ -348,7 +311,6 @@ public abstract class UiScreen extends PlatformScreen {
         }
     }
 
-    /** Ends a press/drag without a release (the mouse became unusable). */
     private void cancelPress() {
         if (pressed != null) {
             Widget w = pressed;
@@ -360,7 +322,6 @@ public abstract class UiScreen extends PlatformScreen {
         }
     }
 
-    /** Shown instead of the UI when the window is smaller than {@link #MIN_WIDTH}×{@link #MIN_HEIGHT}. */
     protected void drawTooSmall(Ui ui) {
         Draw.rect(ui, 0, 0, width, height, Theme.BACKDROP_BOTTOM);
         int boxW = Math.min(width - 16, 260);
@@ -373,7 +334,6 @@ public abstract class UiScreen extends PlatformScreen {
         ui.textWrapped(text, bx + 8, by + 8, boxW - 16, Theme.TEXT);
     }
 
-    /** The widget whose tooltip explains {@code widget}: itself, or the nearest parent with one (a field's row). */
     public static Widget tooltipOwner(Widget widget) {
         for (Widget w = widget; w != null; w = w.parent) {
             if ((w == widget || w.tooltipCoversChildren()) && (w.tooltipTitle() != null || w.tooltipText() != null)) {
@@ -389,7 +349,6 @@ public abstract class UiScreen extends PlatformScreen {
         int anchorY = ui.mouseY;
         boolean show = owner != null && pressed == null && UiClock.time() - hoverSince > Theme.TOOLTIP_DELAY;
         if (!show && keyboardFocus && focused != null && pressed == null && UiClock.time() - focusSince > Theme.TOOLTIP_DELAY) {
-            // Moved here with the keyboard: the focused control's tooltip, under it.
             owner = tooltipOwner(focused);
             show = owner != null;
             anchorX = focused.x;
@@ -424,7 +383,6 @@ public abstract class UiScreen extends PlatformScreen {
         if (by + boxH > height - 4) {
             by = Math.max(4, anchorY - boxH - 6);
         }
-        // Never past the screen's edges, even when it is wider or taller than the room on either side.
         bx = Math.clamp(bx, 4, Math.max(4, width - 4 - boxW));
         by = Math.clamp(by, 4, Math.max(4, height - 4 - boxH));
         float rise = (1f - alpha) * 3f;
@@ -448,8 +406,6 @@ public abstract class UiScreen extends PlatformScreen {
         ui.g.pose().popMatrix();
     }
 
-    // --- input ---
-
     @Override
     protected boolean uiMouseClicked(double mx, double my, int button, boolean doubleClick) {
         if (tooSmall() || !MouseGuard.valid(mx, my)) {
@@ -466,7 +422,6 @@ public abstract class UiScreen extends PlatformScreen {
                 if (top.modal()) {
                     return true;
                 }
-                // A non-modal overlay closed: the click also goes to what is under it.
             }
         }
         Widget hit = hitTest(mx, my);
@@ -544,10 +499,6 @@ public abstract class UiScreen extends PlatformScreen {
         return true;
     }
 
-    /**
-     * Screen-wide shortcuts (Ctrl+Z, Ctrl+S, …), asked before the focused widget so a text field does not swallow
-     * them. True if handled.
-     */
     protected boolean shortcut(KeyInput event) {
         return false;
     }

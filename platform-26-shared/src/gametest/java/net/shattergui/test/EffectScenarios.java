@@ -19,10 +19,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * Edge flights of screens without a source (several directions), the dissolve effect (also with reduceMotion), and
- * spam protection (rapid open/close with burn must not pile up effects).
- */
 final class EffectScenarios {
     private final ClientGameTestContext context;
     private final BiConsumer<Boolean, String> check;
@@ -34,7 +30,6 @@ final class EffectScenarios {
         this.shot = shot;
     }
 
-    /** Inventory (never a source) opened and closed with fly: in from an edge, out to an edge. */
     void edgeFlights(String name) {
         ShatterConfig config = ShatterConfig.get();
         String effect = config.effect;
@@ -81,7 +76,6 @@ final class EffectScenarios {
         }
     }
 
-    /** The furnace dissolves: screenshots across the wave; then once more with reduceMotion (shorter). */
     void dissolve(String name, Supplier<Screen> furnace) {
         ShatterConfig config = ShatterConfig.get();
         String effect = config.effect;
@@ -118,7 +112,6 @@ final class EffectScenarios {
                 context.waitTicks(10);
             }
 
-            // reduceMotion: shorter (0.65x), calmer.
             config.reduceMotion = true;
             context.setScreen(furnace);
             context.waitTicks(10);
@@ -137,7 +130,6 @@ final class EffectScenarios {
         }
     }
 
-    /** Rapid open/close with burn: waves and shards stay bounded, and everything is gone soon after. */
     void spam(String name) {
         ShatterConfig config = ShatterConfig.get();
         String effect = config.effect;
@@ -159,7 +151,6 @@ final class EffectScenarios {
             int left = context.computeOnClient(mc -> ShardManager.waveCount());
             ShatterGuiClient.LOGGER.info("[ShatterTest] {}: max waves={} max shards={} left after {} ticks={}", name,
                     maxWaves, maxShards, burnEnd, left);
-            // 4 running + the ones still fading out (6 ticks, one close every 5 ticks).
             check.accept(maxWaves <= 6, name + ": waves must stay bounded, max " + maxWaves);
             check.accept(maxShards <= 8000 + 3000, name + ": shards must stay bounded, max " + maxShards);
             check.accept(left == 0, name + ": everything must be gone after " + burnEnd + " ticks, waves=" + left);
@@ -168,10 +159,6 @@ final class EffectScenarios {
         }
     }
 
-    /**
-     * Edge flights belong to fly only: glass, burn and dissolve on a screen without a source open and close without
-     * any side flight; chat never flies from an edge, not even with fly.
-     */
     void edgeOnlyForFly(String name) {
         ShatterConfig config = ShatterConfig.get();
         String effect = config.effect;
@@ -209,7 +196,6 @@ final class EffectScenarios {
         }
     }
 
-    /** Master switch off: no capture, no shards, no fly-in; on again: works. */
     void masterSwitch(String name) {
         ShatterConfig config = ShatterConfig.get();
         String effect = config.effect;
@@ -241,7 +227,6 @@ final class EffectScenarios {
         }
     }
 
-    /** An old flat config is moved into the registry, clamped; only non-defaults are stored. */
     void configMigration(String name) {
         ShatterConfig old = ShatterConfig.parse("{\"effect\":\"burn\",\"gravity\":5.0,\"burnDurationTicks\":40,"
                 + "\"gridColumns\":10,\"edgeDirection\":\"sideways\",\"particleDensity\":\"NaN\"}");
@@ -254,7 +239,6 @@ final class EffectScenarios {
         check.accept(old.get(Params.PARTICLE_DENSITY) == 1f, name + ": NaN → default");
         check.accept(!saved.contains("gridColumns") && !saved.contains("\"columns\"") && saved.contains("\"duration\": 40"),
                 name + ": only non-default params stored under effects/<id>/params");
-        // Before the performance settings: quality and effects at once come from the preset; the look stays the same.
         check.accept(old.quality() == Quality.MEDIUM && old.maxConcurrent() == 2 && !old.skipNewEffects()
                 && old.alwaysOnTop, name + ": an older config gets medium quality, 2 effects at once, finishOldest, on top");
         ShatterConfig subtle = ShatterConfig.parse("{\"preset\":\"minimal\"}");

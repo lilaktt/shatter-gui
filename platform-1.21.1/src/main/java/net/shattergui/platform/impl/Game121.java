@@ -23,9 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/** The running game on 1.21.1 with Fabric Loader: screens, mods, the world, the clipboard. */
 final class Game121 implements GameInfo, Desktop {
-    /** Fabric's metadata of a mod. */
     private record Meta(ModMetadata meta) implements ModMeta {
         @Override
         public String name() {
@@ -91,7 +89,6 @@ final class Game121 implements GameInfo, Desktop {
         out.put("GPU", com.mojang.blaze3d.platform.GlUtil.getRenderer());
         out.put("Driver", com.mojang.blaze3d.platform.GlUtil.getOpenGLVersion());
         out.put("GPU vendor", com.mojang.blaze3d.platform.GlUtil.getVendor());
-        // The pack's name is not part of Iris's public API; this port does not reach into Iris itself yet.
         out.put("Shader pack", !FabricLoader.getInstance().isModLoaded("iris") ? "Iris not installed"
                 : net.shattergui.compat.iris.IrisCompat.shaderPackInUse() ? "in use (name not read on 1.21.1)" : "none");
         out.put("Language", Minecraft.getInstance().options.languageCode);
@@ -136,8 +133,6 @@ final class Game121 implements GameInfo, Desktop {
             player.displayClientMessage(ComponentText.unwrap(message), true);
         }
     }
-
-    // --- desktop ---
 
     @Override
     public String clipboard() {

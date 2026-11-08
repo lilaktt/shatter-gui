@@ -17,11 +17,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** The schema-2 parser on good and broken input: clear errors with the field's path, clamping, unknown fields. */
 class FxParserTest {
     private static final String MINIMAL = "{\"schema\": 2, \"id\": \"t\"}";
 
-    /** A minimal effect with one extra top-level field (JSON fragment without braces). */
     private static String with(String fields) {
         return "{\"schema\": 2, \"id\": \"t\", " + fields + "}";
     }
@@ -189,7 +187,6 @@ class FxParserTest {
         FxParser.Result many = parse(with("\"emitters\": [" + emitters + "], \"appearance\": {\"overlays\": [" + overlays
                 + "], \"mask\": {\"texture\": \"m1\"}}, \"trigger\": {\"type\": \"mask\", \"texture\": \"m2\"}, "
                 + "\"layers\": [{\"module\": \"drag\"}]"));
-        // 8 sprites + 4 overlays + a mask + a trigger mask: the most the format can name, within the limit.
         assertTrue(many.ok(), many.problems().all().toString());
         assertEquals(14, many.def().textures.size());
         assertEquals(FxDef.TextureRole.SPRITE, many.def().textures.get("s0"));
@@ -237,7 +234,6 @@ class FxParserTest {
         assertTrue(hasError(r, "", "too large"));
     }
 
-    /** Random damage to the examples: the parser never throws, and a result is either usable or has errors. */
     @Test
     void fuzzedExamplesNeverThrow() throws IOException {
         Random random = new Random(1234);

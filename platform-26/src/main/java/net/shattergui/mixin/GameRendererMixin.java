@@ -24,18 +24,15 @@ public abstract class GameRendererMixin {
     @Final
     private FogRenderer fogRenderer;
 
-    /** The level's projection, view bobbing included, for the effects drawn over the world. */
     @ModifyArg(method = "renderLevel", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/ProjectionMatrixBuffer;getBuffer(Lorg/joml/Matrix4f;)Lcom/mojang/blaze3d/buffers/GpuBufferSlice;"))
     private Matrix4f shatterGui$levelProjection(Matrix4f projection) {
         OnTopPass.levelProjection(projection);
         OnTopPass.cleanProjection(gameRenderState.levelRenderState.cameraRenderState.projectionMatrix);
-        // Before the level render: without a shader pack's view bobbing (it is put into this matrix during the render).
         OnTopPass.cleanViewRotation(gameRenderState.levelRenderState.cameraRenderState.viewRotationMatrix);
         return projection;
     }
 
-    /** The menu blur radius of this frame: faded with an opening or closing screen (OpenBackdrop). */
     @ModifyArg(method = "render", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/GlobalSettingsUniform;update(IIDJLnet/minecraft/client/DeltaTracker;ILnet/minecraft/world/phys/Vec3;Z)V"),
             index = 5)
@@ -50,12 +47,9 @@ public abstract class GameRendererMixin {
                 gameRenderState.levelRenderState.cameraRenderState.viewRotationMatrix);
     }
 
-    /** Right before vanilla clears the depth for the hand (javap: the one clear in renderLevel): it still holds the world. */
     @Inject(method = "renderLevel", at = @At(value = "INVOKE",
             target = "Lcom/mojang/blaze3d/systems/CommandEncoder;clearDepthTexture(Lcom/mojang/blaze3d/textures/GpuTexture;D)V"))
     private void shatterGui$beforeHand(DeltaTracker deltaTracker, CallbackInfo ci) {
-        // The camera rotation the level was drawn with: the object vanilla handed to LevelRenderer#renderLevel, which a
-        // shader pack multiplied by the view bobbing in place.
         FrameHooks.beforeHand(fogRenderer.getBuffer(FogRenderer.FogMode.NONE),
                 gameRenderState.levelRenderState.cameraRenderState.viewRotationMatrix);
     }

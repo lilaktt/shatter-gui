@@ -2,11 +2,6 @@ package net.shattergui.fx;
 
 import java.util.List;
 
-/**
- * A colour over time: stops at times 0..1, linearly blended (alpha included). Written as a list of colours (spread
- * evenly) or of stops: {@code ["#ffffff", "#aa50ff"]} or {@code [{"t": 0, "color": "#fff"}, {"t": 0.7, "color": "#a5f"}]}.
- * Colours: {@code #RGB}, {@code #RRGGBB} or {@code #AARRGGBB}.
- */
 public final class Gradient {
     public static final Gradient WHITE = new Gradient(new float[]{0}, new int[]{0xFFFFFFFF});
     final float[] times;
@@ -52,7 +47,6 @@ public final class Gradient {
                 | (Math.round(ag + (bg - ag) * t) << 8) | Math.round(ab + (bb - ab) * t);
     }
 
-    /** #RGB, #RRGGBB, #AARRGGBB → ARGB, or null. */
     public static Integer parseColor(String text) {
         if (text == null || !text.startsWith("#")) {
             return null;
@@ -75,7 +69,6 @@ public final class Gradient {
         }
     }
 
-    /** Reads a gradient from JSON for showing it: anything unreadable gives the default. */
     public static Gradient fromJson(com.google.gson.JsonElement json, Gradient def) {
         try {
             return read(new Node(json, "", new FxProblems()), def);
@@ -84,7 +77,6 @@ public final class Gradient {
         }
     }
 
-    /** #AARRGGBB (or #RRGGBB when opaque) for an ARGB colour. */
     public static String format(int argb) {
         return (argb >>> 24) == 0xFF ? String.format(java.util.Locale.ROOT, "#%06x", argb & 0xFFFFFF) : String.format(java.util.Locale.ROOT, "#%08x", argb);
     }

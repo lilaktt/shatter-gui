@@ -7,16 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
-/**
- * A choice of a few options as buttons side by side. Buttons are as wide as their labels; when they do not fit in one
- * line they flow onto the next, and each line is stretched to the full width. A label wider than the whole width is
- * the only one ever shortened, and then its tooltip shows it in full.
- */
 public class Segmented extends Container {
     private static final int GAP = 3;
     private final List<Button> buttons = new ArrayList<>();
 
-    /** Adds an option: drawn as chosen while {@code chosen} is true. */
     public Button option(Text label, Text description, BooleanSupplier chosen, Runnable action) {
         Button b = new Button(label, null, Button.Kind.GHOST, action) {
             @Override

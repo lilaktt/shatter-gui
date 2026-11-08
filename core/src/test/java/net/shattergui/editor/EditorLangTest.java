@@ -16,7 +16,6 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Every name the editor builds from data (modules, parameters, forms, easings, choices, templates) is translated. */
 class EditorLangTest {
     private static JsonObject lang(String code) throws IOException {
         try (InputStream in = EditorLangTest.class.getResourceAsStream("/assets/shatter_gui/lang/" + code + ".json")) {
@@ -83,10 +82,6 @@ class EditorLangTest {
         }
     }
 
-    /**
-     * The tooltip text of every parameter (settings and module), module type, list value, tab and help page — each one
-     * shown when its control is hovered or focused.
-     */
     private static List<String> tooltipKeys() {
         List<String> keys = new ArrayList<>();
         String p = "ui.shatter_gui.fx.";
@@ -115,8 +110,6 @@ class EditorLangTest {
         for (String tab : List.of("general", "effects", "screens", "custom")) {
             keys.add("ui.shatter_gui.tab." + tab + ".desc");
         }
-        // Choosing effects on the Effects tab: the buttons under the selected card, the star, the badges and the
-        // preview's direction.
         for (String key : List.of("assign.open.tooltip", "assign.open.none.tooltip", "assign.close.tooltip",
                 "assign.both.tooltip", "assign.remove.tooltip", "favorite.tooltip", "badge.tooltip",
                 "preview.mode.open.desc", "preview.mode.close.desc", "preview.mode.both.desc", "fx.preview.opening.desc")) {
@@ -144,7 +137,6 @@ class EditorLangTest {
                     continue;
                 }
                 int length = lang.get(key).getAsString().length();
-                // Help pages are a few sentences; a tooltip one or two (plus the range line the code adds).
                 int max = key.contains(".help.") ? 520 : 260;
                 int min = key.endsWith(".title") ? 2 : 8;
                 if (length < min || length > max) {
@@ -163,7 +155,6 @@ class EditorLangTest {
             List<String> missing = dynamicKeys().stream().filter(k -> !lang.has(k)).toList();
             assertTrue(missing.isEmpty(), code + " misses " + missing);
         }
-        // Both languages have the same editor keys.
         JsonObject en = lang("en_us");
         JsonObject uk = lang("uk_ua");
         for (String key : en.keySet()) {

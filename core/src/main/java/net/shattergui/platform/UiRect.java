@@ -1,6 +1,5 @@
 package net.shattergui.platform;
 
-/** A rectangle in GUI coordinates (a clip area); the same rules as the game's screen rectangles. */
 public record UiRect(int left, int top, int width, int height) {
     public int right() {
         return left + width;
@@ -10,7 +9,6 @@ public record UiRect(int left, int top, int width, int height) {
         return top + height;
     }
 
-    /** The overlap, or null if they do not overlap. */
     public UiRect intersection(UiRect other) {
         int l = Math.max(left(), other.left());
         int t = Math.max(top(), other.top());

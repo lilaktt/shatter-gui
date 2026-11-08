@@ -9,13 +9,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * A drop-down list: shows the chosen option (with its thumbnail, if any) and opens a list above everything else
- * ({@link Popup}) on click, Enter or Space. In the list: arrows move, Enter chooses, Esc or a click outside closes.
- * Left/right arrows on the closed drop-down step through the options.
- */
 public class Dropdown<T> extends Widget {
-    /** Draws an option's small picture. */
     @FunctionalInterface
     public interface Painter {
         void paint(Ui ui, int x, int y, int w, int h);
@@ -31,7 +25,6 @@ public class Dropdown<T> extends Widget {
     private final Supplier<T> getter;
     private final Consumer<T> setter;
     private final Reveal reveal = new Reveal();
-    /** The list on screen (also while it animates out), or null. */
     private Popup popup;
     private int thumbWidth = 22;
 
@@ -42,7 +35,6 @@ public class Dropdown<T> extends Widget {
         this.h = Theme.CONTROL_HEIGHT;
     }
 
-    /** Taller, with room for thumbnails of this width. */
     public Dropdown<T> thumbs(int width, int height) {
         thumbWidth = width;
         this.h = height;
@@ -100,7 +92,6 @@ public class Dropdown<T> extends Widget {
         return options.get().size();
     }
 
-    /** Chooses option {@code index} (as a click on it in the list). */
     public void choose(int index) {
         List<Option<T>> all = options.get();
         if (index >= 0 && index < all.size()) {
@@ -108,12 +99,10 @@ public class Dropdown<T> extends Widget {
         }
     }
 
-    /** Open or opening (a list that is only animating out counts as closed). */
     public boolean isOpen() {
         return popup != null && reveal.wantsOpen();
     }
 
-    /** The list's open/close state (tests). */
     public Reveal.State listState() {
         return reveal.state();
     }
@@ -127,12 +116,10 @@ public class Dropdown<T> extends Widget {
             popup = new Popup();
             screen().openOverlay(popup);
         }
-        // Opened again while still closing: the same list turns round from where it is.
         reveal.open();
         screen().setFocus(popup);
     }
 
-    /** Closes the list with its (shorter) closing animation. */
     public void closeList() {
         if (!isOpen()) {
             return;
@@ -180,7 +167,6 @@ public class Dropdown<T> extends Widget {
         return false;
     }
 
-    /** The open list. */
     private final class Popup extends UiScreen.Overlay {
         private static final int MAX_VISIBLE = 9;
         private final List<Option<T>> items = options.get();
@@ -221,7 +207,6 @@ public class Dropdown<T> extends Widget {
 
         @Override
         public boolean ownsClick(double mx, double my) {
-            // A click on the header toggles the list (Dropdown.mouseDown), it is not a click outside.
             return Dropdown.this.contains(mx, my);
         }
 
@@ -237,7 +222,6 @@ public class Dropdown<T> extends Widget {
             Draw.shadow(ui, x, y, w, h, Theme.RADIUS_CONTROL, a);
             Draw.roundBox(ui, x, y, w, h, Theme.RADIUS_CONTROL, Theme.fade(0xFF15161C, a), Theme.fade(Theme.BORDER_STRONG, a));
             if (a < 0.35f) {
-                // Nearly gone (or just appearing): only the box, the items would flicker at this size of fade.
                 ui.g.pose().popMatrix();
                 return;
             }
@@ -310,7 +294,6 @@ public class Dropdown<T> extends Widget {
             }
             click();
             setter.accept(items.get(index).value());
-            // One sound for choosing: the list closes without its own click.
             reveal.close();
             screen().setFocus(Dropdown.this);
         }
@@ -372,7 +355,6 @@ public class Dropdown<T> extends Widget {
         }
     }
 
-    /** Called by the screen when the popup is removed (by any path). */
     void popupClosed() {
         popup = null;
         reveal.reset();

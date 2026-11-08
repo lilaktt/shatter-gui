@@ -1,9 +1,5 @@
 package net.shattergui.ui;
 
-/**
- * Children in equal columns, as many as fit at {@link #minCell} wide (never more than there are children, cells at
- * most twice as wide); rows as tall as their tallest child.
- */
 public class Grid extends Container {
     private final int minCell;
     private final int gap;
@@ -20,7 +16,6 @@ public class Grid extends Container {
     @Override
     protected int measure(int width) {
         int cols = columns(width);
-        // Few children: wider cells, but not more than twice the minimum.
         int cell = Math.min(minCell * 2, (width - gap * (cols - 1)) / cols);
         int cy = y;
         int rowH = 0;
@@ -32,7 +27,6 @@ public class Grid extends Container {
             rowH = Math.max(rowH, child.h);
             col++;
             if (col == cols || i == children.size() - 1) {
-                // Equal heights within a row.
                 for (int j = rowStart; j <= i; j++) {
                     Widget c = children.get(j);
                     c.setBounds(c.x, c.y, c.w, rowH);

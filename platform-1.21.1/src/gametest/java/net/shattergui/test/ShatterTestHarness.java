@@ -27,12 +27,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
 
-/**
- * The 1.21.1 test harness (Fabric API for 1.21.1 has no client game tests): with {@code -Dshatter.test=true}
- * ({@code runClientTest}) it waits for the title screen, creates a fresh flat creative world, runs the scenarios on a
- * thread of its own (each step on the client thread), logs every check as {@code [ShatterTest] OK/FAIL}, writes
- * screenshots to {@code build/run/clientTest/screenshots} and quits the game. {@code -PtestOnly=a,b} picks scenarios.
- */
 public final class ShatterTestHarness implements ClientModInitializer {
     private static final Map<String, Consumer<TestContext>> SCENARIOS = new LinkedHashMap<>();
 
@@ -56,7 +50,6 @@ public final class ShatterTestHarness implements ClientModInitializer {
                 return;
             }
             if (screen instanceof AccessibilityOnboardingScreen) {
-                // The first start of a fresh game folder asks about accessibility first.
                 client.options.onboardAccessibility = false;
                 client.execute(() -> client.setScreen(new TitleScreen(false)));
             } else if (screen instanceof TitleScreen) {
@@ -82,7 +75,6 @@ public final class ShatterTestHarness implements ClientModInitializer {
         });
     }
 
-    /** No pause on focus loss, no tutorial, no narrator, the GUI scale tests expect. */
     private static void quietOptions(Minecraft mc) {
         mc.options.pauseOnLostFocus = false;
         mc.options.onboardAccessibility = false;
@@ -127,7 +119,6 @@ public final class ShatterTestHarness implements ClientModInitializer {
         context.runOnClient(Minecraft::stop);
     }
 
-    /** A flat creative world with commands, always noon and clear, nothing spawning. */
     private static void createWorld(TestContext context) {
         context.runOnClient(mc -> {
             GameRules rules = new GameRules();

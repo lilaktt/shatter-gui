@@ -22,10 +22,6 @@ import net.shattergui.platform.Texts;
 import net.shattergui.platform.UiTextures;
 import net.shattergui.shatter.ShardManager;
 
-/**
- * Minecraft 26.1.2 with Fabric. Found by core through {@code META-INF/services}. The services only forward to the
- * classes that did the work before core existed; nothing here decides anything.
- */
 public final class PlatformImpl implements Platform {
     private final ConfigPaths paths = () -> FabricLoader.getInstance().getConfigDir();
     private final Texts26 texts = new Texts26();

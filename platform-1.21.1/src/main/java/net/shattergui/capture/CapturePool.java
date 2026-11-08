@@ -10,19 +10,10 @@ import net.shattergui.ShatterGuiClient;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Render targets that hold captured screens. Everything stays on the GPU: the closing screen is drawn straight into a
- * slot's {@link TextureTarget} and the shards sample that target's colour texture, so there is neither a read-back to
- * the CPU nor a copy (26.1 copies the main target into a slot with {@code copyTextureToTexture}). Slots are registered
- * in the {@code TextureManager} once and reused; a slot's target is only recreated when the window size changes.
- */
 public final class CapturePool {
-    /** Simultaneous captures (overlapping shard waves). Past this the oldest wave is dropped. */
     public static final int MAX_SLOTS = 8;
-    /** Free slots that keep their GPU memory for reuse; the rest give the memory back. */
     private static final int MAX_IDLE_WITH_MEMORY = 1;
 
-    /** A captured screen, sampled by the shards of one wave: the texture is the target's colour attachment. */
     public static final class Slot extends AbstractTexture {
         private final ResourceLocation id;
         private TextureTarget target;
@@ -44,7 +35,6 @@ public final class CapturePool {
             return target.height;
         }
 
-        /** Where the screen is drawn: bound for writing, cleared to transparent black. */
         public TextureTarget target() {
             return target;
         }
@@ -56,10 +46,8 @@ public final class CapturePool {
 
         @Override
         public void load(ResourceManager manager) {
-            // Nothing to load: the content is drawn on the GPU.
         }
 
-        /** The colour texture belongs to the target, which frees it ({@link #freeMemory}). */
         @Override
         public void releaseId() {
         }
@@ -95,7 +83,6 @@ public final class CapturePool {
     private CapturePool() {
     }
 
-    /** A free slot holding a target of the given size, or null if all {@link #MAX_SLOTS} are in use. */
     public static Slot acquire(int width, int height) {
         Slot slot = null;
         for (Slot candidate : SLOTS) {
@@ -126,7 +113,6 @@ public final class CapturePool {
         }
     }
 
-    /** Number of slots currently holding GPU memory (for leak checks; 1.21.1 needs no backup of the frame). */
     public static int texturesWithMemory() {
         int count = 0;
         for (Slot slot : SLOTS) {

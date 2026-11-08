@@ -6,7 +6,6 @@ import net.shattergui.platform.Keys;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-/** A pill-shaped on/off switch; the knob slides and the track fills with the accent. Enter/Space/arrows switch it. */
 public class Toggle extends Widget {
     public static final int WIDTH = 28;
     private final BooleanSupplier getter;

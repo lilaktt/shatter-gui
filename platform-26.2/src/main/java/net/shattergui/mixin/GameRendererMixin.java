@@ -15,7 +15,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** The frame's hooks in 26.2. What they do is in {@link FrameHooks}. */
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
     @Shadow
@@ -25,18 +24,15 @@ public abstract class GameRendererMixin {
     @Final
     private FogRenderer fogRenderer;
 
-    /** The level's projection, view bobbing included, and rotation, for the effects drawn over the world. */
     @ModifyArg(method = "renderLevel", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/ProjectionMatrixBuffer;getBuffer(Lorg/joml/Matrix4f;)Lcom/mojang/blaze3d/buffers/GpuBufferSlice;"))
     private Matrix4f shatterGui$levelProjection(Matrix4f projection) {
         OnTopPass.levelProjection(projection);
         OnTopPass.cleanProjection(gameRenderState.levelRenderState.cameraRenderState.projectionMatrix);
-        // Before the level render: without a shader pack's view bobbing (it is put into this matrix during the render).
         OnTopPass.cleanViewRotation(gameRenderState.levelRenderState.cameraRenderState.viewRotationMatrix);
         return projection;
     }
 
-    /** The menu blur radius of this frame: faded with an opening or closing screen (OpenBackdrop). */
     @ModifyArg(method = "render", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/GlobalSettingsUniform;update(IIDJLnet/minecraft/client/DeltaTracker;ILnet/minecraft/world/phys/Vec3;Z)V"),
             index = 5)
@@ -51,7 +47,6 @@ public abstract class GameRendererMixin {
                 gameRenderState.levelRenderState.cameraRenderState.viewRotationMatrix);
     }
 
-    /** Right before vanilla clears the depth for the hand (javap: the one clear in renderLevel): it still holds the world. */
     @Inject(method = "renderLevel", at = @At(value = "INVOKE",
             target = "Lcom/mojang/blaze3d/systems/CommandEncoder;clearDepthTexture(Lcom/mojang/blaze3d/textures/GpuTexture;D)V"))
     private void shatterGui$beforeHand(DeltaTracker deltaTracker, CallbackInfo ci) {

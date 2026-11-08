@@ -26,38 +26,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-/**
- * Opens and closes screens in a real client and checks when shards appear. Screenshots of the effect land in the
- * test run's screenshots folder. Run with {@code ./gradlew runClientGameTest}.
- */
 public final class ShatterClientGameTest implements FabricClientGameTest {
-    /** Long enough for every shard to die (lifetime up to 120% of 60 ticks) and its texture to be released. */
     private static final int SHARD_LIFETIME_WAIT = 90;
 
     private final List<String> failures = new ArrayList<>();
 
     @Override
     public void runTest(ClientGameTestContext context) {
-        // Full HD, so the [ShatterProfile] numbers match a real game window.
-        // (Not on Vulkan: changing the window there lost the device on the title screen, see NOTES.md.)
         if (!Boolean.getBoolean("shatter.test.keepWindow")) {
             context.getInput().resizeWindow(1920, 1080);
         }
         context.waitTicks(5);
 
-        // Every wave breaks and flies the same way in every run (scenarios that check where pieces go seed again).
         context.runOnClient(mc -> ShardManager.seedForTests(OnTopScenario.TEST_SEED));
-        // No scenario asks the real Modrinth or GitHub: every page answers "up" unless LinksScenario says otherwise.
         LinksScenario.everyPageUp();
         ShatterConfig config = ShatterConfig.get();
-        // The [ShatterProfile] lines are part of what a test run leaves for reading (off by default for players).
         config.profiling = true;
         config.applyTo = ShatterConfig.APPLY_ALL;
         config.effect = "glass";
         config.overrides.clear();
         config.disabledScreens.clear();
 
-        // No world loaded: setScreen(null) turns into the title screen and must not shatter.
         int closes = closeCount(context);
         context.setScreen(TitleScreen::new);
         context.waitTicks(5);
@@ -75,7 +64,6 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
             check(closeCount(context) == closes, "level loading screen must not shatter");
             StartupScenario.run(context, this::check, ShatterClientGameTest::furnace);
 
-            // With Iris only the shader screenshots run; everything else is covered by the runs without shaders.
             String irisOnly = System.getProperty("shatter.test.only", "");
             if (irisOnly.contains("matrix")) {
                 MatrixScenario.startup(context, failures);
@@ -135,15 +123,12 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
 
     private void runWithoutShaders(ClientGameTestContext context, TestSingleplayerContext singleplayer,
                                    ShatterConfig config) {
-        // 1.8 uses the id "spatial-gui", later versions "spatial_gui" (which also provides "spatial-gui").
         boolean spatial = FabricLoader.getInstance().isModLoaded("spatial-gui");
-        // -PtestOnly=shots,crawler,fxeditor: only those scenarios (the full run takes minutes).
         String only = System.getProperty("shatter.test.only", "").trim();
         if (!only.isEmpty()) {
             java.util.Set<String> chosen = java.util.Set.of(only.split(","));
             String prefix = spatial ? "spatial_" : "";
             ShatterGuiClient.LOGGER.info("[ShatterTest] only {} (Spatial GUI {})", chosen, spatial ? "loaded" : "not loaded");
-            // -Prepeat=N: the chosen scenarios N times in a row (each round seeded the same way, see ShardManager).
             int repeat = Integer.getInteger("shatter.test.repeat", 1);
             for (int round = 1; round <= repeat; round++) {
                 if (repeat > 1) {
@@ -151,7 +136,6 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
                     context.runOnClient(mc -> ShardManager.seedForTests(OnTopScenario.TEST_SEED));
                 }
                 if (chosen.contains("reload")) {
-                    // Resource reloads in a row, nothing else going on (a native crash during one on 26.3).
                     for (int i = 1; i <= Integer.getInteger("shatter.test.reloads", 20); i++) {
                         context.runOnClient(Minecraft::reloadResourcePacks);
                         context.waitFor(mc -> McTest.overlay(mc) == null, 1200);
@@ -298,8 +282,6 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
                 }
                 if (chosen.contains("quickshots")) {
                     if (spatial) {
-                        // Third person is Spatial GUI's default; in first person the closing is not drawn during the
-                        // camera's way back, which shows the moments better.
                         QuickShotsScenario.run(context, "spatial_third", ShatterClientGameTest::furnace);
                         SpatialScenarios setup = new SpatialScenarios(context, this::check);
                         setup.setSpatial("firstPersonModeInventory", true);
@@ -344,7 +326,6 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
         }
         BoundsScenario.run(context, singleplayer, this::check, context::takeScreenshot,
                 spatial ? "spatial_bounds" : "bounds", ShatterClientGameTest::furnace);
-        // With Spatial GUI (third person after its scenarios) its plane flies; without it the flat GUI.
         FlyScenario.run(context, singleplayer, this::check, context::takeScreenshot, spatial ? "spatial_fly" : "fly");
         EscScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
         OnTopScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
@@ -373,29 +354,24 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
         BundledEffectsScenario.run(context, this::check, context::takeScreenshot, prefix + "bundled", ShatterClientGameTest::furnace);
         FxEditorScenario.run(context, this::check, context::takeScreenshot, prefix + "fx_editor", ShatterClientGameTest::furnace);
 
-        // applyTo = all: screens without a container work too.
         closeAndCheck(context, "pause", () -> new PauseScreen(true), true);
         closeAndCheck(context, "chat", () -> new ChatScreen("", false), true);
         closeAndCheck(context, "inventory", () -> new InventoryScreen(Minecraft.getInstance().player), true);
 
         BurnScenario.run(context, this::check, context::takeScreenshot, "shatter_burn_furnace", ShatterClientGameTest::furnace);
 
-        // applyTo = containers: only container screens.
         config.effect = "glass";
         config.applyTo = ShatterConfig.APPLY_CONTAINERS;
         closeAndCheck(context, "pause_containers_only", () -> new PauseScreen(true), false);
         closeAndCheck(context, "inventory_containers_only", () -> new InventoryScreen(Minecraft.getInstance().player), true);
         config.applyTo = ShatterConfig.APPLY_ALL;
 
-        // disabledScreens by menu key.
         config.disabledScreens.add("minecraft:inventory");
         closeAndCheck(context, "inventory_disabled", () -> new InventoryScreen(Minecraft.getInstance().player), false);
         config.disabledScreens.clear();
 
-        // The cycle key and the Effects tab (favourites only, names in the action bar): ChooseScenario.
         ChooseScenario.run(context, this::check, context::takeScreenshot, prefix + "choose");
 
-        // Rapid open/close: the texture pool must stay bounded and give memory back.
         for (int i = 0; i < 30; i++) {
             context.setScreen(() -> new InventoryScreen(Minecraft.getInstance().player));
             context.waitTicks(2);
@@ -438,7 +414,6 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
 
     private static Screen furnace() {
         Minecraft mc = Minecraft.getInstance();
-        // Client-only menu; enough to render the furnace screen.
         FurnaceMenu menu = new FurnaceMenu(0, mc.player.getInventory());
         return new FurnaceScreen(menu, mc.player.getInventory(), Component.literal("Furnace"));
     }

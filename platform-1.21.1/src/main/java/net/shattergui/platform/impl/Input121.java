@@ -4,10 +4,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.shattergui.platform.CharInput;
 import net.shattergui.platform.KeyInput;
 
-/**
- * 1.21.1's input (plain numbers) in core's terms, answering as 26.1's key events do (see {@link KeyInput}): modifiers
- * from the event's own bits; the edit shortcuts through 1.21.1's own checks (which read the keyboard's current state).
- */
 public final class Input121 {
     private static final int SHIFT = 1;
     private static final int CONTROL = 2;

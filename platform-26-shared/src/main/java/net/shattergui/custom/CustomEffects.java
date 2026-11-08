@@ -21,15 +21,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Custom effects from {@code config/shatter_gui/effects/*.json} and from resource packs
- * ({@code assets/<namespace>/shatter_gui/effects/*.json}). Reloaded with the resources (F3+T); for the same id the
- * player's config file wins over a resource pack. A file that cannot be used is skipped with one log line.
- */
 public final class CustomEffects {
     public static final Path DIRECTORY = FabricLoader.getInstance().getConfigDir().resolve("shatter_gui").resolve("effects");
     private static final String RESOURCE_PATH = "shatter_gui/effects";
-    /** Largest file read (a valid effect is a few hundred bytes). */
     private static final long MAX_FILE_BYTES = 65_536;
 
     private static final Map<String, CustomEffectDef> FROM_CONFIG = new LinkedHashMap<>();
@@ -38,15 +32,12 @@ public final class CustomEffects {
     private CustomEffects() {
     }
 
-    /** Client start: writes the example files the first time, then reads the config folder. */
     public static void init() {
         writeExampleOnce();
-        // Schema-2 effects load with the resources (their textures need the GPU): only the example is put in place here.
         FxEffects.init();
         reloadConfig();
     }
 
-    /** Resource reload (also F3+T): resource packs and the config folder again. */
     public static void reload(ResourceManager resources) {
         FROM_PACKS.clear();
         for (Map.Entry<Identifier, Resource> entry : resources.listResources(RESOURCE_PATH,
@@ -66,7 +57,6 @@ public final class CustomEffects {
         FxEffects.reload(resources);
     }
 
-    /** Reads the config folder and registers all custom effects (config over packs). */
     public static void reloadConfig() {
         FROM_CONFIG.clear();
         if (Files.isDirectory(DIRECTORY)) {
@@ -78,7 +68,6 @@ public final class CustomEffects {
                         }
                         String json = Files.readString(file, StandardCharsets.UTF_8);
                         if (FxParser.schemaOf(json) == FxLimits.SCHEMA) {
-                            // Schema 2: loaded by FxEffects.
                             continue;
                         }
                         CustomEffectDef def = CustomEffectDef.parse(json, file.getFileName().toString());
@@ -98,20 +87,14 @@ public final class CustomEffects {
                 FROM_PACKS.size());
     }
 
-    /** Custom effects from resource packs (shown, not editable; a config file with the same id wins). */
     public static Collection<CustomEffectDef> fromPacks() {
         return Collections.unmodifiableCollection(FROM_PACKS.values());
     }
 
-    /** The player's own custom effects (editable in the editor). */
     public static Collection<CustomEffectDef> fromConfig() {
         return Collections.unmodifiableCollection(FROM_CONFIG.values());
     }
 
-    /**
-     * The editor's Save: writes the given effects as the config folder's content (removing files of effects that are
-     * no longer there) and registers them.
-     */
     public static void saveAll(Collection<CustomEffectDef> defs) {
         try {
             Files.createDirectories(DIRECTORY);

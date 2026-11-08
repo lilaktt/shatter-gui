@@ -17,7 +17,6 @@ import net.shattergui.platform.Text;
 import java.util.Collection;
 import java.util.List;
 
-/** The effect registry of 26.1 ({@link ShatterEffects}, {@link FxEffects}, {@link CustomEffects}) as core sees it. */
 final class Effects26 implements EffectCatalog {
     @Override
     public List<String> ids() {

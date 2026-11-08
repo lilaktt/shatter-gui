@@ -2,10 +2,6 @@ package net.shattergui.ui.preview;
 
 import net.minecraft.client.gui.screens.Screen;
 
-/**
- * The editor's real preview (vanilla screens drawn into textures) on 1.21.1: not ported yet, so it is never available
- * and the editor shows its drawn samples. Same methods as on 26.1.
- */
 public final class RealPreview {
     private RealPreview() {
     }
@@ -50,7 +46,6 @@ public final class RealPreview {
     public static void breakNextForTests() {
     }
 
-    /** {@code GameRenderer#render}, before the HUD: draws a queued picture. */
     public static void beforeHud(float partialTick) {
     }
 }

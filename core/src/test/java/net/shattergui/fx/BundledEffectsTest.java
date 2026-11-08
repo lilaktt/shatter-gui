@@ -13,7 +13,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** The effects shipped with the mod: they read cleanly, match their settings, and stay gentle enough. */
 class BundledEffectsTest {
     private static String json(String id) throws IOException {
         try (InputStream in = BundledEffectsTest.class.getResourceAsStream("/assets/shatter_gui/effects/" + id + ".json")) {
@@ -54,7 +53,6 @@ class BundledEffectsTest {
         for (String id : BundledParams.ids()) {
             FxSimulation backward = sim(parse(id), false);
             backward.reverse(6);
-            // 6 ticks of motion and one at rest, gathered, before the real screen takes over.
             assertEquals(7, backward.length(), id);
             for (int t = 0; t < 7; t++) {
                 assertTrue(backward.alive(), id + " still gathering at " + t);
@@ -86,7 +84,6 @@ class BundledEffectsTest {
                     }
                 }
                 assertTrue(!forward.alive() || !forward.sprites().isEmpty(), id + " ends");
-                // Gathered: every piece is back where it was cut, whole and opaque.
                 for (FxSimulation.Piece p : backward.pieces()) {
                     float u = (p.u - 0.5f) * 0.9f;
                     float v = (0.5f - p.v) * 0.85f;
@@ -98,7 +95,6 @@ class BundledEffectsTest {
         }
     }
 
-    /** At most three sharp flashes per second, per piece and over the whole interface. */
     @Test
     void flashesAtMostThreePerSecond() throws IOException {
         for (String id : BundledParams.ids()) {
@@ -134,7 +130,6 @@ class BundledEffectsTest {
         }
     }
 
-    /** With reduce motion nothing flickers: a piece only fades out, never back in. */
     @Test
     void reducedMotionDoesNotFlicker() throws IOException {
         for (String id : BundledParams.ids()) {
@@ -153,10 +148,6 @@ class BundledEffectsTest {
         }
     }
 
-    /**
-     * The quick everyday effects stay light: 0.3–0.9 s, at most 60 pieces and 40 particles, no smoke, no glow (so no
-     * flash), a calmer version or the engine's own calming for reduce motion, and they open by gathering.
-     */
     @Test
     void quickEffectsStayLight() throws IOException {
         List<String> smoke = List.of("minecraft:smoke", "minecraft:large_smoke", "minecraft:campfire_cosy_smoke",

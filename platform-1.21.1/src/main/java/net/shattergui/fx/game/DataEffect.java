@@ -27,19 +27,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 
-/**
- * A schema-2 effect in the game: the definition, its loaded textures, and the particles and sounds resolved against
- * the game's registries. Each closed screen gets a {@link DataWave} that runs the {@link FxSimulation} and moves the
- * shards; the renderer draws the wave's overlays and sprites through {@link net.shattergui.render.WaveDecor}.
- */
 public final class DataEffect implements ShatterEffect, EffectCatalog.Data, EffectCatalog.Built {
     public final FxDef def;
     public final FxTextures textures;
-    /** Where it was loaded from (file, package or resource pack), for messages. */
     public final String origin;
-    /** Shipped with the mod (assets/shatter_gui/effects): translated name, its own settings, not editable in place. */
     public final boolean bundled;
-    /** Played backwards: the pieces gather into the interface (opening a screen). */
     public final boolean reversed;
     final Map<String, SimpleParticleType> particles;
     final Map<String, SoundEvent> sounds;
@@ -57,7 +49,6 @@ public final class DataEffect implements ShatterEffect, EffectCatalog.Data, Effe
         this.sounds = sounds;
     }
 
-    /** The same effect played backwards, for opening a screen (same textures, particles and sounds). */
     public DataEffect reversed() {
         if (reversed) {
             return this;
@@ -68,7 +59,6 @@ public final class DataEffect implements ShatterEffect, EffectCatalog.Data, Effe
         return reversedView;
     }
 
-    /** Resolves particles and sounds; unknown ones are dropped with a warning. */
     static DataEffect link(FxDef def, FxTextures textures, String origin, List<String> warnings) {
         return link(def, textures, origin, false, warnings);
     }
@@ -109,7 +99,6 @@ public final class DataEffect implements ShatterEffect, EffectCatalog.Data, Effe
 
     @Override
     public boolean countsTowardShardLimit() {
-        // Pieces of several triangles must stay whole; the format has its own hard limits.
         return false;
     }
 
@@ -167,7 +156,6 @@ public final class DataEffect implements ShatterEffect, EffectCatalog.Data, Effe
         out.unlit = sim.def.appearance.fullbright();
         out.scale = sim.scale(piece, partialTick);
         if (reversed) {
-            // Backwards the pieces end uncut: the face shading eases out towards the unlit GUI.
             out.lightAge = Math.max(0f, sim.shownForward(partialTick));
         }
         float glow = sim.emissive(piece, partialTick);
@@ -177,13 +165,10 @@ public final class DataEffect implements ShatterEffect, EffectCatalog.Data, Effe
         }
     }
 
-    /** See {@link FxRun#simulate}. */
     public static FxSimulation simulate(FxDef def, boolean bundled, boolean reversed, List<Fracture.Piece> cut, float width,
                                         float height, FxSimulation.Host host, Random random, ParamValues params) {
         return FxRun.simulate(def, bundled, reversed, cut, width, height, host, random, params);
     }
-
-    // --- as the settings and the editor see it (core) ---
 
     @Override
     public FxDef def() {
@@ -205,12 +190,10 @@ public final class DataEffect implements ShatterEffect, EffectCatalog.Data, Effe
         return origin;
     }
 
-    /** Frees the textures (reload). */
     void release() {
         textures.release();
     }
 
-    /** Names of the textures that loaded (for the editor and logs). */
     public List<String> loadedTextures() {
         List<String> names = new ArrayList<>();
         for (String name : def.textures.keySet()) {

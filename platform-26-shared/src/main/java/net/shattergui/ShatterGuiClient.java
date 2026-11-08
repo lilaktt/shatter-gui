@@ -26,7 +26,6 @@ public final class ShatterGuiClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // First, so a warning while starting up is kept for the diagnostics too.
         net.shattergui.debug.WarningLog.install();
         LOGGER.info("Shatter GUI for Minecraft {}, build {}", net.shattergui.BuildInfo.minecraft(),
                 net.shattergui.BuildInfo.describe());
@@ -45,7 +44,6 @@ public final class ShatterGuiClient implements ClientModInitializer {
             FlyOpen.tick();
             PreviewRunner.tick();
             ShardManager.tick();
-            // After the waves: an opening that just ended unlocks input in this same tick.
             OpenAssemble.tick();
         });
         LevelRenderEvents.COLLECT_SUBMITS.register(ShardRenderer::submit);

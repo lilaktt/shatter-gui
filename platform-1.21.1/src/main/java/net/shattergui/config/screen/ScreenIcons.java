@@ -26,13 +26,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * The picture next to a screen in the editor: for vanilla menus and screens an item that stands for it (furnace,
- * anvil, a book, a sign…), for screens of other mods the mod's icon from its Fabric metadata, otherwise a plain window.
- */
 public final class ScreenIcons {
     private static final Map<String, Item> VANILLA = new HashMap<>();
-    /** Mod id → its icon texture, or null if it has none (also cached). */
     private static final Map<String, Texture121> MOD_ICONS = new HashMap<>();
 
     static {
@@ -59,7 +54,6 @@ public final class ScreenIcons {
         VANILLA.put("minecraft:cartography_table", Items.CARTOGRAPHY_TABLE);
         VANILLA.put("minecraft:stonecutter", Items.STONECUTTER);
         VANILLA.put("minecraft:inventory", Items.BUNDLE);
-        // Screens without a menu, by simple class name.
         VANILLA.put("ChatScreen", Items.PAPER);
         VANILLA.put("InBedChatScreen", Items.RED_BED);
         VANILLA.put("PauseScreen", Items.COMPASS);
@@ -81,7 +75,6 @@ public final class ScreenIcons {
     private ScreenIcons() {
     }
 
-    /** Draws the icon of a screen key at (x, y), {@code size} pixels square. */
     public static void draw(Ui ui, String key, String modId, int x, int y, int size) {
         Item item = VANILLA.get(key);
         if (item == null) {
@@ -106,7 +99,6 @@ public final class ScreenIcons {
         Draw.iconCentered(ui, Icon.WINDOW, x, y, size, size, Theme.TEXT_DIM);
     }
 
-    /** The icon of a mod from its metadata ("icon" in fabric.mod.json), loaded once. */
     static Texture121 modIcon(String modId) {
         if (modId == null || ScreenCatalog.MINECRAFT.equals(modId)) {
             return null;

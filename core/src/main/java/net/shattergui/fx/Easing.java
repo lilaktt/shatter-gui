@@ -3,12 +3,10 @@ package net.shattergui.fx;
 import java.util.List;
 import java.util.Locale;
 
-/** Easing presets: 0..1 → 0..1 (some overshoot a little: back, elastic). */
 public enum Easing {
     LINEAR, EASE_IN, EASE_OUT, EASE_IN_OUT, EASE_IN_CUBIC, EASE_OUT_CUBIC, EASE_IN_OUT_CUBIC, EASE_IN_QUART,
     EASE_OUT_QUART, EASE_IN_BACK, EASE_OUT_BACK, EASE_OUT_BOUNCE, EASE_OUT_ELASTIC, SMOOTH, STEP, PULSE;
 
-    /** Config names: "linear", "easeIn", "easeOutCubic", … */
     public static final List<String> NAMES = java.util.Arrays.stream(values()).map(Easing::configName).toList();
 
     public String configName() {

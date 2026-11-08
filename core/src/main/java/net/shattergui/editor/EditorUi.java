@@ -9,10 +9,6 @@ import net.shattergui.ui.Ui;
 
 import java.util.Locale;
 
-/**
- * Small shared pieces of the effect editor: translations, numbers in human units (seconds instead of ticks, degrees
- * instead of radians, blocks per second, percentages) and back, module icons and colours, a checkerboard.
- */
 public final class EditorUi {
     private EditorUi() {
     }
@@ -21,9 +17,6 @@ public final class EditorUi {
         return Text.translatable("ui.shatter_gui.fx." + key, args);
     }
 
-    // --- units ---
-
-    /** Display value for a stored one. */
     public static double toDisplay(FxSchema.Unit unit, double v) {
         return switch (unit) {
             case FRACTION -> v * 100;
@@ -48,7 +41,6 @@ public final class EditorUi {
         };
     }
 
-    /** "1.25 s", "40 %", "0.80 bl/s", "×1.50", … */
     public static String format(FxSchema.Unit unit, double stored) {
         double v = toDisplay(unit, stored);
         String number = switch (unit) {
@@ -83,7 +75,6 @@ public final class EditorUi {
         return "-0".equals(s) ? "0" : s;
     }
 
-    /** A typed number in display units → stored value; null if it is not a number. */
     public static Double parse(FxSchema.Unit unit, String text) {
         String clean = text.replace(',', '.').replaceAll("[^0-9.+-]", "");
         if (clean.isEmpty() || "-".equals(clean) || ".".equals(clean)) {
@@ -97,10 +88,6 @@ public final class EditorUi {
         }
     }
 
-    /**
-     * A field's help with its range in human units and (when {@code withDefault}: the default is a plain number) its
-     * default — "From 0 % to 100 %, default 35 %".
-     */
     public static Text withRange(Text help, FxSchema.Field field, boolean withDefault) {
         Text range = withDefault
                 ? Text.translatable("ui.shatter_gui.range", format(field.unit(), field.min()), format(field.unit(), field.max()),
@@ -109,15 +96,12 @@ public final class EditorUi {
         return help.copy().append("\n").append(range);
     }
 
-    /** Slider step in stored units. */
     public static double step(FxSchema.Field field) {
         if (field.whole() || field.unit() == FxSchema.Unit.COUNT) {
             return 1;
         }
         return (field.max() - field.min()) / 400.0;
     }
-
-    // --- modules ---
 
     public static Icon icon(FxDef.Module module) {
         return switch (module) {
@@ -154,7 +138,6 @@ public final class EditorUi {
     public static final int EMITTER_COLOR = 0xFFFACC15;
     public static final int SOUND_COLOR = 0xFF38BDF8;
 
-    /** The module's translated name ("Launch" / "Поштовх"). */
     public static Text moduleName(FxDef.Module module) {
         return tr("module." + FxSchema.moduleName(module));
     }
@@ -171,9 +154,6 @@ public final class EditorUi {
         return tr("param." + key + ".desc");
     }
 
-    // --- drawing ---
-
-    /** A grey checkerboard (behind colours with transparency). */
     public static void checker(Ui ui, int x, int y, int w, int h, int cell) {
         Draw.rect(ui, x, y, w, h, 0xFF9A9A9A);
         for (int cy = 0; cy * cell < h; cy++) {
@@ -185,7 +165,6 @@ public final class EditorUi {
         }
     }
 
-    /** Line segments (x0, y0, x1, y1, …) of the given width, drawn as thin quads in one batch. */
     public static void lines(Ui ui, float[] points, int count, float width, int color) {
         if (count < 2) {
             return;
@@ -219,7 +198,6 @@ public final class EditorUi {
         Draw.triangles(ui, null, data, colors, n);
     }
 
-    /** A horizontal colour gradient over the rectangle, one column per pixel (or per 2 for wide ones). */
     public static void hGradient(Ui ui, int x, int y, int w, int h, java.util.function.IntUnaryOperator colorAtColumn) {
         int step = w > 200 ? 2 : 1;
         for (int i = 0; i < w; i += step) {

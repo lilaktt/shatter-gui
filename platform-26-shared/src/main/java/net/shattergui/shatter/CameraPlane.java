@@ -4,9 +4,7 @@ import net.shattergui.capture.ScreenCapture.CameraSnapshot;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 
-/** The flat GUI: a camera-facing plane that covers exactly the field of view, so shards start where the GUI was. */
 public final class CameraPlane implements ShardPlane {
-    /** Distance from the camera to the plane, in blocks. */
     private static final double DISTANCE = 1.0;
 
     private final CameraSnapshot camera;

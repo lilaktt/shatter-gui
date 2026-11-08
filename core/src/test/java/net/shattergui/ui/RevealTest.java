@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** The open/close state machine of pop-ups. */
 class RevealTest {
     private static final float FRAME = 1f / 60f;
 

@@ -16,10 +16,6 @@ import net.shattergui.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * The effects menu under the effect's name: a new effect (the template gallery), the player's effects to open (the
- * current one ticked), duplicate and delete. Arrows move, Enter chooses, Esc or a click outside closes.
- */
 final class EffectsMenu extends UiScreen.Overlay {
     private record Item(Icon icon, Text label, boolean danger, Runnable action) {
     }
@@ -44,7 +40,6 @@ final class EffectsMenu extends UiScreen.Overlay {
                     }));
         }
         items.add(new Item(Icon.COPY, EditorUi.tr("menu.duplicate"), false, editor::duplicateEffect));
-        // The mod's own effects, as examples: a copy opens to change and save as one's own.
         for (String id : Platform.get().effects().dataIds()) {
             String json = Platform.get().effects().isBundled(id) ? Platform.get().effects().bundledJson(id) : null;
             if (json != null) {
@@ -60,7 +55,6 @@ final class EffectsMenu extends UiScreen.Overlay {
         }
     }
 
-    /** The menu on screen (open, or animating out), or null. */
     private static EffectsMenu shown(UiScreen screen) {
         for (UiScreen.Overlay o : screen.overlays()) {
             if (o instanceof EffectsMenu menu) {
@@ -77,14 +71,12 @@ final class EffectsMenu extends UiScreen.Overlay {
             menu = new EffectsMenu(editor, anchor);
             screen.openOverlay(menu);
         }
-        // Opened again while closing: the same menu turns round.
         if (menu.reveal.open()) {
             click();
         }
         screen.setFocus(menu);
     }
 
-    /** Its button: opens the menu, or closes it when it is open. */
     static void toggle(FxEditor editor, Widget anchor) {
         EffectsMenu menu = shown(UiScreen.active());
         if (menu != null && menu.reveal.wantsOpen()) {
@@ -111,7 +103,6 @@ final class EffectsMenu extends UiScreen.Overlay {
 
     @Override
     public boolean ownsClick(double mx, double my) {
-        // A click on its button toggles the menu: not a click outside.
         return anchor.contains(mx, my);
     }
 

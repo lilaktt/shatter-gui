@@ -8,12 +8,6 @@ import net.shattergui.ui.Draw;
 import net.shattergui.ui.Theme;
 import net.shattergui.ui.Ui;
 
-/**
- * A small graph of a parameter over its time window (left = start, right = end). Keyframes are dots: a click on the
- * empty graph adds one (a number or a preset curve becomes keyframes first), dragging moves one (never past its
- * neighbours), a right click removes one. A Bézier shows its two handles, dragged to shape it (drawn on a 0..1 scale;
- * its start and end values are set beside it). The value range follows the curve, frozen while dragging.
- */
 final class CurveEditor extends net.shattergui.ui.Widget {
     private static final int SAMPLES = 48;
     private static final int GRAB = 5;
@@ -28,7 +22,6 @@ final class CurveEditor extends net.shattergui.ui.Widget {
     private float hi = 1;
     private boolean frozen;
     private boolean refreshAfter;
-    /** 0..1 of the window, or negative for none (the timeline sets it). */
     float playhead = -1;
 
     CurveEditor(FxEditor editor, String path, FxSchema.Field field, JsonElement def, boolean lane) {
@@ -132,7 +125,6 @@ final class CurveEditor extends net.shattergui.ui.Widget {
         } else {
             Draw.roundBox(ui, x, y, w, h, Theme.RADIUS_CONTROL, Theme.FIELD, Theme.BORDER);
         }
-        // Grid: quarters of time, zero line.
         for (int i = 1; i < 4; i++) {
             Draw.rect(ui, Math.round(sx(i / 4f)), iy(), 1, ih(), 0x18FFFFFF);
         }
@@ -194,7 +186,6 @@ final class CurveEditor extends net.shattergui.ui.Widget {
     }
 
     private static float bezierAt(float[] p, float t) {
-        // Same maths as the engine: bisection on x(s), then y(s).
         float lo = 0;
         float hi = 1;
         float s = t;
@@ -214,8 +205,6 @@ final class CurveEditor extends net.shattergui.ui.Widget {
         float u = 1 - s;
         return 3 * u * u * s * a + 3 * u * s * s * b + s * s * s;
     }
-
-    // --- input ---
 
     @Override
     public boolean mouseDown(double mx, double my, int button) {
@@ -260,11 +249,9 @@ final class CurveEditor extends net.shattergui.ui.Widget {
             return false;
         }
         if (form != ValueForms.Form.KEYS) {
-            // A number or preset curve becomes keyframes, then the new key goes in.
             JsonElement converted = ValueForms.convert(editor.doc.get(path), def, field, ValueForms.Form.KEYS);
             editor.doc.edit(null, r -> FxDoc.put(r, path, converted));
             keys = ValueForms.keys(converted);
-            // The form controls above change: rebuilt when the drag ends.
             refreshAfter = true;
         }
         if (keys.length >= net.shattergui.fx.FxLimits.MAX_KEYS) {

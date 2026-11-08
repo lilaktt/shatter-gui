@@ -24,37 +24,14 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * Draws shard triangles at the end of the level render ({@code WorldRenderEvents.END}, see {@link OnTopPass}). Each
- * shard is drawn as a fan of three triangles around its centroid so the effect can color the center and the rim
- * differently; the render types draw quads, so each triangle is sent as a quad with a repeated corner.
- *
- * <p>Layers per wave:
- * <ul>
- *   <li>No shader pack: {@link ShardRenderTypes} (vanilla particle shader, premultiplied blending, CPU shading).</li>
- *   <li>Iris shader pack: vanilla types Iris knows — {@code entity_cutout} for opaque shards (lit and depth-written like
- *       any entity), {@code entity_translucent} for fading ones. Our own pipeline is unknown to Iris and would render
- *       nearly invisible.</li>
- *   <li>Glow ({@link ShardTint#glow}): vanilla {@code eyes} (emissive, fullbright, no depth write) over the same cells,
- *       in both cases.</li>
- * </ul>
- */
 public final class ShardRenderer {
-    /** Floats per vertex: x, y, z, u, v. */
     private static final int STRIDE = 5;
-    /** 3 fan triangles × 4 quad vertices. */
     private static final int VERTICES_PER_SHARD = 12;
-    /** Ticks over which shards go from unshaded to shaded by their facing. */
     private static final float LIGHT_EASE_TICKS = 10f;
-    /** Vanilla level light directions ({@code Lighting.DIFFUSE_LIGHT_0/1}) and the entity shader's light formula. */
     private static final Vector3f LIGHT_0 = new Vector3f(0.2f, 1f, -0.7f).normalize();
     private static final Vector3f LIGHT_1 = new Vector3f(-0.2f, 1f, 0.7f).normalize();
     private static final float LIGHT_POWER = 0.6f;
     private static final float AMBIENT_LIGHT = 0.4f;
-    /**
-     * The glow layer is lifted towards the camera so it never z-fights. It keeps the cell's size: larger cells would
-     * overlap their neighbours and the doubled edges would draw the triangle grid.
-     */
     private static final float GLOW_SCALE = 1f;
     private static final float GLOW_LIFT = 0.004f;
     private static final float GLOW_MAX_ALPHA = 0.85f;
@@ -62,24 +39,20 @@ public final class ShardRenderer {
     private ShardRenderer() {
     }
 
-    /** Shards of opening (gathering) waves drawn in the last frame, for tests and the profile log. */
     private static int gatherShardsDrawn;
 
     public static int gatherShardsDrawn() {
         return gatherShardsDrawn;
     }
 
-    /** Vertices relative to the camera position, in world axes. */
     interface Geometry3d {
         void emit(PoseStack.Pose pose, VertexConsumer consumer);
     }
 
-    /** Where the geometry of this frame goes (the pass at the end of the level). */
     interface Sink {
         void add(RenderType type, Geometry3d geometry);
     }
 
-    /** {@code WorldRenderEvents.END}: builds this frame's layers and draws them. */
     public static void render(WorldRenderContext context) {
         gatherShardsDrawn = 0;
         boolean shaders = IrisCompat.shaderPackInUse();
@@ -92,7 +65,6 @@ public final class ShardRenderer {
             return;
         }
         if (onTop) {
-            // Drawn over the finished world, with the mod's own type.
             shaders = false;
         }
         Sink sink = OnTopPass::add;
@@ -104,13 +76,9 @@ public final class ShardRenderer {
         for (ShardManager.Batch batch : byDistance(ShardManager.batches(), liveCamera)) {
             camera = batch.camera(liveCamera);
             if (!batch.belongsToScreen()) {
-                // A gathering whose screen is gone is never drawn, not even for the frame before it is removed.
                 continue;
             }
-            // Openings also play while the game is paused (the pause menu), on their own clock.
             float partialTick = batch.effect().opens() ? openPartialTick : gamePartialTick;
-            // Overlays and own particles of schema-2 effects (particles may outlive the shards). Over the world they
-            // come after the shards: they are lifted towards the camera and would hide the shards in the depth test.
             WaveDecor decor = batch.wave() instanceof WaveDecor d ? d : null;
             Quaternionf orientation = context.camera().rotation();
             if (decor != null && (!onTop || batch.shards().isEmpty())) {
@@ -160,10 +128,6 @@ public final class ShardRenderer {
         }
     }
 
-    /**
-     * Batches from the farthest to the nearest (by their first shard), so translucent pieces of a nearer wave blend
-     * over a farther one instead of hiding it in the depth test.
-     */
     private static List<ShardManager.Batch> byDistance(List<ShardManager.Batch> batches, Vec3 camera) {
         if (batches.size() < 2) {
             return batches;
@@ -179,11 +143,8 @@ public final class ShardRenderer {
         return sorted;
     }
 
-    /** All layers of one wave for this frame, computed at submit time so later ticks cannot change them. */
     private static final class Layers {
-        /** Opaque shards (with a shader pack), or all shards (without). */
         final Geometry opaque;
-        /** Shards with some transparency, with a shader pack. */
         final Geometry fading;
         final Geometry glow;
 
@@ -200,7 +161,6 @@ public final class ShardRenderer {
             Vector3f normal = new Vector3f();
             Vector3f[] corners = {new Vector3f(), new Vector3f(), new Vector3f()};
             ShardTint tint = new ShardTint();
-            // Below 1 only while the wave is hurried out (too many effects at once).
             float fade = batch.fade(partialTick);
 
             for (ShardInstance shard : batch.shards()) {
@@ -219,7 +179,6 @@ public final class ShardRenderer {
                 float py = (float) (lerp(shard.prevPos().y, shard.pos().y, partialTick) - camera.y);
                 float pz = (float) (lerp(shard.prevPos().z, shard.pos().z, partialTick) - camera.z);
 
-                // Light the side that faces the camera (camera is at the origin here).
                 rot.transform(shard.normal(), normal);
                 if (normal.x * px + normal.y * py + normal.z * pz > 0) {
                     normal.negate();
@@ -233,12 +192,10 @@ public final class ShardRenderer {
                     int edge = tint.edge;
                     Geometry target = layers.opaque;
                     if (shaders) {
-                        // Packs blend with SRC_ALPHA and light the shards themselves: straight colors, no CPU shading.
                         if ((center >>> 24) != 255 || (edge >>> 24) != 255) {
                             target = layers.fading;
                         }
                     } else {
-                        // The GUI was unlit, so the first frame is unshaded and face shading eases in.
                         float shade = 1f;
                         if (!tint.unlit) {
                             float age = Float.isNaN(tint.lightAge) ? shard.age() + partialTick : tint.lightAge;
@@ -261,7 +218,6 @@ public final class ShardRenderer {
         }
     }
 
-    /** Vertex data of one layer. */
     private static final class Geometry {
         private float[] vertices;
         private int[] colors;
@@ -282,10 +238,6 @@ public final class ShardRenderer {
             return count == 0;
         }
 
-        /**
-         * One shard as a fan around its centroid, corners scaled by {@code scale} and everything moved {@code lift}
-         * along the camera-facing normal.
-         */
         void add(ShardInstance shard, float px, float py, float pz, Vector3f[] corners, float scale, float lift,
                  Vector3f normal, int centerColor, int edgeColor) {
             if (count == lights.length) {
@@ -305,7 +257,6 @@ public final class ShardRenderer {
             int c = count * VERTICES_PER_SHARD;
             for (int k = 0; k < 3; k++) {
                 int n = (k + 1) % 3;
-                // Quad: centroid, corner k, corner n, corner n again.
                 v = put(v, cx, cy, cz, cu, cv);
                 colors[c++] = centerColor;
                 v = put(v, cx + corners[k].x * scale, cy + corners[k].y * scale, cz + corners[k].z * scale,
@@ -353,7 +304,6 @@ public final class ShardRenderer {
         }
     }
 
-    /** ARGB with its alpha multiplied by {@code factor}. */
     private static int withAlpha(int argb, float factor) {
         return (Math.round((argb >>> 24) * factor) << 24) | (argb & 0xFFFFFF);
     }
@@ -362,7 +312,6 @@ public final class ShardRenderer {
         return a + (b - a) * t;
     }
 
-    /** Same as {@code minecraft_mix_light} in light.glsl, for a normal facing the camera. */
     private static float diffuse(Vector3f normal) {
         float light = Math.max(0f, LIGHT_0.dot(normal)) + Math.max(0f, LIGHT_1.dot(normal));
         return Math.min(1f, light * LIGHT_POWER + AMBIENT_LIGHT);
