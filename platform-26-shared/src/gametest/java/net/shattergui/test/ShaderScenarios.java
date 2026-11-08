@@ -41,6 +41,13 @@ final class ShaderScenarios {
                     Files.createDirectories(Iris.getShaderpacksDirectory());
                     Files.copy(zip, Iris.getShaderpacksDirectory().resolve(zip.getFileName()), StandardCopyOption.REPLACE_EXISTING);
                     Iris.getIrisConfig().setShaderPackName(zip.getFileName().toString());
+                    String options = System.getProperty("shatter.test.shaderOptions", "");
+                    Path optionsFile = Iris.getShaderpacksDirectory().resolve(zip.getFileName() + ".txt");
+                    if (options.isBlank()) {
+                        Files.deleteIfExists(optionsFile);
+                    } else {
+                        Files.writeString(optionsFile, String.join("\n", options.split(",")) + "\n");
+                    }
                 }
                 Iris.getIrisConfig().setShadersEnabled(source != null);
                 Iris.getIrisConfig().save();
@@ -74,6 +81,7 @@ final class ShaderScenarios {
         shots(tag + "_glass", () -> new InventoryScreen(Minecraft.getInstance().player), new int[]{1, 2, 3, 10, 40, 52});
         BurnScenario.run(context, check, this::shot, tag + "_burn", furnace);
         FlyScenario.run(context, singleplayer, check, this::shot, tag + "_fly");
+        HandScenario.run(context, singleplayer, check, tag);
         EffectScenarios effects = new EffectScenarios(context, check, this::shot);
         effects.edgeFlights(tag + "_edge");
         effects.dissolve(tag + "_dissolve", furnace);

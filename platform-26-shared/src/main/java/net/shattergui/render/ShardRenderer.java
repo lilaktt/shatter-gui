@@ -243,7 +243,11 @@ public final class ShardRenderer {
                 if ((tint.center >>> 24) == 0 && (tint.edge >>> 24) == 0 && tint.glow <= 0f) {
                     continue;
                 }
-                shard.prevRot().slerp(shard.rot(), partialTick, rot);
+                if (shard.prevRot().equals(shard.rot())) {
+                    rot.set(shard.rot());
+                } else {
+                    shard.prevRot().slerp(shard.rot(), partialTick, rot);
+                }
                 space.point(lerp(shard.prevPos().x, shard.pos().x, partialTick),
                         lerp(shard.prevPos().y, shard.pos().y, partialTick),
                         lerp(shard.prevPos().z, shard.pos().z, partialTick), at);

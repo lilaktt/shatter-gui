@@ -35,6 +35,8 @@ public final class OnTopPass {
     private static ProjectionMatrixBuffer projectionBuffer;
     private static ProjectionMatrixBuffer screenBuffer;
     private static boolean failed;
+    private static boolean handDepth;
+    private static boolean onTopDrawn;
 
     private OnTopPass() {
     }
@@ -61,6 +63,11 @@ public final class OnTopPass {
         SETTLED.clear();
     }
 
+    public static void frameStart() {
+        handDepth = false;
+        onTopDrawn = false;
+    }
+
     static void add(RenderType type, SubmitNodeCollector.CustomGeometryRenderer geometry) {
         PENDING.add(new Entry(type, geometry));
     }
@@ -73,31 +80,41 @@ public final class OnTopPass {
         return !PENDING.isEmpty() || !SETTLED.isEmpty();
     }
 
-    public static void drawSettled(GpuBufferSlice noFog) {
-        if (SETTLED.isEmpty()) {
-            return;
+    public static void drawBeforeHand(GpuBufferSlice noFog) {
+        handDepth = true;
+        if (!SETTLED.isEmpty()) {
+            try {
+                draw(SETTLED, PROJECTION, VIEW_ROTATION, false, false, noFog);
+            } finally {
+                SETTLED.clear();
+            }
         }
-        try {
-            draw(SETTLED, PROJECTION, VIEW_ROTATION, false, false, noFog);
-        } finally {
-            SETTLED.clear();
+        if (IrisCompat.shaderPackInUse()) {
+            drawOnTop(noFog, Mc26.behindHand(PROJECTION, true), false, false);
         }
     }
 
     public static void drawAfterLevel(GpuBufferSlice noFog) {
-        int closing = OpenBackdrop.closingKind();
         if (!SETTLED.isEmpty()) {
             PENDING.addAll(0, SETTLED);
             SETTLED.clear();
         }
+        boolean hand = handDepth;
+        handDepth = false;
+        drawOnTop(noFog, hand ? Mc26.behindHand(PROJECTION, false) : PROJECTION, !hand, true);
+    }
+
+    private static void drawOnTop(GpuBufferSlice noFog, Matrix4f projection, boolean clearFirst, boolean clearAfter) {
+        int closing = onTopDrawn ? 0 : OpenBackdrop.closingKind();
         if (PENDING.isEmpty() && closing == 0) {
             return;
         }
+        onTopDrawn = true;
         try {
             if (closing != 0) {
                 drawBackdrop(closing, OpenBackdrop.closeFactor());
             }
-            draw(PENDING, PROJECTION, VIEW_ROTATION, IrisCompat.shaderPackInUse(), true, noFog);
+            draw(PENDING, projection, VIEW_ROTATION, clearFirst, clearAfter, noFog);
         } finally {
             PENDING.clear();
         }

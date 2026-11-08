@@ -89,4 +89,8 @@ public final class Mc26 {
         out.put("GPU vendor", device.getVendor());
         out.put("Graphics backend", device.getBackendName());
     }
+
+    public static org.joml.Matrix4f behindHand(org.joml.Matrix4fc projection, boolean shaderHand) {
+        return new org.joml.Matrix4f().m22(shaderHand ? 0.005f : 0.0005f).m32(shaderHand ? 0.135f : 0.9985f).mul(projection);
+    }
 }

@@ -14,6 +14,7 @@ public final class FrameHooks {
 
     public static void frameStart() {
         ShatterProfiler.frameStart();
+        OnTopPass.frameStart();
     }
 
     public static void frameEnd() {
@@ -26,8 +27,8 @@ public final class FrameHooks {
     public static void beforeHand(GpuBufferSlice noFog, org.joml.Matrix4fc viewRotation) {
         long start = System.nanoTime();
         OnTopPass.levelViewRotation(viewRotation);
-        OnTopPass.drawSettled(noFog);
-        CloseWatchdog.step("draw the settled pieces in the world", start);
+        OnTopPass.drawBeforeHand(noFog);
+        CloseWatchdog.step("draw the effects before the hand", start);
     }
 
     public static void afterLevel(GpuBufferSlice noFog, org.joml.Matrix4fc viewRotation) {

@@ -80,6 +80,9 @@ loom {
         if (name == "clientGameTest" && project.hasProperty("shaderPack")) {
             vmArg "-Dshatter.test.shaderPack=${project.property('shaderPack')}"
         }
+        if (name == "clientGameTest" && project.hasProperty("shaderOptions")) {
+            vmArg "-Dshatter.test.shaderOptions=${project.property('shaderOptions')}"
+        }
         if (name == "clientGameTest" && project.hasProperty("testOnly")) {
             vmArg "-Dshatter.test.only=${project.property('testOnly')}"
         }

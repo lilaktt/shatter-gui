@@ -162,8 +162,7 @@ final class OnTopScenario {
             }
             ShatterGuiClient.LOGGER.info("[ShatterTest] {}: share of the hand covered by shards {} ({} hand cells)", name,
                     String.format(Locale.ROOT, "%.3f", hand), cells);
-            boolean irisHand = context.computeOnClient(mc -> net.shattergui.compat.iris.IrisCompat.shaderPackInUse());
-            check.accept(hand <= HAND_COVERED || irisHand, name + ": the shards must stay under the player's hand, "
+            check.accept(hand <= HAND_COVERED, name + ": the shards must stay under the player's hand, "
                     + String.format(Locale.ROOT, "%.3f", hand) + " of it changed");
             return null;
         }

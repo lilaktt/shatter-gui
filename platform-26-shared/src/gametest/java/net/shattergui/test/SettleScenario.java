@@ -19,7 +19,6 @@ import java.util.function.BiConsumer;
 final class SettleScenario {
     static final int MAGENTA = 0xFFFF00FF;
     private static final double[] VIEW = {0, 0, 1, 0.86};
-    private static final double[] ABOVE_HAND = {0, 0, 1, 0.74};
     private static final double[] WALL_VIEW = {0.02, 0.02, 0.98, 0.7};
     private static final int LIFETIME = 900;
     static final int SETTLE_TICKS = 4;
@@ -27,7 +26,7 @@ final class SettleScenario {
     private SettleScenario() {
     }
 
-    static final class SolidScreen extends Screen {
+    static class SolidScreen extends Screen {
         private final int color;
 
         SolidScreen(int color) {
@@ -111,10 +110,10 @@ final class SettleScenario {
         int settled = settledCount(context);
         FullFrame.request(context, name + "_b_settled", true);
         FullFrame.Image settledFrame = FullFrame.get(context, name + "_b_settled");
-        FullFrame.Blob magentaHeld = held == null ? null : FullFrame.blob(held, FullFrame::magenta, ABOVE_HAND);
+        FullFrame.Blob magentaHeld = held == null ? null : FullFrame.blob(held, FullFrame::magenta, VIEW);
         FullFrame.Blob magentaSettled = settledFrame == null ? null
-                : FullFrame.blob(settledFrame, FullFrame::magenta, ABOVE_HAND);
-        double[] jump = FullFrame.changed(held, settledFrame, 6, ABOVE_HAND, FullFrame::magenta);
+                : FullFrame.blob(settledFrame, FullFrame::magenta, VIEW);
+        double[] jump = FullFrame.changed(held, settledFrame, 6, VIEW, FullFrame::magenta);
         ShatterGuiClient.LOGGER.info("[ShatterTest] {}: settled {} of {}; magenta pixels {} held, {} settled; changed {} of "
                         + "{} magenta pixels, largest difference {}", name, settled, shards,
                 magentaHeld == null ? -1 : magentaHeld.count(), magentaSettled == null ? -1 : magentaSettled.count(),
