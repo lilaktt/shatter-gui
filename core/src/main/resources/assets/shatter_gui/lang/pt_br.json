@@ -113,6 +113,7 @@
   "ui.shatter_gui.look.desc": "A cor de destaque desta janela.",
   "ui.shatter_gui.about.title": "Sobre",
   "ui.shatter_gui.about.version": "Versão: %s",
+  "ui.shatter_gui.about.build": "Compilação: %s",
   "ui.shatter_gui.about.author": "Autor: %s",
   "ui.shatter_gui.about.license": "Licença: %s",
   "ui.shatter_gui.about.link": "Código-fonte: %s",

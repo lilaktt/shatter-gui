@@ -14,7 +14,7 @@ import net.shattergui.platform.impl.Mc26;
  * log keeps reaching the game's log (the warnings are collected beside it).
  */
 final class DiagnosticsScenario {
-    private static final List<String> FIELDS = List.of("Shatter GUI:", "Minecraft:", "Fabric Loader:", "Fabric API:",
+    private static final List<String> FIELDS = List.of("Shatter GUI:", "Build:", "Minecraft:", "Fabric Loader:", "Fabric API:",
             "Iris:", "Sodium:", "Spatial GUI:", "GPU:", "Driver:", "GPU vendor:", "Shader pack:", "Open effect:",
             "Close effect:", "Thematic mode:", "Recent warnings:");
 
@@ -38,6 +38,8 @@ final class DiagnosticsScenario {
         for (String field : FIELDS) {
             check.accept(text.contains(field), "diagnostics: missing " + field);
         }
+        check.accept(text.contains("Build: " + net.shattergui.BuildInfo.commit()) && !net.shattergui.BuildInfo.commit().equals("unknown"),
+                "diagnostics: the build's commit must be listed, got " + net.shattergui.BuildInfo.describe());
         check.accept(text.contains("diagnostics probe"), "diagnostics: the mod's last warning must be listed");
         check.accept(!text.contains(home) && !text.contains(home.replace('\\', '/')),
                 "diagnostics: the home folder must not be in the text");

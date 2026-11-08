@@ -113,6 +113,7 @@
   "ui.shatter_gui.look.desc": "Kolor akcentu tego okna.",
   "ui.shatter_gui.about.title": "O modzie",
   "ui.shatter_gui.about.version": "Wersja: %s",
+  "ui.shatter_gui.about.build": "Kompilacja: %s",
   "ui.shatter_gui.about.author": "Autor: %s",
   "ui.shatter_gui.about.license": "Licencja: %s",
   "ui.shatter_gui.about.link": "Kod źródłowy: %s",

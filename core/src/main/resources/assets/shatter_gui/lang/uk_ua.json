@@ -113,6 +113,7 @@
   "ui.shatter_gui.look.desc": "Колір акценту цього вікна.",
   "ui.shatter_gui.about.title": "Про мод",
   "ui.shatter_gui.about.version": "Версія: %s",
+  "ui.shatter_gui.about.build": "Збірка: %s",
   "ui.shatter_gui.about.author": "Автор: %s",
   "ui.shatter_gui.about.license": "Ліцензія: %s",
   "ui.shatter_gui.about.link": "Вихідний код: %s",

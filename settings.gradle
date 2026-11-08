@@ -38,4 +38,8 @@ def selected = chosen == 'all' ? platforms.values().unique() : chosen.split(',')
     }
     module
 }
-selected.unique().each { include it }
+def tasksAsked = gradle.startParameter.taskNames
+def distOnly = !tasksAsked.isEmpty() && tasksAsked.every { it == 'dist' || it == ':dist' }
+if (!distOnly) {
+    selected.unique().each { include it }
+}

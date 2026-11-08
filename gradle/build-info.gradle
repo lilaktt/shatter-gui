@@ -1,0 +1,54 @@
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
+def git = { List<String> args ->
+    try {
+        def process = new ProcessBuilder(['git'] + args).directory(rootProject.projectDir).redirectErrorStream(true).start()
+        def text = process.inputStream.getText('UTF-8').trim()
+        process.waitFor() == 0 ? text : null
+    } catch (IOException ignored) {
+        null
+    }
+}
+
+def buildCommit = project.findProperty('buildCommit')?.toString() ?: {
+    def hash = git(['rev-parse', '--short=7', 'HEAD'])
+    if (hash == null) {
+        return 'unknown'
+    }
+    def status = git(['status', '--porcelain', '--untracked-files=normal'])
+    status == null || !status.isEmpty() ? hash + '-dirty' : hash
+}()
+def buildTime = project.findProperty('buildTime')?.toString() ?:
+        ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm 'UTC'"))
+
+ext.buildCommit = buildCommit
+ext.buildTime = buildTime
+
+if (!plugins.hasPlugin('java')) {
+    return
+}
+
+def buildInfoDir = layout.buildDirectory.dir('generated/buildInfo')
+def writeBuildInfo = tasks.register('writeBuildInfo') {
+    def values = [commit: buildCommit, time: buildTime, version: project.mod_version.toString(),
+                  minecraft: (project.findProperty('minecraft_label') ?: project.minecraft_version).toString()]
+    inputs.properties values
+    outputs.dir buildInfoDir
+    doLast {
+        def file = buildInfoDir.get().file('shatter_gui_build.properties').asFile
+        file.parentFile.mkdirs()
+        file.setText(values.collect { k, v -> "${k}=${v}" }.join('\n') + '\n', 'UTF-8')
+    }
+}
+
+sourceSets.main.resources.srcDir(files(buildInfoDir).builtBy(writeBuildInfo))
+
+tasks.named('jar') {
+    manifest {
+        attributes('Implementation-Title': 'Shatter GUI', 'Implementation-Version': project.mod_version.toString(),
+                'Shatter-Commit': buildCommit, 'Shatter-Build-Time': buildTime,
+                'Shatter-Minecraft': (project.findProperty('minecraft_label') ?: project.minecraft_version).toString())
+    }
+}

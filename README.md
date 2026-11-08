@@ -90,8 +90,8 @@ the mod: General tab → About.
 ## Building
 
 ```
-./gradlew build                 # build/libs/shatter-gui-<version>+mc26.1-fabric.jar, runs unit tests
-./gradlew build -Pmc=26.2       # the same for 26.2 (or 26.3)
+./gradlew dist                  # every ready version from scratch: dist/shatter-gui-<version>+mc<minecraft>-fabric.jar + dist/SHA256SUMS.txt
+./gradlew build                 # compiles 26.1.x and runs the unit tests (-Pmc=26.2 or 26.3 for the others)
 ./gradlew runClientGameTest     # automated tests in a real client (screenshots in platform-26/build/run/clientGameTest)
 ./gradlew runClientGameTest -PspatialGui=1.10.1 -PmodMenu
 ./gradlew runClientGameTest -Pshaders -PshaderPack=C:/path/to/Pack.zip
@@ -99,6 +99,12 @@ the mod: General tab → About.
 ./gradlew build -Pmc=1.21.1     # the 1.21.1 port (a stub so far)
 ./gradlew runVersionMatrix --no-daemon -PshaderPack=C:/path/to/Pack.zip   # a short test set on every version, for the night
 ```
+
+Take jars only from `dist/`, made by `./gradlew dist`: it runs the unit tests, builds 26.1.x, 26.2 and 26.3 one after another
+from a clean state and writes their SHA-256 sums. Game tests run from the compiled classes, not from a jar, so any jar left
+somewhere under `build/` is not what was tested. Each jar carries the commit and build time (`-dirty` when the tree had
+uncommitted changes): in its manifest, in the game log at start (`Shatter GUI for Minecraft …, build …`), in Settings →
+About and in "Copy diagnostics".
 
 The shared code (`core`, no Minecraft; `platform-26-shared`, all of 26.x) and one module per Minecraft version
 (`platform-*`) are described in `docs/PORTING.md`, the versions in `docs/VERSIONS.md`, the last results in

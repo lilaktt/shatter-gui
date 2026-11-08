@@ -777,6 +777,7 @@ public final class ShatterConfigScreen extends UiScreen {
         Section about = section(tr("ui.shatter_gui.about.title"), null);
         about.add(new Label(Text.literal(meta.name()), Label.Style.BODY));
         about.add(new Label(tr("ui.shatter_gui.about.version", meta.version()), Label.Style.DIM));
+        about.add(new Label(tr("ui.shatter_gui.about.build", net.shattergui.BuildInfo.describe()), Label.Style.SMALL));
         String authors = String.join(", ", meta.authors());
         about.add(new Label(tr("ui.shatter_gui.about.author", authors), Label.Style.DIM));
         about.add(new Label(tr("ui.shatter_gui.about.license", String.join(", ", meta.licenses())), Label.Style.DIM));

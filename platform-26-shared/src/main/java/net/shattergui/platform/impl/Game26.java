@@ -81,6 +81,7 @@ final class Game26 implements GameInfo, Desktop {
     public java.util.Map<String, String> diagnostics() {
         java.util.Map<String, String> out = new java.util.LinkedHashMap<>();
         out.put("Shatter GUI", version(net.shattergui.ShatterMod.MOD_ID));
+        out.put("Build", net.shattergui.BuildInfo.describe() + ", for Minecraft " + net.shattergui.BuildInfo.minecraft());
         out.put("Minecraft", version("minecraft"));
         out.put("Fabric Loader", version("fabricloader"));
         out.put("Fabric API", version("fabric-api"));

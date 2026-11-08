@@ -41,10 +41,11 @@ Core не має власного jar: кожен platform-модуль комп
 ## Збірка
 
 ```
-./gradlew build                      # core (+ юніт-тести, checkNoMinecraft) і 26.1.x: build/libs/shatter-gui-0.1.0-beta+mc26.1-fabric.jar
-./gradlew build -Pmc=1.21.1          # core і заготовка 1.21.1:          build/libs/shatter-gui-0.1.0-beta+mc1.21.1-fabric.jar
-./gradlew build -Pmc=26.2             # 26.2:                             build/libs/shatter-gui-0.1.0-beta+mc26.2-fabric.jar
-./gradlew build -Pmc=26.3             # 26.3:                             build/libs/shatter-gui-0.1.0-beta+mc26.3-fabric.jar
+./gradlew dist                       # jar-и для випуску: 26.1.x, 26.2, 26.3 начисто в dist/ і dist/SHA256SUMS.txt (лише звідти)
+./gradlew build                      # core (+ юніт-тести, checkNoMinecraft) і 26.1.x
+./gradlew build -Pmc=1.21.1          # core і заготовка 1.21.1
+./gradlew build -Pmc=26.2             # 26.2
+./gradlew build -Pmc=26.3             # 26.3
 ./gradlew build -Pmc=all             # усі по черзі (на слабкій машині — краще по одній)
 ./gradlew :platform-26:runClientGameTest [-PspatialGui=1.10.1] [-Pshaders -PshaderPack=…] [-PtestOnly=…]
 ./gradlew :platform-26.3:runClientGameTest -Pmc=26.3 [-PgraphicsBackend=vulkan]

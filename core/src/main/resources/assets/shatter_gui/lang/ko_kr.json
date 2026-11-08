@@ -113,6 +113,7 @@
   "ui.shatter_gui.look.desc": "이 창의 강조 색.",
   "ui.shatter_gui.about.title": "모드 정보",
   "ui.shatter_gui.about.version": "버전: %s",
+  "ui.shatter_gui.about.build": "빌드: %s",
   "ui.shatter_gui.about.author": "만든 이: %s",
   "ui.shatter_gui.about.license": "라이선스: %s",
   "ui.shatter_gui.about.link": "소스 코드: %s",

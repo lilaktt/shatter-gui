@@ -28,6 +28,8 @@ public final class ShatterGuiClient implements ClientModInitializer {
     public void onInitializeClient() {
         // First, so a warning while starting up is kept for the diagnostics too.
         net.shattergui.debug.WarningLog.install();
+        LOGGER.info("Shatter GUI for Minecraft {}, build {}", net.shattergui.BuildInfo.minecraft(),
+                net.shattergui.BuildInfo.describe());
         ShatterConfig.load();
         ScreenCatalog.load();
         CustomEffects.init();

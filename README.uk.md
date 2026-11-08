@@ -18,14 +18,18 @@
 ## Збірка
 
 ```
-./gradlew build              # build/libs/shatter-gui-0.1.0-beta+mc26.1-fabric.jar
-./gradlew build -Pmc=26.2    # те саме для 26.2 (або 26.3)
+./gradlew dist               # усі готові версії начисто: dist/shatter-gui-<версія>+mc<minecraft>-fabric.jar і dist/SHA256SUMS.txt
+./gradlew build              # компіляція 26.1.x і юніт-тести (-Pmc=26.2 або 26.3 для інших)
 ./gradlew runClient          # dev-клієнт
 ./gradlew runClientGameTest  # автотест: відкриває/закриває екрани у справжньому клієнті, робить скріншоти
 ./gradlew runClientGameTest -PspatialGui=1.10.1   # те саме зі Spatial GUI, береться з Modrinth Maven
 ./gradlew runClientGameTest -Pshaders -PshaderPack=C:/path/to/Pack.zip   # знімки з Iris і шейдерпаком
 ./gradlew runVersionMatrix --no-daemon -PshaderPack=C:/path/to/Pack.zip   # скорочений набір на всіх версіях, на ніч
 ```
+
+Jar-и брати лише з `dist/` (`./gradlew dist`). Тести гри запускаються з класів, а не з jar-а, тож jar деінде в `build/` — не
+те, що перевіряли. У кожному jar-і є коміт і час збірки (`-dirty`, якщо були незакомічені зміни): у маніфесті, у лозі гри на
+старті, у «Про мод» і в «Скопіювати діагностику».
 
 У PowerShell аргументи з крапками треба брати в лапки: `"-PspatialGui=1.8"`.
 

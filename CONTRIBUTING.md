@@ -35,6 +35,6 @@ English and Ukrainian are written by hand, the other languages are machine-assis
 
 ## Building
 
-JDK 25, then `./gradlew build` (the jar is in `build/libs`, unit tests run with it; the code layout for other Minecraft versions is in `docs/PORTING.md`). Game tests run a real client:
+JDK 25, then `./gradlew build` (unit tests run with it; release jars come only from `./gradlew dist`, in `dist/`; the code layout for other Minecraft versions is in `docs/PORTING.md`). Game tests run a real client:
 `./gradlew runClientGameTest`, see the README for the options. Development-only mods (Spatial GUI, Iris, Sodium, Mod
 Menu, YACL) are downloaded from the Modrinth Maven and never bundled.

@@ -207,9 +207,8 @@ jar {
     }
 }
 
-// Every build lands in the root build/libs as shatter-gui-<version>+mc<minecraft>-<loader>.jar.
-tasks.register('collectJar', Copy) {
-    from tasks.named('jar')
-    into rootProject.layout.buildDirectory.dir('libs')
+apply from: rootProject.file('gradle/build-info.gradle')
+
+tasks.named('jar') {
+    destinationDirectory = layout.buildDirectory.dir('tmp/distInput')
 }
-assemble.dependsOn collectJar

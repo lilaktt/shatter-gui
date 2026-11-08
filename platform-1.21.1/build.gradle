@@ -160,12 +160,8 @@ jar {
     }
 }
 
-// The remapped jar is the one the game loads: shatter-gui-<version>+mc1.21.1-fabric.jar (in the root build/libs too).
+// The remapped jar is the one the game loads: shatter-gui-<version>+mc1.21.1-fabric.jar. A stub, not part of dist/.
 remapJar {
     archiveVersion = jarVersion
+    destinationDirectory = layout.buildDirectory.dir('tmp/distInput')
 }
-tasks.register('collectJar', Copy) {
-    from tasks.named('remapJar')
-    into rootProject.layout.buildDirectory.dir('libs')
-}
-assemble.dependsOn collectJar

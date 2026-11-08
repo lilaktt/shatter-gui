@@ -113,6 +113,7 @@
   "ui.shatter_gui.look.desc": "このウィンドウのアクセントカラー。",
   "ui.shatter_gui.about.title": "この Mod について",
   "ui.shatter_gui.about.version": "バージョン: %s",
+  "ui.shatter_gui.about.build": "ビルド: %s",
   "ui.shatter_gui.about.author": "作者: %s",
   "ui.shatter_gui.about.license": "ライセンス: %s",
   "ui.shatter_gui.about.link": "ソースコード: %s",

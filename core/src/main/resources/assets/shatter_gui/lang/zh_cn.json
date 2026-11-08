@@ -113,6 +113,7 @@
   "ui.shatter_gui.look.desc": "此窗口的强调色。",
   "ui.shatter_gui.about.title": "关于",
   "ui.shatter_gui.about.version": "版本：%s",
+  "ui.shatter_gui.about.build": "构建：%s",
   "ui.shatter_gui.about.author": "作者：%s",
   "ui.shatter_gui.about.license": "许可证：%s",
   "ui.shatter_gui.about.link": "源代码：%s",
