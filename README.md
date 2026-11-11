@@ -138,10 +138,13 @@ the two match and that each address has its platform's form.
 - GitHub: https://github.com/lilaktt/shatter-gui
 - Bug reports: https://github.com/lilaktt/shatter-gui/issues
 
-The names and logos of Modrinth, CurseForge and GitHub belong to their owners. The mod ships no logos: the page buttons
-show simple icons of its own, or pictures put into `assets/shatter_gui/textures/gui/links/` (`modrinth.png`,
-`curseforge.png`, `github.png`, `bug.png`, 16×16, and `_32` versions at 32×32 for large GUI scales), which need no code
-change.
+The icons on the Modrinth and CurseForge buttons in About were drawn by the mod's author (8×8 pixels,
+`assets/shatter_gui/gui/links/`); the names and logos of Modrinth, CurseForge and GitHub belong to their owners. GitHub
+and "Report a bug" show the mod's own simple icons until pictures are added. One file per button, `<name>.png`, 8×8,
+in `assets/shatter_gui/textures/gui/links/` or `assets/shatter_gui/gui/links/` (`modrinth.png`, `curseforge.png`,
+`github.png`, `bug.png`); each is drawn 8 GUI pixels wide without smoothing at every GUI scale. A white or light picture is
+tinted with the platform's colour, a coloured one is drawn as it is and only lightens a little on hover. A file of another
+size, or one that cannot be read, gives one line in the log and the built-in icon.
 
 ## Author
 

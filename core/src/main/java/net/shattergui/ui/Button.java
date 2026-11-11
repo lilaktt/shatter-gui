@@ -184,7 +184,7 @@ public class Button extends Widget {
         int cx = x + Math.max(4, (w - contentW) / 2);
         int cy = y + (h - 8) / 2;
         if (painter != null) {
-            painter.paint(ui, cx, y + (h - Icon.SIZE) / 2, textColor, brandFill());
+            painter.paint(ui, cx, cy, textColor, brandFill());
             cx += Icon.SIZE + 4;
         } else if (icon != null) {
             Draw.icon(ui, icon, cx, y + (h - Icon.SIZE) / 2, 1, textColor);

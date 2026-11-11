@@ -36,6 +36,8 @@ public final class LinkButton extends Button {
     private final Text tooltip;
     private final BooleanSupplier checkEnabled;
     private final String version;
+    private int iconX = -1;
+    private int iconY = -1;
 
     public LinkButton(Brand brand, Text title, Text tooltip, BooleanSupplier checkEnabled, String version) {
         super(title, null, Kind.SECONDARY, null);
@@ -45,12 +47,24 @@ public final class LinkButton extends Button {
         this.checkEnabled = checkEnabled;
         this.version = version;
         brand(brand.color);
-        iconPainter((ui, x, y, color, fill) -> LinkIcons.draw(ui, brand, x, y, color, fill));
+        iconPainter((ui, x, y, color, fill) -> {
+            iconX = x;
+            iconY = y;
+            LinkIcons.draw(ui, brand, x, y, color, fill);
+        });
         tooltip(title, tooltip);
     }
 
     public Brand brandOf() {
         return brand;
+    }
+
+    public int iconX() {
+        return iconX;
+    }
+
+    public int iconY() {
+        return iconY;
     }
 
     public LinkStatus.State state() {

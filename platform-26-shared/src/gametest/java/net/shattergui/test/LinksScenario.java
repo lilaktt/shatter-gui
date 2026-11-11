@@ -121,6 +121,7 @@ final class LinksScenario {
             context.runOnClient(mc -> EditorScenario.editor(mc).working().linkStatusCheck = true);
             context.runOnClient(mc -> Mc26.setScreen(null));
             context.waitTicks(3);
+            LinkIconScenario.run(context, check, name + "_icons");
         } finally {
             everyPageUp();
         }
@@ -165,7 +166,7 @@ final class LinksScenario {
                 && Math.abs(FullFrame.b(a) - FullFrame.b(b)) <= tolerance;
     }
 
-    private static void revealAbout(ClientGameTestContext context) {
+    static void revealAbout(ClientGameTestContext context) {
         for (int pass = 0; pass < 2; pass++) {
             context.runOnClient(mc -> {
                 LinkButton b = button(LinkButton.Brand.MODRINTH);

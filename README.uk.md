@@ -362,9 +362,12 @@ Schema 2 дозволяє описати **по-справжньому нови�
 Гру це не гальмує, без мережі нічого не відбувається. Вимикається налаштуванням «Перевіряти сторінки мода»
 (`"linkStatusCheck": false`).
 
-Назви й логотипи Modrinth, CurseForge і GitHub належать їхнім власникам. Мод не містить логотипів: кнопки показують
-власні прості піктограми або картинки з `assets/shatter_gui/textures/gui/links/` (`modrinth.png`, `curseforge.png`,
-`github.png`, `bug.png`, 16×16, і версії `_32` 32×32 для великого масштабу GUI); заміна файлів не потребує змін коду.
+Піктограми на кнопках Modrinth і CurseForge у «Про мод» намалював автор мода (8×8 пікселів, `assets/shatter_gui/gui/links/`);
+назви й логотипи Modrinth, CurseForge і GitHub належать їхнім власникам. GitHub і «Повідомити про помилку» показують власні
+прості піктограми мода, доки немає малюнків. Один файл на кнопку, `<назва>.png`, 8×8, у `assets/shatter_gui/textures/gui/links/`
+або `assets/shatter_gui/gui/links/` (`modrinth.png`, `curseforge.png`, `github.png`, `bug.png`); малюється шириною 8 пікселів
+інтерфейсу без згладжування на будь-якому масштабі GUI. Білий чи світлий малюнок тонується кольором платформи, кольоровий
+малюється як є й при наведенні лише трохи світлішає. Файл іншого розміру чи пошкоджений — один рядок у лозі й вбудована піктограма.
 
 - Modrinth: https://modrinth.com/mod/shattergui
 - CurseForge: https://www.curseforge.com/minecraft/mc-mods/shatter-gui

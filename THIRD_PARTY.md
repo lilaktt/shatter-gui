@@ -24,10 +24,11 @@ from Iris is copied or included in the jar.
 
 ## Platform names and logos
 
-Modrinth, CurseForge and GitHub, their names and logos, belong to their owners. The mod ships none of their logos: the
-page buttons in "About" draw simple icons of the mod's own (an arrow out of a square, brackets, a marker). Pictures put
-into `assets/shatter_gui/textures/gui/links/` (`modrinth.png`, `curseforge.png`, `github.png`, `bug.png`) are drawn
-instead; whoever adds them must have the right to use them (e.g. the platforms' brand guidelines).
+Modrinth, CurseForge and GitHub, their names and logos, belong to their owners. The 8×8 icons on the Modrinth and
+CurseForge buttons in "About" (`assets/shatter_gui/gui/links/modrith.png`, `curseforge.png`) were drawn by the mod's author
+and are part of the mod under its license; they are the author's own pictures, not files taken from the platforms. The
+other page buttons draw simple icons of the mod's own (brackets, a marker). Whoever adds more pictures
+(`modrinth.png`, `curseforge.png`, `github.png`, `bug.png`, 8×8) must have the right to use them.
 
 ## Development-only dependencies (not in the mod's jar, not in the repository)
 

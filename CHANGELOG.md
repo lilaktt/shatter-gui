@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- About: the Modrinth and CurseForge buttons show 8×8 icons drawn by the mod's author, on the text row, 8 GUI pixels wide
+  and sharp at every GUI scale; coloured icons keep their colours and lighten a little on hover, light ones would be
+  tinted. A picture of the wrong size or a damaged file falls back to the built-in icon with one line in the log. The
+  loader needs one `<name>.png` (the 16×16 and `_32` pictures are gone). GitHub and "Report a bug" keep the built-in icons.
 - Pieces in flight behind a wall or roof are hidden by it once a solid block is between them and the camera, with or
   without a shader pack (before, they showed through the blocks until they settled, about 1–2 seconds). Pieces that start
   behind a wall in front of you, and "Fly" pieces flying into their container, still show over blocks.

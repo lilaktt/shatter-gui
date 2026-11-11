@@ -27,7 +27,7 @@ class HardcodedTextTest {
                     + "\\.json|\\.png|\\.shatterfx|startsWith|endsWith|replace|matches|split\\(|String\\.format\\(Locale\\.ROOT|"
                     + "guard\\(|reportScreen|UiFailures\\.report|DynamicTexture|FxProblems|problems\\.(error|warn)");
     private static final Set<String> NOT_SHOWN_TEXT = Set.of("error: ", "warning: ", "the textures are over ", " KB together",
-            " (in ", "assets/", "/textures/gui/links/", "shatter_gui link icon ", " no-stage", "shatter_gui editor sample ",
+            " (in ", "assets/", "/textures/gui/links/", "/gui/links/", "shatter_gui link icon ", " no-stage", "shatter_gui editor sample ",
             "shatter_gui editor sample fallback");
 
     @Test
