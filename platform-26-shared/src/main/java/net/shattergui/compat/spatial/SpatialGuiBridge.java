@@ -6,10 +6,9 @@ import com.mojang.blaze3d.textures.GpuTexture;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Camera;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.Minecraft;
 import net.shattergui.capture.CapturePool;
 import net.shattergui.capture.ScreenCapture;
-import net.shattergui.compat.spatial.mixin.InventoryRendererAccessor;
+import net.shattergui.compat.spatial.mixin.SpatialPlaneAccessor;
 import net.shattergui.debug.ShatterProfiler;
 import net.shattergui.effect.ShatterEffect;
 import net.shattergui.fly.FlyTarget;
@@ -18,10 +17,6 @@ import net.shattergui.platform.impl.Mc26;
 import net.shattergui.shatter.ImageRect;
 import net.shattergui.shatter.ShardManager;
 import org.joml.Vector3f;
-import org.tastytrash.spatialGUI.client.SpatialGUIClient;
-import org.tastytrash.spatialGUI.render.InventoryRenderer;
-import org.tastytrash.spatialGUI.render.SpatialGUIRenderer;
-import org.tastytrash.spatialGUI.util.RenderUtil;
 
 import java.util.Locale;
 
@@ -48,17 +43,23 @@ final class SpatialGuiBridge {
     private SpatialGuiBridge() {
     }
 
+    private static SpatialHandles api() {
+        return SpatialHandles.get();
+    }
+
     static boolean isShowing(Screen screen) {
-        SpatialGUIRenderer renderer = SpatialGUIClient.renderer();
-        return renderer != null && SpatialGUIClient.isEnabled() && renderer.getHookedScreen() == screen;
+        SpatialHandles api = api();
+        Object renderer = api.renderer();
+        return renderer != null && api.enabled() && api.hookedScreen(renderer) == screen;
     }
 
     static boolean cancelOpenAnimation() {
-        SpatialGUIRenderer renderer = SpatialGUIClient.renderer();
+        SpatialHandles api = api();
+        Object renderer = api.renderer();
         if (renderer == null) {
             return false;
         }
-        renderer.getInventoryRenderer().setScreenOpenTime(System.currentTimeMillis() - OPEN_ANIMATION_SKIP_MS);
+        api.setScreenOpenTime(api.plane(renderer), System.currentTimeMillis() - OPEN_ANIMATION_SKIP_MS);
         return true;
     }
 
@@ -89,8 +90,9 @@ final class SpatialGuiBridge {
         if (job == null) {
             return false;
         }
-        SpatialGUIRenderer renderer = SpatialGUIClient.renderer();
-        if (renderer == null || renderer.getHookedScreen() != job.screen()) {
+        SpatialHandles api = api();
+        Object renderer = api.renderer();
+        if (renderer == null || api.hookedScreen(renderer) != job.screen()) {
             pendingOpen = null;
             ShatterProfiler.openValue("spatial.openSkipped", "screen no longer on the plane");
             return false;
@@ -98,10 +100,10 @@ final class SpatialGuiBridge {
         if (++openFrames < OPEN_CAPTURE_FRAME) {
             return false;
         }
-        InventoryRenderer inventory = renderer.getInventoryRenderer();
-        inventory.updateQuadBasis();
-        RenderUtil.QuadBasis basis = inventory.getQuadBasis();
-        TextureTarget target = renderer.getTargetManager().getInventoryTarget();
+        Object inventory = api.plane(renderer);
+        api.updateQuadBasis(inventory);
+        SpatialHandles.Quad basis = api.quadBasis(inventory);
+        TextureTarget target = api.texture(renderer);
         GpuTexture color = target != null ? target.getColorTexture() : null;
         if (basis == null || color == null || basis.halfWidth() <= 0 || basis.halfHeight() <= 0) {
             if (openFrames > MAX_WAIT_FRAMES) {
@@ -131,7 +133,7 @@ final class SpatialGuiBridge {
         return true;
     }
 
-    private static net.shattergui.shatter.PlaneBasis basis(RenderUtil.QuadBasis quad, net.minecraft.world.phys.Vec3 origin) {
+    private static net.shattergui.shatter.PlaneBasis basis(SpatialHandles.Quad quad, net.minecraft.world.phys.Vec3 origin) {
         Vector3f c = quad.centerOffset();
         Vector3f forward = new Vector3f(quad.normal()).normalize();
         if (forward.dot(c) < 0) {
@@ -144,11 +146,12 @@ final class SpatialGuiBridge {
 
     static net.shattergui.shatter.PlaneBasis planeNow() {
         try {
-            SpatialGUIRenderer renderer = SpatialGUIClient.renderer();
-            if (renderer == null || renderer.getHookedScreen() == null) {
+            SpatialHandles api = api();
+            Object renderer = api.renderer();
+            if (renderer == null || api.hookedScreen(renderer) == null) {
                 return null;
             }
-            RenderUtil.QuadBasis quad = renderer.getInventoryRenderer().getQuadBasis();
+            SpatialHandles.Quad quad = api.quadBasis(api.plane(renderer));
             if (quad == null || quad.halfWidth() <= 0 || quad.halfHeight() <= 0) {
                 return null;
             }
@@ -160,14 +163,15 @@ final class SpatialGuiBridge {
 
     static boolean queue(Screen screen, ShatterEffect effect, FlyTarget flyTarget, ParamValues params, boolean preview) {
         long start = ShatterProfiler.now();
-        SpatialGUIRenderer renderer = SpatialGUIClient.renderer();
+        SpatialHandles api = api();
+        Object renderer = api.renderer();
         if (renderer == null) {
             return false;
         }
-        if (!((Object) renderer.getInventoryRenderer() instanceof InventoryRendererAccessor)) {
-            throw new IllegalStateException("InventoryRenderer accessor mixin was not applied");
+        if (!(api.plane(renderer) instanceof SpatialPlaneAccessor)) {
+            throw new IllegalStateException("the Spatial GUI plane accessor mixin was not applied");
         }
-        TextureTarget target = renderer.getTargetManager().getInventoryTarget();
+        TextureTarget target = api.texture(renderer);
         if (target == null || target.getColorTexture() == null) {
             ShatterProfiler.value("spatial.skipped", "no texture, using the flat capture");
             return false;
@@ -194,17 +198,18 @@ final class SpatialGuiBridge {
         }
         pending = null;
         long start = ShatterProfiler.now();
-        SpatialGUIRenderer renderer = SpatialGUIClient.renderer();
+        SpatialHandles api = api();
+        Object renderer = api.renderer();
         if (renderer == null) {
             giveUp(job, "Spatial GUI renderer gone");
             return;
         }
-        InventoryRenderer inventory = renderer.getInventoryRenderer();
-        boolean closing = inventory.isClosing();
-        boolean firstPerson = closing && inventory.isClosingFirstPerson();
-        ClosingBasis closingBasis = readClosingBasis(inventory, closing, firstPerson);
-        RenderUtil.QuadBasis basis = closingBasis.quad();
-        TextureTarget target = renderer.getTargetManager().getInventoryTarget();
+        Object inventory = api.plane(renderer);
+        boolean closing = api.closing(inventory);
+        boolean firstPerson = closing && api.closingFirstPerson(inventory);
+        ClosingBasis closingBasis = readClosingBasis(api, inventory, closing, firstPerson);
+        SpatialHandles.Quad basis = closingBasis.quad();
+        TextureTarget target = api.texture(renderer);
         GpuTexture color = target != null ? target.getColorTexture() : null;
         if (basis == null || color == null || basis.halfWidth() <= 0 || basis.halfHeight() <= 0) {
             giveUp(job, "plane or texture gone before the frame");
@@ -241,15 +246,16 @@ final class SpatialGuiBridge {
     }
 
     static void hideClosingPlane() {
-        SpatialGUIRenderer renderer = SpatialGUIClient.renderer();
+        SpatialHandles api = api();
+        Object renderer = api.renderer();
         if (renderer == null) {
             return;
         }
-        InventoryRenderer inventory = renderer.getInventoryRenderer();
-        if (inventory.isClosing()) {
-            InventoryRendererAccessor animation = (InventoryRendererAccessor) (Object) inventory;
+        Object inventory = api.plane(renderer);
+        if (api.closing(inventory)) {
+            SpatialPlaneAccessor animation = (SpatialPlaneAccessor) inventory;
             animation.shatterGui$setCloseStartElapsed(0L);
-            if (inventory.isClosingFirstPerson()) {
+            if (api.closingFirstPerson(inventory)) {
                 animation.shatterGui$setCloseDurationMs(0L);
             }
         }
@@ -261,21 +267,40 @@ final class SpatialGuiBridge {
         ScreenCapture.requestCapture(job.screen(), job.effect(), job.target(), job.params(), job.preview());
     }
 
-    private record ClosingBasis(RenderUtil.QuadBasis quad, boolean curved) {
+    private record ClosingBasis(SpatialHandles.Quad quad, boolean curved) {
     }
 
-    private static ClosingBasis readClosingBasis(InventoryRenderer inventory, boolean closing, boolean firstPerson) {
+    private static ClosingBasis readClosingBasis(SpatialHandles api, Object inventory, boolean closing, boolean firstPerson) {
         if (!closing) {
-            return new ClosingBasis(inventory.getQuadBasis(), inventory.getCylinderBasis() != null);
+            return new ClosingBasis(api.quadBasis(inventory), api.curved(inventory));
         }
-        boolean saved = SpatialGUIClient.getEffectiveFirstPersonMode();
+        boolean saved = api.firstPersonMode();
         try {
-            SpatialGUIClient.setEffectiveFirstPersonMode(firstPerson);
-            inventory.updateQuadBasis();
-            return new ClosingBasis(inventory.getQuadBasis(), inventory.getCylinderBasis() != null);
+            api.firstPersonMode(firstPerson);
+            api.updateQuadBasis(inventory);
+            return new ClosingBasis(api.quadBasis(inventory), api.curved(inventory));
         } finally {
-            SpatialGUIClient.setEffectiveFirstPersonMode(saved);
-            inventory.updateQuadBasis();
+            api.firstPersonMode(saved);
+            api.updateQuadBasis(inventory);
         }
+    }
+
+    static Screen hookedScreenForTests() {
+        Object renderer = api().renderer();
+        return renderer == null ? null : api().hookedScreen(renderer);
+    }
+
+    static boolean planeClosingForTests() {
+        Object renderer = api().renderer();
+        return renderer != null && api().closing(api().plane(renderer));
+    }
+
+    static long closeStartElapsedForTests() {
+        Object renderer = api().renderer();
+        if (renderer == null) {
+            return 0L;
+        }
+        Object plane = api().plane(renderer);
+        return api().closing(plane) ? ((SpatialPlaneAccessor) plane).shatterGui$getCloseStartElapsed() : 0L;
     }
 }

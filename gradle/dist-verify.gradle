@@ -1,0 +1,81 @@
+import java.util.concurrent.TimeUnit
+
+def DIST_MODULES = ['26.1': 'platform-26', '26.2': 'platform-26.2', '26.3': 'platform-26.3']
+
+tasks.register('verifyDist') {
+    group = 'verification'
+    description = 'Starts the game once per dist/ jar and Spatial GUI version with only those jars in mods/ and checks the bridge.'
+    outputs.upToDateWhen { false }
+    doLast {
+        def root = rootProject.projectDir
+        def out = new File(root, 'build/verify-dist')
+        out.deleteDir()
+        out.mkdirs()
+        def spatialVersions = (project.findProperty('verifySpatial') ?: '1.11.0,1.10.1,1.11.1').toString().split(',')*.trim()
+        def only = project.findProperty('verifyOnly')?.toString()?.split(',')*.trim()
+        def timeout = (project.findProperty('verifyTimeoutMinutes') ?: '20') as long
+        def jars = (new File(root, 'dist').listFiles() ?: []).findAll { it.name.endsWith('.jar') }.sort { it.name }
+        if (jars.isEmpty()) {
+            throw new GradleException('verifyDist: dist/ has no jars, run ./gradlew dist first')
+        }
+        def gradlew = new File(root, System.getProperty('os.name').toLowerCase().contains('win') ? 'gradlew.bat' : 'gradlew').path
+        def results = []
+        jars.each { jar ->
+            def label = (jar.name =~ /\+mc([0-9.]+)-/)
+            def mc = label.find() ? label.group(1) : null
+            if (only != null && !only.contains(mc)) {
+                return
+            }
+            def module = DIST_MODULES[mc]
+            if (module == null) {
+                results << [jar: jar.name, spatial: '-', ok: false, detail: "no module for Minecraft ${mc}", minutes: 0]
+                return
+            }
+            spatialVersions.each { spatial ->
+                def tag = "${mc}_spatial-${spatial}"
+                def log = new File(out, "${tag}.gradle.log")
+                def args = [gradlew, ":${module}:runDistVerify".toString(), "-Pmc=${mc}".toString(),
+                            "-PdistJar=${jar.absolutePath}".toString(), "-PdistSpatial=${spatial}".toString(), '--no-daemon',
+                            '--console=plain', '-PgameHeap=3G',
+                            "-Dorg.gradle.daemon.registry.base=${new File(out, 'registry').absolutePath}".toString()]
+                println "verifyDist: ${jar.name} with Spatial GUI ${spatial}"
+                long begin = System.currentTimeMillis()
+                def process = new ProcessBuilder(args).directory(root).redirectErrorStream(true).redirectOutput(log).start()
+                boolean finished = process.waitFor(timeout, TimeUnit.MINUTES)
+                if (!finished) {
+                    process.descendants().forEach { it.destroyForcibly() }
+                    process.destroyForcibly()
+                }
+                def gameLog = new File(root, "${module}/build/run/distVerify/logs/latest.log")
+                def text = gameLog.exists() ? gameLog.getText('UTF-8') : ''
+                if (gameLog.exists()) {
+                    new File(out, "${tag}.game.log").setText(text, 'UTF-8')
+                }
+                def shots = new File(root, "${module}/build/run/distVerify/screenshots")
+                if (shots.isDirectory()) {
+                    def keep = new File(out, "${tag}_screenshots")
+                    keep.mkdirs()
+                    shots.listFiles().each { new File(keep, it.name).bytes = it.bytes }
+                }
+                def lines = text.readLines()
+                def statusLine = lines.find { it.contains('Spatial GUI: ') && !it.contains('[ShatterTest]') }
+                def failures = lines.findAll { it.contains('[ShatterTest] FAILED') }.collect { it.replaceFirst(/.*FAILED: /, '') }
+                boolean ok = finished && text.contains('[ShatterTest] all checks passed')
+                int minutes = Math.round((System.currentTimeMillis() - begin) / 60000d) as int
+                def detail = ok ? (statusLine?.replaceFirst(/.*?Spatial GUI: /, 'Spatial GUI: ') ?: 'passed')
+                        : !finished ? "timed out after ${timeout} minutes"
+                        : failures ? failures.join('; ')
+                        : text ? 'no "all checks passed" in the game log' : "the game did not start, see ${log.name}"
+                results << [jar: jar.name, spatial: spatial, ok: ok, detail: detail.toString(), minutes: minutes]
+                println "verifyDist: ${jar.name} with Spatial GUI ${spatial}: ${ok ? 'OK' : 'FAILED'} (${minutes} min) ${detail}"
+            }
+        }
+        def table = new StringBuilder('| Jar | Spatial GUI | Result | Minutes | Details |\n|---|---|---|---|---|\n')
+        results.each { table << "| ${it.jar} | ${it.spatial} | ${it.ok ? 'OK' : 'FAILED'} | ${it.minutes} | ${it.detail.replace('|', '/')} |\n" }
+        new File(out, 'summary.md').setText(table.toString(), 'UTF-8')
+        println table
+        if (results.any { !it.ok }) {
+            throw new GradleException("verifyDist: ${results.count { !it.ok }} of ${results.size()} runs failed, see build/verify-dist/")
+        }
+    }
+}

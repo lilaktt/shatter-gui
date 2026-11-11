@@ -12,8 +12,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(targets = "org.tastytrash.spatialGUI.render.InventoryRenderer", remap = false)
-public abstract class InventoryRendererFlyMixin {
+@Mixin(targets = {"org.tastytrash.spatialGUI.render.WorldScreenRenderer", "org.tastytrash.spatialGUI.render.InventoryRenderer"},
+        remap = false)
+public abstract class SpatialPlaneFlyMixin {
     @Shadow(remap = false)
     @Final
     private static PoseStack WORLD_POSE_STACK;

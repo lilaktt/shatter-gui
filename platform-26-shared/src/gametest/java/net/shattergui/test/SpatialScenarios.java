@@ -12,10 +12,8 @@ import net.shattergui.params.Params;
 import net.shattergui.debug.ShatterProfiler;
 import net.shattergui.platform.impl.Mc26;
 import net.shattergui.shatter.ShardManager;
-import org.tastytrash.spatialGUI.client.SpatialGUIClient;
-import org.tastytrash.spatialGUI.render.InventoryRenderer;
+import net.shattergui.compat.spatial.SpatialGuiCompat;
 
-import java.lang.reflect.Field;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -33,6 +31,9 @@ final class SpatialScenarios {
     }
 
     void run(Supplier<Screen> furnace) {
+        net.shattergui.platform.SpatialGuiBridge.Status status = SpatialGuiCompat.status();
+        log("status", status.line());
+        check.accept(status.enabled(), "Spatial GUI bridge must be enabled: " + status.line());
         ShatterConfig config = ShatterConfig.get();
         config.effect = "glass";
         config.spatialGuiIntegration = true;
@@ -74,7 +75,7 @@ final class SpatialScenarios {
         context.waitTicks(OPEN_WAIT);
         context.runOnClient(mc -> Mc26.setScreen(null));
         long elapsedLeft = context.computeOnClient(mc -> closeStartElapsed());
-        boolean closing = context.computeOnClient(mc -> SpatialGUIClient.renderer().isClosing());
+        boolean closing = context.computeOnClient(mc -> SpatialGuiCompat.planeClosingForTests());
         log("integration_off", "Spatial closing=" + closing + " closeStartElapsed=" + elapsedLeft);
         check.accept(closing && elapsedLeft > 0, "with spatialGuiIntegration=false Spatial GUI must play its own close animation");
         context.waitTicks(100);
@@ -86,7 +87,7 @@ final class SpatialScenarios {
         int closes = context.computeOnClient(mc -> ShatterProfiler.closeCount());
         context.runOnClient(mc -> Mc26.setScreen(null));
         long offElapsed = context.computeOnClient(mc -> closeStartElapsed());
-        boolean offClosing = context.computeOnClient(mc -> SpatialGUIClient.renderer().isClosing());
+        boolean offClosing = context.computeOnClient(mc -> SpatialGuiCompat.planeClosingForTests());
         context.waitTick();
         context.takeScreenshot("spatial_mod_off_close_t1");
         boolean untouched = context.computeOnClient(mc -> ShatterProfiler.closeCount()) == closes;
@@ -123,7 +124,7 @@ final class SpatialScenarios {
     private void closeWithSpatial(String name, Supplier<Screen> screen, int openTicks, boolean expectSpatial) {
         context.setScreen(screen);
         context.waitTicks(openTicks);
-        boolean hooked = context.computeOnClient(mc -> SpatialGUIClient.renderer().getHookedScreen() == Mc26.screen());
+        boolean hooked = context.computeOnClient(mc -> SpatialGuiCompat.hookedScreenForTests() == Mc26.screen());
         if (expectSpatial) {
             context.takeScreenshot(name + "_before");
         }
@@ -134,7 +135,7 @@ final class SpatialScenarios {
         int shards = context.computeOnClient(mc -> ShardManager.liveShardCount());
         boolean shattered = context.computeOnClient(mc -> ShatterProfiler.closeCount()) > closes;
         context.waitTick();
-        boolean closingAfter = context.computeOnClient(mc -> SpatialGUIClient.renderer().isClosing());
+        boolean closingAfter = context.computeOnClient(mc -> SpatialGuiCompat.planeClosingForTests());
         if (expectSpatial) {
             context.takeScreenshot(name + "_t1");
             context.waitTicks(10);
@@ -153,14 +154,7 @@ final class SpatialScenarios {
     }
 
     private static long closeStartElapsed() {
-        try {
-            InventoryRenderer inventory = SpatialGUIClient.renderer().getInventoryRenderer();
-            Field field = InventoryRenderer.class.getDeclaredField("closeStartElapsed");
-            field.setAccessible(true);
-            return inventory.isClosing() ? field.getLong(inventory) : 0L;
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException(e);
-        }
+        return SpatialGuiCompat.closeStartElapsedForTests();
     }
 
     void setSpatial(String field, Object value) {

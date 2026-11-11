@@ -34,7 +34,7 @@ def selected = chosen == 'all' ? platforms.values().unique() : chosen.split(',')
     module
 }
 def tasksAsked = gradle.startParameter.taskNames
-def distOnly = !tasksAsked.isEmpty() && tasksAsked.every { it == 'dist' || it == ':dist' }
+def distOnly = !tasksAsked.isEmpty() && tasksAsked.every { it in ['dist', ':dist', 'verifyDist', ':verifyDist'] }
 if (!distOnly) {
     selected.unique().each { include it }
 }

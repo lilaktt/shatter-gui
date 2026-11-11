@@ -10,7 +10,7 @@
 
 ## Вимоги
 
-- Minecraft 26.1, 26.1.1 або 26.1.2 (один jar, `+mc26.1`), 26.2 (`+mc26.2`) або 26.3 (`+mc26.3`), на OpenGL чи Vulkan; Fabric Loader ≥ 0.19.3, Fabric API, Java 25. Spatial GUI 1.10, а також Iris на 26.3, потребують Fabric Loader новішого за 0.19.3 (0.20.1 працює).
+- Minecraft 26.1, 26.1.1 або 26.1.2 (один jar, `+mc26.1`), 26.2 (`+mc26.2`) або 26.3 (`+mc26.3`), на OpenGL чи Vulkan; Fabric Loader ≥ 0.19.3, Fabric API, Java 25. Перевірено Spatial GUI 1.10.1, 1.11.0 і 1.11.1; вони, а також Iris на 26.3, потребують Fabric Loader новішого за 0.19.3 (0.20.1 працює).
 - Відоме обмеження: Minecraft 26.3 на Vulkan іноді падає (`0xC0000005`, без файлу `hs_err`) під час завантаження ресурсів на
   старті, ще до головного меню, і з модом, і без нього: на NVIDIA RTX 3050 з драйвером 610.62 3 із 20 стартів з модом і 2
   із 20 без мода (лише Fabric API), у ту саму мить. Причина не в моді; запустіть гру ще раз або оберіть OpenGL.
@@ -25,11 +25,24 @@
 ./gradlew runClientGameTest -PspatialGui=1.10.1   # те саме зі Spatial GUI, береться з Modrinth Maven
 ./gradlew runClientGameTest -Pshaders -PshaderPack=C:/path/to/Pack.zip   # знімки з Iris і шейдерпаком
 ./gradlew runVersionMatrix --no-daemon -PshaderPack=C:/path/to/Pack.zip   # скорочений набір на всіх версіях, на ніч
+./gradlew verifyDist --no-daemon   # самі jar-и з dist/ зі Spatial GUI, див. нижче (довго)
 ```
 
 Jar-и брати лише з `dist/` (`./gradlew dist`). Тести гри запускаються з класів, а не з jar-а, тож jar деінде в `build/` — не
 те, що перевіряли. У кожному jar-і є коміт і час збірки (`-dirty`, якщо були незакомічені зміни): у маніфесті, у лозі гри на
 старті, у «Про мод» і в «Скопіювати діагностику».
+
+`./gradlew verifyDist` перевіряє саме jar-и: для кожного jar-а з `dist/` і кожної версії Spatial GUI з `-PverifySpatial`
+(типово `1.11.0,1.10.1,1.11.1`) запускає гру з чистою текою `mods/`, де лише цей jar, Fabric API, Spatial GUI і YACL (класи
+мода й модулі Fabric API прибрано з classpath), і перевіряє, що міст зі Spatial GUI увімкнено, закриття печі й інвентаря дає
+наш ефект, а окремої площини закриття Spatial GUI немає. Підсумок, логи й знімки — у `build/verify-dist/` (`summary.md`).
+Один запуск — близько двох хвилин на jar і версію Spatial GUI, тому це не частина `dist`; запускати після `dist`.
+`-PverifyOnly=26.2` обмежує версії.
+
+Міст зі Spatial GUI не дивиться на номер версії: на старті мод читає класи Spatial GUI й вмикає міст, лише якщо в них є
+потрібні методи й поля (3D-площина, її текстура, анімація закриття). У лозі один рядок, наприклад
+`Spatial GUI: 1.11.0, bridge enabled, …` або `Spatial GUI: 1.12.0, bridge disabled, this version lacks: …`; те саме дрібним
+текстом у «Про мод» і в «Скопіювати діагностику». Коли міст вимкнено, закриття екрана Spatial GUI грає звичайний плаский ефект.
 
 У PowerShell аргументи з крапками треба брати в лапки: `"-PspatialGui=1.8"`.
 

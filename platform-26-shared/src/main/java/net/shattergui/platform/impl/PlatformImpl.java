@@ -31,7 +31,17 @@ public final class PlatformImpl implements Platform {
     private final ScreenCapture capture = new Capture26();
     private final ShardRenderer shards = ShardManager::clear;
     private final InputHooks input = FlyOpen::stop;
-    private final SpatialGuiBridge spatialGui = SpatialGuiCompat::cancelPending;
+    private final SpatialGuiBridge spatialGui = new SpatialGuiBridge() {
+        @Override
+        public void cancelPending() {
+            SpatialGuiCompat.cancelPending();
+        }
+
+        @Override
+        public Status status() {
+            return SpatialGuiCompat.status();
+        }
+    };
     private final ShaderCompat shaders = IrisCompat::shaderPackInUse;
     private final EffectCatalog effects = new Effects26();
     private final Game26 game = new Game26();

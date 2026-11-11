@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Spatial GUI 1.11.0 and 1.11.1 work again: they renamed the class that draws the 3D plane, so the bridge failed at the
+  first close and Spatial GUI played its own closing animation next to our effect (on 26.1.x, 26.2 and 26.3). The bridge
+  no longer checks version numbers: at start it looks for the classes, methods and fields it uses and turns itself on only
+  when they are all there. One line in the game log says which Spatial GUI was found and whether the bridge is on and why;
+  the same line is in About (small print) and in "Copy diagnostics".
+- `./gradlew verifyDist` starts the game with each `dist/` jar in a clean `mods/` folder with Spatial GUI and checks the
+  bridge on the jar itself.
 - The CurseForge link (About, Mod Menu, `fabric.mod.json`, README) now points to
   https://www.curseforge.com/minecraft/mc-mods/shatter-gui. The project's addresses come from one place in the code, so
   `fabric.mod.json` and About can no longer disagree.

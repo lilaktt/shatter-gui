@@ -1,0 +1,64 @@
+if (project.hasProperty("distJar")) {
+    def distJar = file(project.property('distJar').toString())
+    def distSpatial = project.findProperty('distSpatial')?.toString()
+    configurations {
+        distMods {
+            transitive = false
+            canBeConsumed = false
+        }
+    }
+    dependencies {
+        distMods "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+        if (distSpatial) {
+            distMods "maven.modrinth:spatial-gui:${distSpatial}-${project.spatial_suffix}"
+            distMods "maven.modrinth:yacl:${project.yacl_version}"
+        }
+        runtimeOnly "net.fabricmc:fabric-loader:${project.runtime_loader}"
+        runtimeOnly "io.github.llamalad7:mixinextras-fabric:${project.runtime_mixinextras}"
+    }
+    afterEvaluate {
+        loom.runs.create('distVerify') {
+            inherit loom.runs.getByName('clientGameTest')
+            configName = 'Verify a dist jar'
+            runDir 'build/run/distVerify'
+            ideConfigGenerated false
+            property 'fabric.client.gametest'
+            property 'fabric.client.gametest.testModResourcesPath',
+                    rootProject.file('platform-26-shared/src/gametest/resources').absolutePath
+            vmArg '-Dshatter.test.only=dist'
+            vmArg "-Dshatter.test.distJar=${distJar.name}"
+        }
+        tasks.named('runDistVerify') {
+            def runDir = file('build/run/distVerify')
+            def ownOutput = sourceSets.main.output.files.collect { it.absoluteFile }
+            def mods = configurations.distMods
+            def dropped = []
+            def sources = new ArrayList(classpath.from)
+            classpath = files(sources).filter { f ->
+                def path = f.path.replace('\\', '/')
+                def drop = ownOutput.contains(f.absoluteFile)
+                        || path.contains('/net.fabricmc.fabric-api/') && !path.contains('/fabric-client-gametest-api-v1/')
+                if (drop) {
+                    dropped << f.name
+                }
+                !drop
+            }
+            doFirst {
+                if (!distJar.isFile()) {
+                    throw new GradleException("distVerify: ${distJar} does not exist")
+                }
+                runDir.deleteDir()
+                def modsDir = new File(runDir, 'mods')
+                modsDir.mkdirs()
+                new File(modsDir, distJar.name).bytes = distJar.bytes
+                mods.files.each { new File(modsDir, it.name).bytes = it.bytes }
+                dropped.clear()
+                def kept = classpath.files
+                logger.lifecycle("distVerify: classpath has ${kept.size()} entries")
+                logger.lifecycle("distVerify: game properties ${allJvmArgs.findAll { it.startsWith('-Dfabric.client') || it.startsWith('-Dshatter') }}")
+                logger.lifecycle("distVerify: mods = ${modsDir.list().sort().join(', ')}")
+                logger.lifecycle("distVerify: left out of the classpath: ${dropped.size()} entries (the mod's own classes and resources, Fabric API modules)")
+            }
+        }
+    }
+}

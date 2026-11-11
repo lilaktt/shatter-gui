@@ -30,6 +30,7 @@ public final class ShatterGuiClient implements ClientModInitializer {
         LOGGER.info("Shatter GUI for Minecraft {}, build {}", net.shattergui.BuildInfo.minecraft(),
                 net.shattergui.BuildInfo.describe());
         ShatterConfig.load();
+        net.shattergui.compat.spatial.SpatialGuiCompat.logStatus();
         ScreenCatalog.load();
         CustomEffects.init();
         ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloadListener(

@@ -5,8 +5,8 @@
   "plugin": "net.shattergui.compat.spatial.SpatialGuiMixinPlugin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "InventoryRendererAccessor",
-    "InventoryRendererFlyMixin",
+    "SpatialPlaneAccessor",
+    "SpatialPlaneFlyMixin",
     "WorldBlurMixin"
   ],
   "injectors": {

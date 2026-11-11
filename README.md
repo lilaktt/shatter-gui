@@ -34,7 +34,7 @@ effect editor.
 
 ## Requirements
 
-Minecraft 26.1, 26.1.1 or 26.1.2 (one jar, `+mc26.1`), 26.2 (`+mc26.2`) or 26.3 (`+mc26.3`), on OpenGL or Vulkan. Fabric Loader ≥ 0.19.3, Fabric API, Java 25. Optional: Mod Menu, Spatial GUI, Iris + Sodium (Spatial GUI 1.10, and Iris on 26.3, need a Fabric Loader newer than 0.19.3; 0.20.1 works).
+Minecraft 26.1, 26.1.1 or 26.1.2 (one jar, `+mc26.1`), 26.2 (`+mc26.2`) or 26.3 (`+mc26.3`), on OpenGL or Vulkan. Fabric Loader ≥ 0.19.3, Fabric API, Java 25. Optional: Mod Menu, Spatial GUI, Iris + Sodium (Spatial GUI 1.10.1, 1.11.0 and 1.11.1 are tested; they, and Iris on 26.3, need a Fabric Loader newer than 0.19.3; 0.20.1 works).
 
 ## Configuration
 
@@ -96,6 +96,7 @@ the mod: General tab → About.
 ./gradlew runClientGameTest -PtestOnly=lang -Plang=ja_jp   # one language at GUI scales 1–4, screenshots lang_ja_…
 ./gradlew build -Pmc=1.21.1     # the 1.21.1 port (a stub so far)
 ./gradlew runVersionMatrix --no-daemon -PshaderPack=C:/path/to/Pack.zip   # a short test set on every version, for the night
+./gradlew verifyDist --no-daemon   # the dist/ jars themselves with Spatial GUI, see below (long)
 ```
 
 Take jars only from `dist/`, made by `./gradlew dist`: it runs the unit tests, builds 26.1.x, 26.2 and 26.3 one after another
@@ -103,6 +104,20 @@ from a clean state and writes their SHA-256 sums. Game tests run from the compil
 somewhere under `build/` is not what was tested. Each jar carries the commit and build time (`-dirty` when the tree had
 uncommitted changes): in its manifest, in the game log at start (`Shatter GUI for Minecraft …, build …`), in Settings →
 About and in "Copy diagnostics".
+
+`./gradlew verifyDist` tests the jars, not the classes: for every jar in `dist/` and every Spatial GUI version in
+`-PverifySpatial` (default `1.11.0,1.10.1,1.11.1`) it starts the game with a clean `mods/` folder that holds only that jar,
+Fabric API, Spatial GUI and YACL (the mod's own classes and the Fabric API modules are taken off the classpath), checks
+that the Spatial GUI bridge is on, that closing a furnace and the inventory plays our effect and that Spatial GUI does not
+play its own closing plane next to it. Results, game logs and screenshots go to `build/verify-dist/` (`summary.md`).
+A run takes about two minutes per jar and Spatial GUI version, so it is not part of `dist`; run it after `dist`.
+`-PverifyOnly=26.2` limits it to some versions.
+
+The Spatial GUI bridge does not check version numbers: at start the mod reads Spatial GUI's classes and enables the
+bridge only if the methods and fields it uses are there (the 3D plane, its texture, its close animation). The game log has
+one line about it, e.g. `Spatial GUI: 1.11.0, bridge enabled, plane WorldScreenRenderer via getWorldScreenRenderer(), …`
+or `Spatial GUI: 1.12.0, bridge disabled, this version lacks: …`; the same is shown in small print in About and in
+"Copy diagnostics". When the bridge is off, closing a screen shown by Spatial GUI plays the normal flat effect.
 
 The shared code (`core`, no Minecraft; `platform-26-shared`, all of 26.x) and one module per Minecraft version
 (`platform-*`) are described in `docs/PORTING.md`, the versions in `docs/VERSIONS.md`, the last results in

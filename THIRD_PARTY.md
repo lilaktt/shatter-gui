@@ -11,7 +11,7 @@ depend on it and does not include it in its jar.
 
 Checked (27.10.2026): the source of Shatter GUI contains no copied parts of Spatial GUI (the `compat/spatial` package
 only calls its API by name), so the MIT condition "include the copyright and the license text in copies" does not
-apply. Thanks and a link are in `NOTICE`, in the "About" section and in Mod Menu (contributors). The Spatial GUI 1.8/1.9
+apply. Thanks and a link are in `NOTICE`, in the "About" section and in Mod Menu (contributors). The Spatial GUI 1.8–1.11
 jars have no LICENSE file and an empty `authors` list, so the repository owner is named; no copyright line was made up.
 
 If code from Spatial GUI is ever taken, the MIT license text and its copyright line must be added here and to `NOTICE`
@@ -33,7 +33,7 @@ instead; whoever adds them must have the right to use them (e.g. the platforms' 
 
 Downloaded by Gradle from the Modrinth Maven (`build.gradle`):
 
-- Spatial GUI 1.8 (`compileOnly`, and 1.8 or 1.9 for runs with `-PspatialGui=…`), MIT.
+- Spatial GUI 1.10.1, 1.11.0, 1.11.1 (only for runs with `-PspatialGui=…` and `verifyDist`; the mod is no longer compiled against it), MIT.
 - YACL 3.9.6 — a dependency of Spatial GUI for those runs, LGPL-3.0.
 - Iris 1.11.4 (`compileOnly` for its public API, and for runs with `-Pshaders`), LGPL-3.0; Sodium 0.9.2 — only for
   runs with `-Pshaders`, PolyForm Shield 1.0.0.

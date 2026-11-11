@@ -38,6 +38,15 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
         }
         context.waitTicks(5);
 
+        if ("dist".equals(System.getProperty("shatter.test.only", "").trim())) {
+            DistScenario.run(context, this::check, ShatterClientGameTest::furnace);
+            if (!failures.isEmpty()) {
+                throw new AssertionError("Shatter GUI test failures:\n - " + String.join("\n - ", failures));
+            }
+            ShatterGuiClient.LOGGER.info("[ShatterTest] all checks passed");
+            return;
+        }
+
         context.runOnClient(mc -> ShardManager.seedForTests(OnTopScenario.TEST_SEED));
         LinksScenario.everyPageUp();
         ShatterConfig config = ShatterConfig.get();

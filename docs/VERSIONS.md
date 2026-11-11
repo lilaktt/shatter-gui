@@ -48,6 +48,16 @@ Sodium від 0.8.10 вказує лише 26.1.2 (Fabric Loader відмовл�
 Fabric Loader: мод стартує на 0.19.3 (перевірено запуском jar-а без Gradle). Spatial GUI 1.10.1 потребує YACL 3.9.7, а той — Loader новішого
 за 0.19.3; Iris 1.11.7 на 26.3 теж падає на 0.19.3, хоч заявляє `>=0.12.3`. З цими модами тести йдуть на 0.20.1.
 
+Spatial GUI: мод не компілюється проти нього й не перевіряє номер версії. На старті `SpatialGuiProbe` читає байткод класів
+Spatial GUI (без їх завантаження) і шукає: `SpatialGUIClient.renderer()/isEnabled()/get|setEffectiveFirstPersonMode`,
+у класі рендерера `getHookedScreen()`, геттер площини (тип із полями `WORLD_POSE_STACK`, `closeStartElapsed`, `closeDurationMs`
+і методами `computeScreenPose(PoseStack, boolean)`, `getFadeAlpha`, `updateQuadBasis`, `getQuadBasis`, `getCylinderBasis`,
+`isClosing`, `isClosingFirstPerson`, `setScreenOpenTime`), геттер текстури (`getTarget()`/`getInventoryTarget()` → `TextureTarget`)
+і `WorldBlurRenderer.applyBlur(int)` (необов'язково). Міксини мають обидві відомі назви площини (`WorldScreenRenderer` з 1.11,
+`InventoryRenderer` до 1.10.1), плагін міксинів вмикає лише ту, що знайдена. Перевірено 1.10.1, 1.11.0, 1.11.1 на 26.1.x, 26.2,
+26.3 (`./gradlew verifyDist`). Нова назва площини — міст вимкнеться з причиною в лозі, доки її не додати в `SpatialGuiProbe.PLANE_TARGETS`
+і в `@Mixin(targets = …)`.
+
 На 26.3 мод працює і на OpenGL, і на Vulkan. Відомі збої:
 - OpenGL на Intel, `0xC0000005` під час завантаження шейдерів: і без мода (1 старт із 6 в обох випадках), не мод.
 - OpenGL, `0xC0000409`: двічі, причина не встановлена, без мода не перевірено.

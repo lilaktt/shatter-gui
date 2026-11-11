@@ -19,7 +19,15 @@ public final class SpatialGuiMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        return SpatialGuiDetector.isSupportedVersionInstalled();
+        SpatialGuiProbe.Api api = SpatialGuiProbe.api();
+        if (!api.usable()) {
+            return false;
+        }
+        String target = targetClassName.replace('/', '.');
+        if (mixinClassName.endsWith(".WorldBlurMixin")) {
+            return api.blur();
+        }
+        return target.equals(api.planeClassName());
     }
 
     @Override

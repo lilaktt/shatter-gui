@@ -117,9 +117,6 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-    compileOnly(spatialGuiVersion(project.spatial_compile)) { transitive = false }
-    gametestCompileOnly(spatialGuiVersion(project.spatial_compile)) { transitive = false }
-
     compileOnly(modMenuVersion) { transitive = false }
     gametestCompileOnly(modMenuVersion) { transitive = false }
     compileOnly(irisVersion) { transitive = false }
@@ -183,3 +180,5 @@ apply from: rootProject.file('gradle/build-info.gradle')
 tasks.named('jar') {
     destinationDirectory = layout.buildDirectory.dir('tmp/distInput')
 }
+
+apply from: rootProject.file('gradle/dist-verify-run.gradle')

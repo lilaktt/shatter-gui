@@ -85,8 +85,7 @@ final class Game26 implements GameInfo, Desktop {
         out.put("Fabric API", version("fabric-api"));
         out.put("Iris", version("iris"));
         out.put("Sodium", version("sodium"));
-        String spatial = version("spatial_gui");
-        out.put("Spatial GUI", spatial.equals("not installed") ? version("spatial-gui") : spatial);
+        out.put("Spatial GUI", net.shattergui.compat.spatial.SpatialGuiCompat.status().summary());
         try {
             Mc26.gpuInfo(out);
         } catch (RuntimeException e) {

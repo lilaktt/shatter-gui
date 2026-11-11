@@ -9,6 +9,7 @@ import net.shattergui.ShatterGuiClient;
 
 public final class SpatialGuiCompat {
     private static boolean failed;
+    private static String failure = "";
 
     private SpatialGuiCompat() {
     }
@@ -105,7 +106,61 @@ public final class SpatialGuiCompat {
 
     private static boolean active() {
         ShatterConfig config = ShatterConfig.get();
-        return config.enabled && config.spatialGuiIntegration && !failed && SpatialGuiDetector.isSupportedVersionInstalled();
+        return config.enabled && config.spatialGuiIntegration && usable();
+    }
+
+    private static boolean usable() {
+        return !failed && SpatialGuiProbe.api().usable();
+    }
+
+    public static net.shattergui.platform.SpatialGuiBridge.Status status() {
+        SpatialGuiProbe.Api api = SpatialGuiProbe.api();
+        if (!api.installed()) {
+            return net.shattergui.platform.SpatialGuiBridge.Status.notInstalled();
+        }
+        if (!api.usable()) {
+            return new net.shattergui.platform.SpatialGuiBridge.Status(api.version(), false, net.shattergui.platform.SpatialGuiBridge.Reason.MISSING, String.join("; ", api.missing()));
+        }
+        if (failed) {
+            return new net.shattergui.platform.SpatialGuiBridge.Status(api.version(), false, net.shattergui.platform.SpatialGuiBridge.Reason.FAILED, failure);
+        }
+        ShatterConfig config = ShatterConfig.get();
+        if (!config.enabled) {
+            return new net.shattergui.platform.SpatialGuiBridge.Status(api.version(), false, net.shattergui.platform.SpatialGuiBridge.Reason.MOD_OFF, "");
+        }
+        if (!config.spatialGuiIntegration) {
+            return new net.shattergui.platform.SpatialGuiBridge.Status(api.version(), false, net.shattergui.platform.SpatialGuiBridge.Reason.SETTING_OFF, "");
+        }
+        return new net.shattergui.platform.SpatialGuiBridge.Status(api.version(), true, net.shattergui.platform.SpatialGuiBridge.Reason.READY, api.describe());
+    }
+
+    public static void logStatus() {
+        if (usable()) {
+            try {
+                SpatialHandles.get();
+            } catch (RuntimeException | LinkageError e) {
+                failed = true;
+                failure = "reading its classes, " + e.getClass().getSimpleName() + " " + e.getMessage();
+            }
+        }
+        net.shattergui.platform.SpatialGuiBridge.Status status = status();
+        if (status.enabled() || status.reason() == net.shattergui.platform.SpatialGuiBridge.Reason.NOT_INSTALLED) {
+            ShatterGuiClient.LOGGER.info(status.line());
+        } else {
+            ShatterGuiClient.LOGGER.warn(status.line());
+        }
+    }
+
+    public static Screen hookedScreenForTests() {
+        return usable() ? SpatialGuiBridge.hookedScreenForTests() : null;
+    }
+
+    public static boolean planeClosingForTests() {
+        return usable() && SpatialGuiBridge.planeClosingForTests();
+    }
+
+    public static long closeStartElapsedForTests() {
+        return usable() ? SpatialGuiBridge.closeStartElapsedForTests() : -1L;
     }
 
     public static org.joml.Vector3d planeCenterNow() {
@@ -117,7 +172,7 @@ public final class SpatialGuiCompat {
     }
 
     public static void cancelPendingOpen() {
-        if (SpatialGuiDetector.isSupportedVersionInstalled() && !failed) {
+        if (usable()) {
             try {
                 SpatialGuiBridge.cancelPendingOpen();
             } catch (Throwable t) {
@@ -127,7 +182,7 @@ public final class SpatialGuiCompat {
     }
 
     public static void cancelPending() {
-        if (SpatialGuiDetector.isSupportedVersionInstalled() && !failed) {
+        if (usable()) {
             try {
                 SpatialGuiBridge.cancelPending();
             } catch (Throwable t) {
@@ -138,7 +193,9 @@ public final class SpatialGuiCompat {
 
     private static void fail(String what, Throwable t) {
         failed = true;
+        failure = what + ", " + t.getClass().getSimpleName() + (t.getMessage() == null ? "" : " " + t.getMessage());
         ShatterGuiClient.LOGGER.warn("Spatial GUI integration disabled for this session (error while {}); "
                 + "closing screens falls back to the normal effect", what, t);
+        logStatus();
     }
 }
