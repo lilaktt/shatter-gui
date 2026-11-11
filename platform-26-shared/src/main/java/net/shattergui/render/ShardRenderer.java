@@ -56,10 +56,24 @@ public final class ShardRenderer {
     }
 
     enum Part {
-        ALL, MOVING, SETTLED;
+        ALL, MOVING, SETTLED, SHOWN, HIDDEN;
 
         boolean takes(boolean settled) {
-            return this == ALL || (this == SETTLED) == settled;
+            return takes(settled, false);
+        }
+
+        boolean takes(boolean settled, boolean hidden) {
+            return switch (this) {
+                case ALL -> true;
+                case MOVING -> !settled && !hidden;
+                case SETTLED -> settled || hidden;
+                case SHOWN -> !hidden;
+                case HIDDEN -> hidden;
+            };
+        }
+
+        boolean overWorld() {
+            return this != SETTLED && this != HIDDEN;
         }
     }
 
@@ -91,9 +105,11 @@ public final class ShardRenderer {
                 space = batch.space(camera).towardsWorld(camera, net.shattergui.effect.FlyEffect.towardsTarget(first,
                         partialTick));
             }
-            if (overBackdrop && splitSettled && !batch.follows()) {
-                submitBatch(OnTopPass::add, batch, space, orientation, partialTick, false, true, Part.MOVING);
-                submitBatch(OnTopPass::addSettled, batch, space, orientation, partialTick, false, true, Part.SETTLED);
+            if (overBackdrop && !batch.follows()) {
+                submitBatch(OnTopPass::add, batch, space, orientation, partialTick, false, true,
+                        splitSettled ? Part.MOVING : Part.SHOWN);
+                submitBatch(OnTopPass::addSettled, batch, space, orientation, partialTick, false, true,
+                        splitSettled ? Part.SETTLED : Part.HIDDEN);
             } else {
                 submitBatch(sink, batch, space, orientation, partialTick, shaders && !overBackdrop, overBackdrop, Part.ALL);
             }
@@ -159,7 +175,7 @@ public final class ShardRenderer {
         if (batch.effect().opens()) {
             gatherShardsDrawn += layers.opaque.count + layers.fading.count;
         }
-        if (layers.opaque.count + layers.fading.count + layers.glow.count > 0 && part != Part.SETTLED) {
+        if (layers.opaque.count + layers.fading.count + layers.glow.count > 0 && part.overWorld()) {
             net.shattergui.debug.FrameAudit.wave(batch.effect().opens());
         }
         Identifier texture = batch.texture();
@@ -229,7 +245,7 @@ public final class ShardRenderer {
 
             for (ShardInstance shard : batch.shards()) {
                 boolean settled = shard.settled();
-                if (!part.takes(settled)) {
+                if (!part.takes(settled, shard.hidden())) {
                     continue;
                 }
                 float bias = settled ? Settle.BIAS : 0f;

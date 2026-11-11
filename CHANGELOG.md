@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Pieces in flight behind a wall or roof are hidden by it once a solid block is between them and the camera, with or
+  without a shader pack (before, they showed through the blocks until they settled, about 1–2 seconds). Pieces that start
+  behind a wall in front of you, and "Fly" pieces flying into their container, still show over blocks.
 - Spatial GUI 1.11.0 and 1.11.1 work again: they renamed the class that draws the 3D plane, so the bridge failed at the
   first close and Spatial GUI played its own closing animation next to our effect (on 26.1.x, 26.2 and 26.3). The bridge
   no longer checks version numbers: at start it looks for the classes, methods and fields it uses and turns itself on only

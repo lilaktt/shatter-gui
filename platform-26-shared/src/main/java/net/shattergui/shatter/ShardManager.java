@@ -92,6 +92,11 @@ public final class ShardManager {
             return follows;
         }
 
+        boolean hidesBehindBlocks() {
+            return !effect.opens() && !follows && !preview && ShatterConfig.get().alwaysOnTop
+                    && !(effect.base() instanceof net.shattergui.effect.FlyEffect);
+        }
+
         public boolean onSpatialPlane() {
             return anchor != null && anchor.onSpatialPlane();
         }
@@ -346,6 +351,12 @@ public final class ShardManager {
         }
         hurryOldWaves(shards.size());
         lastSpawned = new Batch(slot, shards, effect, wave, params, preview, anchor, effect.opens() ? owner : null);
+        if (lastSpawned.hidesBehindBlocks()) {
+            net.minecraft.world.phys.Vec3 eye = Mc26.camera().position();
+            for (ShardInstance shard : shards) {
+                shard.bornBehind(mc.level, eye);
+            }
+        }
         BATCHES.add(lastSpawned);
         peakPlaying = Math.max(peakPlaying, playingCount());
         effect.playSound(source);
@@ -413,8 +424,10 @@ public final class ShardManager {
             });
             boolean waveAlive = batch.wave != null && batch.wave.tick(mc.level, batch.shards, batch.params);
             boolean settles = !batch.effect.opens() && !batch.follows() && !batch.preview && !settleHeld;
+            net.minecraft.world.phys.Vec3 eye = batch.hidesBehindBlocks() ? Mc26.camera().position() : null;
             for (ShardInstance shard : batch.shards) {
                 shard.updateSettled(mc.level, settles);
+                shard.updateHidden(mc.level, eye);
             }
             if (batch.hurried() && --batch.hurryLeft <= 0) {
                 batch.shards.clear();

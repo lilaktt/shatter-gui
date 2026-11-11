@@ -80,7 +80,7 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
             if (FabricLoader.getInstance().isModLoaded("iris") && (irisOnly.contains("gather") || irisOnly.contains("matrix")
                     || irisOnly.contains("duplicates") || irisOnly.contains("thematic") || irisOnly.contains("esc") || irisOnly.contains("ontop")
                     || irisOnly.contains("backdrop") || irisOnly.contains("follow") || irisOnly.contains("settle")
-                    || irisOnly.contains("bob") || irisOnly.contains("hand"))) {
+                    || irisOnly.contains("bob") || irisOnly.contains("hand") || irisOnly.contains("roof"))) {
                 context.waitTicks(100);
                 boolean withSpatial = FabricLoader.getInstance().isModLoaded("spatial-gui");
                 String tag = "shader_" + ShaderScenarios.packTag() + (withSpatial ? "_spatial" : "");
@@ -113,6 +113,9 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
                 }
                 if (irisOnly.contains("bob")) {
                     BobScenario.run(context, singleplayer, this::check, tag);
+                }
+                if (irisOnly.contains("roof")) {
+                    RoofScenario.run(context, singleplayer, this::check, "shaders");
                 }
                 if (irisOnly.contains("hand")) {
                     HandScenario.run(context, singleplayer, this::check, tag);
@@ -285,6 +288,9 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
                 }
                 if (chosen.contains("bob")) {
                     BobScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
+                }
+                if (chosen.contains("roof")) {
+                    RoofScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
                 }
                 if (chosen.contains("hand")) {
                     HandScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");

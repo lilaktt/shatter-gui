@@ -4,6 +4,7 @@ import net.shattergui.platform.impl.Mc26;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
@@ -40,6 +41,8 @@ public final class ShardInstance {
     boolean noClip;
     private int stillTicks;
     private boolean settled;
+    private boolean hidden;
+    private boolean bornBehind;
     private float extent = -1f;
 
     ShardInstance(Vector3d centroid, Vector3f[] corners, float[] uv, Vector3f normal, int lifetime, float fadeStartFraction,
@@ -113,6 +116,32 @@ public final class ShardInstance {
 
     public boolean settled() {
         return settled;
+    }
+
+    public boolean hidden() {
+        return hidden;
+    }
+
+    void bornBehind(ClientLevel level, Vec3 eye) {
+        bornBehind = eye != null && behindBlocks(level, eye);
+    }
+
+    void updateHidden(ClientLevel level, Vec3 eye) {
+        if (eye == null || settled) {
+            hidden = false;
+            return;
+        }
+        boolean behind = behindBlocks(level, eye);
+        if (bornBehind && !behind) {
+            bornBehind = false;
+        }
+        hidden = behind && !bornBehind;
+    }
+
+    private boolean behindBlocks(ClientLevel level, Vec3 eye) {
+        BlockPos.MutableBlockPos cell = new BlockPos.MutableBlockPos();
+        return SightLine.blocked(eye.x, eye.y, eye.z, pos.x, pos.y, pos.z,
+                (x, y, z) -> level.getBlockState(cell.set(x, y, z)).isSolidRender());
     }
 
     void updateSettled(ClientLevel level, boolean eligible) {

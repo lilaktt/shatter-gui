@@ -43,7 +43,10 @@ style, playback, performance — effect quality and how many effects play at onc
 For both / Remove", a double click uses a card for both, ★ marks favourites), Screens (per-screen effects, thematic
 table), Custom (effect editor). The "Next favourite close effect" key (unbound by default) switches between the
 favourites. Pieces in flight are drawn over the world by default ("Draw over blocks"): blocks in front never cut into
-them; a piece that has settled on the ground is hidden by blocks like the rest of the world. The player's hand, the HUD
+them; a piece that has settled on the ground is hidden by blocks like the rest of the world, and so is a piece in flight
+once a solid block stands between it and the camera (you walk under a roof or behind a wall). Pieces that start behind a
+wall right in front of you stay over it until they come into view, and pieces flying into their container ("Fly") always
+stay over blocks. The player's hand, the HUD
 and screens stay on top, with or without a shader pack. The config is `config/shatter_gui.json`.
 
 **Page status in About.** By each page button a dot says whether the page is up: green (yes), yellow (not published yet
