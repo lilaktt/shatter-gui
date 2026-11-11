@@ -1,5 +1,6 @@
 package net.shattergui.config.screen;
 
+import net.shattergui.links.ProjectLinks;
 import net.shattergui.ModKeys;
 import net.shattergui.ShatterMod;
 import net.shattergui.config.ScreenKeys;
@@ -725,10 +726,7 @@ public final class ShatterConfigScreen extends UiScreen {
         String authors = String.join(", ", meta.authors());
         about.add(new Label(tr("ui.shatter_gui.about.author", authors), Label.Style.DIM));
         about.add(new Label(tr("ui.shatter_gui.about.license", String.join(", ", meta.licenses())), Label.Style.DIM));
-        String link = meta.contact("sources").orElse(null);
-        if (link != null) {
-            about.add(new Label(tr("ui.shatter_gui.about.link", link), Label.Style.DIM));
-        }
+        about.add(new Label(tr("ui.shatter_gui.about.link", ProjectLinks.SOURCES), Label.Style.DIM));
         about.add(new SettingRow(tr("ui.shatter_gui.link_status_check"), tr("ui.shatter_gui.link_status_check.desc"), false,
                 new Toggle(() -> work.linkStatusCheck, v -> work.linkStatusCheck = v), () -> !work.linkStatusCheck,
                 () -> work.linkStatusCheck = true));
@@ -737,10 +735,7 @@ public final class ShatterConfigScreen extends UiScreen {
                 {"curseforge", "curseforge", LinkButton.Brand.CURSEFORGE}, {"sources", "github", LinkButton.Brand.GITHUB},
                 {"issues", "report_bug", LinkButton.Brand.BUG}};
         for (Object[] page : pageLinks) {
-            String url = meta.contact((String) page[0]).orElse(null);
-            if (url == null) {
-                continue;
-            }
+            String url = ProjectLinks.contact().get((String) page[0]);
             String key = "ui.shatter_gui.about." + page[1];
             LinkButton open = new LinkButton((LinkButton.Brand) page[2], tr(key), tr(key + ".tooltip"),
                     () -> work.linkStatusCheck, meta.version());

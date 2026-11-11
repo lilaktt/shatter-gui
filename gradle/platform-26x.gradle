@@ -145,11 +145,11 @@ dependencies {
 }
 
 processResources {
-    def props = [version: project.version, sources: project.mod_sources, issues: project.mod_issues,
-                 modrinth: project.mod_modrinth, curseforge: project.mod_curseforge,
+    def props = rootProject.projectLinks() + [version: project.version,
                  author: project.mod_author, license: project.mod_license,
                  minecraft_range: project.minecraft_range]
     inputs.properties props
+    inputs.file rootProject.projectLinksFile
     filteringCharset "UTF-8"
 
     filesMatching("fabric.mod.json") {

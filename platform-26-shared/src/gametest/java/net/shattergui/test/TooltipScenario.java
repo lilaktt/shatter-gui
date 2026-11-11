@@ -46,10 +46,16 @@ final class TooltipScenario {
         context.runOnClient(mc -> EditorScenario.editor(mc).selectTab(ShatterConfigScreen.Tab.GENERAL));
         context.waitTicks(3);
         java.util.Map<String, String> pages = new java.util.LinkedHashMap<>();
-        pages.put("modrinth", "https://modrinth.com/mod/shattergui");
-        pages.put("curseforge", "https://www.curseforge.com/minecraft/mc-mods/shattergui");
-        pages.put("github", "https://github.com/lilaktt/shatter-gui");
-        pages.put("report_bug", "https://github.com/lilaktt/shatter-gui/issues");
+        pages.put("modrinth", net.shattergui.links.ProjectLinks.MODRINTH);
+        pages.put("curseforge", net.shattergui.links.ProjectLinks.CURSEFORGE);
+        pages.put("github", net.shattergui.links.ProjectLinks.SOURCES);
+        pages.put("report_bug", net.shattergui.links.ProjectLinks.ISSUES);
+        for (java.util.Map.Entry<String, String> link : net.shattergui.links.ProjectLinks.contact().entrySet()) {
+            String declared = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("shatter_gui").orElseThrow()
+                    .getMetadata().getContact().get(link.getKey()).orElse(null);
+            check.accept(link.getValue().equals(declared), name + ": fabric.mod.json contact " + link.getKey() + " is "
+                    + declared + ", ProjectLinks has " + link.getValue());
+        }
         for (java.util.Map.Entry<String, String> page : pages.entrySet()) {
             String title = net.minecraft.network.chat.Component.translatable("ui.shatter_gui.about." + page.getKey()).getString();
             boolean opened = context.computeOnClient(mc -> {

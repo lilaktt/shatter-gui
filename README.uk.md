@@ -354,7 +354,7 @@ Schema 2 дозволяє описати **по-справжньому нови�
 `github.png`, `bug.png`, 16×16, і версії `_32` 32×32 для великого масштабу GUI); заміна файлів не потребує змін коду.
 
 - Modrinth: https://modrinth.com/mod/shattergui
-- CurseForge: https://www.curseforge.com/minecraft/mc-mods/shattergui
+- CurseForge: https://www.curseforge.com/minecraft/mc-mods/shatter-gui
 - GitHub: https://github.com/lilaktt/shatter-gui
 - Повідомити про помилку: https://github.com/lilaktt/shatter-gui/issues
 

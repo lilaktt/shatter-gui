@@ -1,2 +1,3 @@
+apply from: 'gradle/project-links.gradle'
 apply from: 'gradle/version-matrix.gradle'
 apply from: 'gradle/dist.gradle'

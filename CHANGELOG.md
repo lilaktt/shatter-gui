@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The CurseForge link (About, Mod Menu, `fabric.mod.json`, README) now points to
+  https://www.curseforge.com/minecraft/mc-mods/shatter-gui. The project's addresses come from one place in the code, so
+  `fabric.mod.json` and About can no longer disagree.
 - Pieces never cover the player's hand, with or without a shader pack, on 26.1.x, 26.2 and 26.3. Before, pieces close to
   the camera (the first moments of a close, pieces lying a block or two away) showed over the hand, and with a shader
   pack every piece in flight did.

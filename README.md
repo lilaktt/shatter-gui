@@ -108,13 +108,15 @@ The shared code (`core`, no Minecraft; `platform-26-shared`, all of 26.x) and on
 (`platform-*`) are described in `docs/PORTING.md`, the versions in `docs/VERSIONS.md`, the last results in
 `docs/TEST_MATRIX.md`.
 
-Author and links are in `gradle.properties` (`mod_author`, `mod_sources`, `mod_issues`, `mod_modrinth`,
-`mod_curseforge`).
+The author is in `gradle.properties` (`mod_author`). The project's addresses (Modrinth, CurseForge, GitHub, bug
+reports) live in one place, `core/src/main/java/net/shattergui/links/ProjectLinks.java`: the build fills
+`fabric.mod.json` (`contact`, `custom.modmenu.links`) from it and About reads it, and `ProjectLinksTest` checks that
+the two match and that each address has its platform's form.
 
 ## Links
 
 - Modrinth: https://modrinth.com/mod/shattergui
-- CurseForge: https://www.curseforge.com/minecraft/mc-mods/shattergui
+- CurseForge: https://www.curseforge.com/minecraft/mc-mods/shatter-gui
 - GitHub: https://github.com/lilaktt/shatter-gui
 - Bug reports: https://github.com/lilaktt/shatter-gui/issues
 

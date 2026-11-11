@@ -115,10 +115,10 @@ if (project.hasProperty("runJavaHome")) {
 }
 
 processResources {
-    def props = [version: project.version, sources: project.mod_sources, issues: project.mod_issues,
-                 modrinth: project.mod_modrinth, curseforge: project.mod_curseforge,
+    def props = rootProject.projectLinks() + [version: project.version,
                  author: project.mod_author, license: project.mod_license]
     inputs.properties props
+    inputs.file rootProject.projectLinksFile
     filteringCharset "UTF-8"
 
     filesMatching("fabric.mod.json") {

@@ -23,8 +23,8 @@ public final class LinkStatus {
     }
 
     public enum Page {
-        MODRINTH("https://api.modrinth.com/v2/project/shattergui"),
-        GITHUB("https://api.github.com/repos/lilaktt/shatter-gui");
+        MODRINTH(ProjectLinks.MODRINTH_API),
+        GITHUB(ProjectLinks.GITHUB_API);
 
         public final String api;
 
