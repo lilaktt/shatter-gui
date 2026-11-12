@@ -295,6 +295,10 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
                 if (chosen.contains("hand")) {
                     HandScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
                 }
+                if (chosen.contains("vortex")) {
+                    VortexScenario.run(context, singleplayer, this::check, context::takeScreenshot, prefix + "vortex",
+                            ShatterClientGameTest::furnace);
+                }
                 if (chosen.contains("edge")) {
                     new EffectScenarios(context, this::check, context::takeScreenshot).edgeFlights(spatial ? "spatial_edge" : "edge");
                 }
