@@ -63,7 +63,29 @@ final class RoofScenario {
             one(context, singleplayer, check, "roof_" + mode + "_default", feet, lifetime, false);
             config.set(Params.GLASS_LIFETIME, LONG_LIFETIME);
             one(context, singleplayer, check, "roof_" + mode + "_long", feet, LONG_LIFETIME, true);
+            context.runOnClient(mc -> mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK));
+            config.set(Params.GLASS_LIFETIME, lifetime);
+            one(context, singleplayer, check, "roof_" + mode + "_third_default", feet, lifetime, false);
+            config.set(Params.GLASS_LIFETIME, LONG_LIFETIME);
+            one(context, singleplayer, check, "roof_" + mode + "_third_long", feet, LONG_LIFETIME, true);
+            context.runOnClient(mc -> mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON));
+            if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("spatial-gui")) {
+                SpatialScenarios setup = new SpatialScenarios(context, check);
+                Object all = setup.getSpatial("allScreens");
+                setup.trySetSpatial("allScreens", true);
+                setup.setSpatial("firstPersonModeInventory", false);
+                setup.setSpatial("firstPersonModeContainers", false);
+                try {
+                    config.set(Params.GLASS_LIFETIME, lifetime);
+                    one(context, singleplayer, check, "roof_" + mode + "_spatial_third_default", feet, lifetime, false);
+                    config.set(Params.GLASS_LIFETIME, LONG_LIFETIME);
+                    one(context, singleplayer, check, "roof_" + mode + "_spatial_third_long", feet, LONG_LIFETIME, true);
+                } finally {
+                    setup.trySetSpatial("allScreens", all == null ? false : all);
+                }
+            }
         } finally {
+            context.runOnClient(mc -> mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON));
             config.effect = effect;
             config.openEffect = open;
             config.alwaysOnTop = onTop;

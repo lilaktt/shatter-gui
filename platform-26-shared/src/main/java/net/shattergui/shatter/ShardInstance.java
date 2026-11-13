@@ -126,16 +126,38 @@ public final class ShardInstance {
         bornBehind = eye != null && behindBlocks(level, eye);
     }
 
-    void updateHidden(ClientLevel level, Vec3 eye) {
-        if (eye == null || settled) {
+    void forgetBornBehind() {
+        bornBehind = false;
+    }
+
+    void updateHidden(ClientLevel level, Vec3 blockEye, Vec3 eye, java.util.List<net.minecraft.world.phys.AABB> occluders) {
+        if (settled) {
             hidden = false;
             return;
         }
-        boolean behind = behindBlocks(level, eye);
-        if (bornBehind && !behind) {
-            bornBehind = false;
+        boolean byBlocks = false;
+        if (blockEye != null) {
+            boolean behind = behindBlocks(level, blockEye);
+            if (bornBehind && !behind) {
+                bornBehind = false;
+            }
+            byBlocks = behind && !bornBehind;
         }
-        hidden = behind && !bornBehind;
+        hidden = byBlocks || eye != null && behindEntity(eye, occluders);
+    }
+
+    private boolean behindEntity(Vec3 eye, java.util.List<net.minecraft.world.phys.AABB> occluders) {
+        if (occluders.isEmpty()) {
+            return false;
+        }
+        double grow = extent();
+        for (net.minecraft.world.phys.AABB box : occluders) {
+            if (BoxSight.blocked(eye.x, eye.y, eye.z, pos.x, pos.y, pos.z, box.minX - grow, box.minY - grow,
+                    box.minZ - grow, box.maxX + grow, box.maxY + grow, box.maxZ + grow)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean behindBlocks(ClientLevel level, Vec3 eye) {

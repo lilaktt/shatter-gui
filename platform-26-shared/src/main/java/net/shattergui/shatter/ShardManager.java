@@ -41,6 +41,7 @@ public final class ShardManager {
         int hurryLeft = -1;
         int hurryTotal = HURRY_TICKS;
         final OpenAnchor anchor;
+        Vec3 bornEye;
         final boolean follows;
         private PlaneBasis lastPlane;
         final Screen owner;
@@ -93,8 +94,11 @@ public final class ShardManager {
         }
 
         boolean hidesBehindBlocks() {
-            return !effect.opens() && !follows && !preview && ShatterConfig.get().alwaysOnTop
-                    && !(effect.base() instanceof net.shattergui.effect.FlyEffect);
+            return hidesBehindEntities() && !(effect.base() instanceof net.shattergui.effect.FlyEffect);
+        }
+
+        boolean hidesBehindEntities() {
+            return !effect.opens() && !follows && !preview && ShatterConfig.get().alwaysOnTop;
         }
 
         public boolean onSpatialPlane() {
@@ -353,8 +357,16 @@ public final class ShardManager {
         lastSpawned = new Batch(slot, shards, effect, wave, params, preview, anchor, effect.opens() ? owner : null);
         if (lastSpawned.hidesBehindBlocks()) {
             net.minecraft.world.phys.Vec3 eye = Mc26.camera().position();
+            lastSpawned.bornEye = eye;
             for (ShardInstance shard : shards) {
                 shard.bornBehind(mc.level, eye);
+            }
+        }
+        if (lastSpawned.hidesBehindEntities()) {
+            net.minecraft.world.phys.Vec3 eye = Mc26.camera().position();
+            List<net.minecraft.world.phys.AABB> boxes = occluders(mc, eye);
+            for (ShardInstance shard : shards) {
+                shard.updateHidden(mc.level, null, eye, boxes);
             }
         }
         BATCHES.add(lastSpawned);
@@ -385,6 +397,25 @@ public final class ShardManager {
         return true;
     }
 
+    private static final double BORN_BEHIND_REACH = 1.0;
+    private static final double OCCLUDER_RANGE = 48.0;
+    private static final double OCCLUDER_MARGIN = 0.3;
+
+    private static List<net.minecraft.world.phys.AABB> occluders(Minecraft mc, Vec3 eye) {
+        List<net.minecraft.world.phys.AABB> boxes = new ArrayList<>();
+        net.minecraft.world.entity.Entity viewer = mc.getCameraEntity();
+        boolean detached = Mc26.camera().isDetached();
+        for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
+            if (entity == viewer && !detached || entity.isSpectator()
+                    || mc.player != null && entity.isInvisibleTo(mc.player)
+                    || entity.distanceToSqr(eye) > OCCLUDER_RANGE * OCCLUDER_RANGE) {
+                continue;
+            }
+            boxes.add(entity.getBoundingBox().inflate(OCCLUDER_MARGIN));
+        }
+        return boxes;
+    }
+
     public static void tick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
@@ -397,6 +428,7 @@ public final class ShardManager {
         boolean paused = mc.isPaused();
         BlockCollision.newTick();
         boolean enabled = ShatterConfig.get().enabled;
+        List<net.minecraft.world.phys.AABB> occluders = null;
         Iterator<Batch> batches = BATCHES.iterator();
         while (batches.hasNext()) {
             Batch batch = batches.next();
@@ -424,10 +456,23 @@ public final class ShardManager {
             });
             boolean waveAlive = batch.wave != null && batch.wave.tick(mc.level, batch.shards, batch.params);
             boolean settles = !batch.effect.opens() && !batch.follows() && !batch.preview && !settleHeld;
-            net.minecraft.world.phys.Vec3 eye = batch.hidesBehindBlocks() ? Mc26.camera().position() : null;
+            net.minecraft.world.phys.Vec3 camera = Mc26.camera().position();
+            net.minecraft.world.phys.Vec3 blockEye = batch.hidesBehindBlocks() ? camera : null;
+            boolean cameraMoved = batch.bornEye != null && batch.bornEye.distanceToSqr(camera) > BORN_BEHIND_REACH * BORN_BEHIND_REACH;
+            if (cameraMoved) {
+                batch.bornEye = null;
+                for (ShardInstance shard : batch.shards) {
+                    shard.forgetBornBehind();
+                }
+            }
+            net.minecraft.world.phys.Vec3 entityEye = batch.hidesBehindEntities() ? camera : null;
+            if (entityEye != null && occluders == null) {
+                occluders = occluders(mc, camera);
+            }
+            List<net.minecraft.world.phys.AABB> boxes = entityEye != null ? occluders : List.of();
             for (ShardInstance shard : batch.shards) {
                 shard.updateSettled(mc.level, settles);
-                shard.updateHidden(mc.level, eye);
+                shard.updateHidden(mc.level, blockEye, entityEye, boxes);
             }
             if (batch.hurried() && --batch.hurryLeft <= 0) {
                 batch.shards.clear();
