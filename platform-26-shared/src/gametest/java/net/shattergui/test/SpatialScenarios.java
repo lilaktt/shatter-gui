@@ -176,6 +176,37 @@ final class SpatialScenarios {
         });
     }
 
+    Object getSpatial(String field) {
+        return context.computeOnClient(mc -> {
+            try {
+                return spatialConfig.getClass().getField(field).get(spatialConfig);
+            } catch (ReflectiveOperationException e) {
+                return null;
+            }
+        });
+    }
+
+    boolean trySetSpatial(String field, Object value) {
+        return context.computeOnClient(mc -> {
+            try {
+                java.lang.reflect.Field f = spatialConfig.getClass().getField(field);
+                if (f.getType().isEnum() && value instanceof String name) {
+                    for (Object constant : f.getType().getEnumConstants()) {
+                        if (constant.toString().equalsIgnoreCase(name)) {
+                            f.set(spatialConfig, constant);
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                f.set(spatialConfig, value);
+                return true;
+            } catch (ReflectiveOperationException | IllegalArgumentException e) {
+                return false;
+            }
+        });
+    }
+
     private static Object findSpatialConfig() {
         try {
             return Class.forName("org.tastytrash.spatialGUI.SpatialGUI").getField("config").get(null);

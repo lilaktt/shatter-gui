@@ -56,8 +56,8 @@ public final class ScreenTransition {
         if (current != null) {
             net.shattergui.fly.OpenBackdrop.cancelClose();
         }
-        if (state.opening && current == newScreen && level != null && player != null) {
-            FlyController.onScreenOpened(newScreen);
+        if (state.opening && current != null && level != null && player != null) {
+            FlyController.onScreenOpened(current);
             return;
         }
         Screen old = state.closing;
