@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Opening effects play in the creative inventory. The game replaces the survival inventory with the creative one while
+  opening it, and the opening was skipped (with or without Spatial GUI, on 26.1.x, 26.2 and 26.3). With Spatial GUI the
+  opening plays on its plane: Spatial GUI's own plane and opening animation appear only once our effect has put the
+  screen together.
+- Spatial GUI, third person: closing a screen no longer leaves the screen empty for about 0.3 s before the pieces appear
+  (on 26.1.x and 26.2; 26.3 was fine). The first frame of the pieces now matches the last frame of Spatial GUI's plane:
+  same place, angle and size, in first and third person.
+- Pieces in flight no longer cover the player's model or other mobs standing in front of them: a piece behind a model is
+  hidden by it, a piece in front still shows over it. This is the same with and without Spatial GUI and with a shader
+  pack.
+- Pieces behind a wall: the exception for pieces that start behind a block (you stand right at a wall) ends once the
+  camera has moved more than a block. With Spatial GUI in third person the camera stands away from the player, and
+  pieces kept showing through walls for their whole flight. Pieces in flight in the open still show over blocks.
 - About: the Modrinth and CurseForge buttons show 8×8 icons drawn by the mod's author, on the text row, 8 GUI pixels wide
   and sharp at every GUI scale; coloured icons keep their colours and lighten a little on hover, light ones would be
   tinted. A picture of the wrong size or a damaged file falls back to the built-in icon with one line in the log. The
