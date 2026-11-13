@@ -138,6 +138,9 @@ final class SpatialFlowScenario {
                 setup.setSpatial("firstPersonModeContainers", false);
             }
             context.runOnClient(mc -> mc.options.setCameraType(CameraType.FIRST_PERSON));
+            context.runOnClient(mc -> Mc26.setScreen(null));
+            context.waitTicks(2);
+            context.runOnClient(mc -> ShardManager.clear());
             SettleScenario.command(singleplayer, "gamemode survival @p");
             SettleScenario.command(singleplayer, "gamerule advance_time true");
             SettleScenario.tp(singleplayer, feet.getX(), feet.getY(), feet.getZ(), 0, 0);
