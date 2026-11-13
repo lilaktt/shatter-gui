@@ -35,7 +35,8 @@ public final class OnTopPass {
     private static ProjectionMatrixBuffer projectionBuffer;
     private static ProjectionMatrixBuffer screenBuffer;
     private static boolean failed;
-    private static boolean handDepth;
+    private static boolean beforeHandDone;
+    private static boolean handDrawn;
     private static boolean onTopDrawn;
 
     private OnTopPass() {
@@ -64,8 +65,13 @@ public final class OnTopPass {
     }
 
     public static void frameStart() {
-        handDepth = false;
+        beforeHandDone = false;
+        handDrawn = false;
         onTopDrawn = false;
+    }
+
+    public static void handDrawn() {
+        handDrawn = beforeHandDone;
     }
 
     static void add(RenderType type, SubmitNodeCollector.CustomGeometryRenderer geometry) {
@@ -81,7 +87,7 @@ public final class OnTopPass {
     }
 
     public static void drawBeforeHand(GpuBufferSlice noFog) {
-        handDepth = true;
+        beforeHandDone = true;
         if (!SETTLED.isEmpty()) {
             try {
                 draw(SETTLED, PROJECTION, VIEW_ROTATION, false, false, noFog);
@@ -96,11 +102,15 @@ public final class OnTopPass {
 
     public static void drawAfterLevel(GpuBufferSlice noFog) {
         if (!SETTLED.isEmpty()) {
-            PENDING.addAll(0, SETTLED);
-            SETTLED.clear();
+            try {
+                draw(SETTLED, PROJECTION, VIEW_ROTATION, false, false, noFog);
+            } finally {
+                SETTLED.clear();
+            }
         }
-        boolean hand = handDepth;
-        handDepth = false;
+        boolean hand = handDrawn;
+        handDrawn = false;
+        beforeHandDone = false;
         drawOnTop(noFog, hand ? Mc26.behindHand(PROJECTION, false) : PROJECTION, !hand, true);
     }
 

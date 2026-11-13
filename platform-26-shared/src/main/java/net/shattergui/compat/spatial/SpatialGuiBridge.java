@@ -31,6 +31,7 @@ final class SpatialGuiBridge {
 
     private static Pending pending;
     private static int waitedFrames;
+    private static ShardManager.Batch spawned;
 
     private record PendingOpen(Screen screen, ImageRect bounds, ShatterEffect effect, FlyTarget target,
                                ParamValues params) {
@@ -242,7 +243,14 @@ final class SpatialGuiBridge {
 
         ShardManager.spawn(slot, plane, job.bounds(), new Vector3f(camera.forwardVector()), job.effect(), job.target(),
                 job.params(), job.preview());
+        spawned = ShardManager.lastSpawned();
         ShatterProfiler.step("spatial.complete total", start);
+    }
+
+    static ShardManager.Batch takeSpawned() {
+        ShardManager.Batch batch = spawned;
+        spawned = null;
+        return batch;
     }
 
     static void hideClosingPlane() {

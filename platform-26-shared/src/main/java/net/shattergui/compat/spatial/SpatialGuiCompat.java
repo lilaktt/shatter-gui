@@ -104,6 +104,18 @@ public final class SpatialGuiCompat {
         }
     }
 
+    public static net.shattergui.shatter.ShardManager.Batch takeSpawned() {
+        if (!usable()) {
+            return null;
+        }
+        try {
+            return SpatialGuiBridge.takeSpawned();
+        } catch (Throwable t) {
+            fail("drawing the first frame of the pieces", t);
+            return null;
+        }
+    }
+
     private static boolean active() {
         ShatterConfig config = ShatterConfig.get();
         return config.enabled && config.spatialGuiIntegration && usable();

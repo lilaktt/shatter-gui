@@ -31,6 +31,10 @@ public final class FrameHooks {
         CloseWatchdog.step("draw the effects before the hand", start);
     }
 
+    public static void handDrawn() {
+        OnTopPass.handDrawn();
+    }
+
     public static void afterLevel(GpuBufferSlice noFog, org.joml.Matrix4fc viewRotation) {
         long start = System.nanoTime();
         OnTopPass.levelViewRotation(viewRotation);
@@ -59,6 +63,7 @@ public final class FrameHooks {
         ScreenCapture.afterGuiRender();
         start = CloseWatchdog.step("capture: copy to the texture pool and spawn the pieces", start);
         ShardRenderer.drawFirstFrame(ScreenCapture.takeSpawnedClose(), noFog);
+        ShardRenderer.drawFirstFrame(SpatialGuiCompat.takeSpawned(), noFog);
         CloseWatchdog.step("draw the first frame of the close", start);
         RealPreview.afterGuiRender();
         SpatialGuiCompat.completeOpenPending();

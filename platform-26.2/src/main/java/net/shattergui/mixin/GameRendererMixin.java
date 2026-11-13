@@ -54,6 +54,11 @@ public abstract class GameRendererMixin {
                 gameRenderState.levelRenderState.cameraRenderState.viewRotationMatrix);
     }
 
+    @Inject(method = "renderItemInHand", at = @At("RETURN"))
+    private void shatterGui$handDrawn(net.minecraft.client.renderer.state.level.CameraRenderState cameraState, float partialTick, org.joml.Matrix4fc viewRotation, CallbackInfo ci) {
+        FrameHooks.handDrawn();
+    }
+
     @Inject(method = "render", at = @At("HEAD"))
     private void shatterGui$frameStart(DeltaTracker deltaTracker, boolean advanceGameTime, CallbackInfo ci) {
         FrameHooks.frameStart();

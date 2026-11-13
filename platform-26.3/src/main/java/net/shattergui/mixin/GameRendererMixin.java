@@ -56,6 +56,12 @@ public abstract class GameRendererMixin {
         FrameHooks.beforeHand(fogRenderer.getBuffer(FogRenderer.FogMode.NONE), cameraState.viewRotationMatrix);
     }
 
+    @Inject(method = "renderItemInHand", at = @At("RETURN"))
+    private void shatterGui$handDrawn(CameraRenderState cameraState, PlayerRenderState playerState,
+                                      com.mojang.renderpearl.api.textures.GpuTextureView handTarget, CallbackInfo ci) {
+        FrameHooks.handDrawn();
+    }
+
     @Inject(method = "render", at = @At("HEAD"))
     private void shatterGui$frameStart(CallbackInfo ci) {
         FrameHooks.frameStart();
