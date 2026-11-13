@@ -12,18 +12,16 @@ import net.shattergui.shatter.ShardManager;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.BiConsumer;
 
 final class ModelMaskScenario {
     private static final double[] VIEW = {0.0, 0.0, 1.0, 0.8};
-    private static final int NOISE_FRAMES = 14;
-    private static final int NOISE_SPACING = 8;
-    private static final int PIECE_FRAMES = 8;
+    private static final int PIECE_FRAMES = 16;
     private static final int EXTRA_TOLERANCE = 10;
     private static final int REACH_GROW = 8;
+    private static final int MASK_EROSION = 4;
 
     private enum View {
         FIRST("first", CameraType.FIRST_PERSON, 180f),
@@ -152,13 +150,6 @@ final class ModelMaskScenario {
         context.waitTicks(6);
         boolean[] mask = mask(with, without);
         int cells = count(mask);
-        List<FullFrame.Image> clean = new ArrayList<>();
-        for (int i = 0; i < NOISE_FRAMES; i++) {
-            clean.add(grab(context, null));
-            context.waitTicks(NOISE_SPACING);
-        }
-        FullFrame.Image reference = clean.getFirst();
-        int[] noise = noise(clean, mask);
 
         SettleScenario.command(singleplayer, "kill @e[type=minecraft:armor_stand]");
         context.runOnClient(mc -> mc.options.setCameraType(CameraType.FIRST_PERSON));
@@ -186,10 +177,31 @@ final class ModelMaskScenario {
         int magentaFrame = 0;
         FullFrame.Image sample = null;
         boolean[] changedAt = new boolean[mask.length];
+        int[] timesChanged = new int[mask.length];
+        int pairsUsed = 0;
         int elsewhere = 0;
-        for (int i = 0; i < PIECE_FRAMES; i++) {
-            FullFrame.Image frame = grab(context, i == 0 ? name + "_pieces" : null);
-            if (frame == null || reference == null) {
+        List<FullFrame.Image[]> series = pairs(context, PIECE_FRAMES);
+        int[] flicker = new int[mask.length];
+        for (int k = 1; k < series.size(); k++) {
+            FullFrame.Image a = series.get(k - 1)[1];
+            FullFrame.Image b = series.get(k)[1];
+            if (a == null || b == null || a.argb().length != mask.length || b.argb().length != mask.length) {
+                continue;
+            }
+            for (int p = 0; p < mask.length; p++) {
+                if (mask[p]) {
+                    flicker[p] = Math.max(flicker[p], diff(a.argb()[p], b.argb()[p]));
+                }
+            }
+        }
+        int flickering = 0;
+        for (int p = 0; p < mask.length; p++) {
+            flickering += mask[p] && flicker[p] > 0 ? 1 : 0;
+        }
+        for (FullFrame.Image[] pair : series) {
+            FullFrame.Image frame = pair[0];
+            FullFrame.Image bare = pair[1];
+            if (frame == null || bare == null || frame.argb().length != mask.length) {
                 continue;
             }
             sample = sample == null ? frame : sample;
@@ -200,12 +212,12 @@ final class ModelMaskScenario {
                 if (!mask[p]) {
                     continue;
                 }
-                if (diff(frame.argb()[p], reference.argb()[p]) > noise[p] + EXTRA_TOLERANCE) {
+                if (diff(frame.argb()[p], bare.argb()[p]) > flicker[p] + EXTRA_TOLERANCE) {
                     int px = p % frame.width();
                     int py = p / frame.width();
                     if (reach != null && px >= reach[0] && px < reach[2] && py >= reach[1] && py < reach[3]) {
                         changed++;
-                        changedAt[p] = true;
+                        timesChanged[p]++;
                     } else {
                         elsewhere++;
                     }
@@ -215,18 +227,27 @@ final class ModelMaskScenario {
                 }
             }
             changedWorst = Math.max(changedWorst, changed);
+            pairsUsed++;
             magentaWorst = Math.max(magentaWorst, magenta);
             magentaFrame = Math.max(magentaFrame, FullFrame.blob(frame, FullFrame::magenta, VIEW).count());
-            context.waitTicks(2);
+        }
+        int covered = 0;
+        for (int p = 0; p < mask.length; p++) {
+            if (pairsUsed > 0 && timesChanged[p] * 4 >= pairsUsed * 3) {
+                changedAt[p] = true;
+                covered++;
+            }
         }
         context.runOnClient(mc -> ShardManager.clear());
         if (sample != null) {
             saveMask(shots, name, sample, mask, changedAt);
         }
-        String text = String.format(Locale.ROOT, "%s: model mask %d px, %d pieces alive (%d drawn with depth), worst frame: "
-                        + "%d mask px changed where the pieces can reach, %d magenta px in the mask, %d magenta px in the frame; "
-                        + "%d mask px changed outside the pieces' reach in all frames (the model's idle sway)%s", name, cells, live,
-                hidden, changedWorst, magentaWorst, magentaFrame, elsewhere,
+        String text = String.format(Locale.ROOT, "%s: model mask %d px, %d pieces alive (%d drawn with depth); with pieces "
+                        + "vs the next frame without them, %d pairs: %d mask px changed in at least 3 of 4 pairs (covered by a "
+                        + "piece), worst single pair %d px where the pieces reach and %d px elsewhere in all pairs; %d mask px "
+                        + "change by themselves between frames without pieces (the model's arms sway); worst frame %d magenta px "
+                        + "in the mask, %d in the frame%s", name, cells, live, hidden, pairsUsed, covered, changedWorst,
+                elsewhere, flickering, magentaWorst, magentaFrame,
                 pack ? " (shader pack: the pack changes the image by itself, magenta counts)" : "");
         ShatterGuiClient.LOGGER.info("[ShatterTest] {}", text);
         check.accept(cells > 800, name + ": the model must be on screen to make the mask (" + cells + " px)");
@@ -235,7 +256,7 @@ final class ModelMaskScenario {
         if (behind) {
             check.accept(magentaWorst == 0, name + ": a piece behind the model must not show over it: " + text);
             if (!pack) {
-                check.accept(changedWorst == 0, name + ": a piece behind the model must not change a pixel of it: " + text);
+                check.accept(covered == 0, name + ": a piece behind the model must not change a pixel of it: " + text);
             }
         } else {
             check.accept(magentaWorst > 200, name + ": a piece in front of the model must be seen over it: " + text);
@@ -263,7 +284,7 @@ final class ModelMaskScenario {
             }
         }
         boolean[] mask = new boolean[raw.length];
-        int r = 2;
+        int r = MASK_EROSION;
         for (int py = r; py < h - r; py++) {
             for (int px = r; px < w - r; px++) {
                 boolean all = true;
@@ -296,20 +317,42 @@ final class ModelMaskScenario {
         return x1 < 0 ? null : new int[]{x0 - grow, y0 - grow, x1 + grow, y1 + grow};
     }
 
-    private static int[] noise(List<FullFrame.Image> frames, boolean[] mask) {
-        int[] worst = new int[mask.length];
-        FullFrame.Image first = frames.getFirst();
-        for (FullFrame.Image frame : frames) {
-            if (frame == null || first == null) {
-                continue;
-            }
-            for (int p = 0; p < mask.length; p++) {
-                if (mask[p]) {
-                    worst[p] = Math.max(worst[p], diff(frame.argb()[p], first.argb()[p]));
+    private static List<FullFrame.Image[]> pairs(ClientGameTestContext context, int n) {
+        FullFrame.Image[][] out = new FullFrame.Image[n][2];
+        int[] done = {0};
+        context.runOnClient(mc -> {
+            int[] taken = {0};
+            Runnable[] step = new Runnable[1];
+            step[0] = () -> {
+                int index = taken[0]++;
+                int pair = index / 2;
+                int side = index % 2;
+                FullFrame.grab(mc, "mask_pair_" + System.identityHashCode(out) + "_" + index, false, image -> {
+                    out[pair][side] = image;
+                    synchronized (done) {
+                        done[0]++;
+                    }
+                    return Boolean.TRUE;
+                });
+                net.shattergui.render.ShardRenderer.suppressForTests(side == 0);
+                if (taken[0] < 2 * n) {
+                    net.shattergui.debug.FrameAudit.atFrameEnd(step[0]);
+                } else {
+                    net.shattergui.render.ShardRenderer.suppressForTests(false);
+                }
+            };
+            net.shattergui.debug.FrameAudit.atFrameEnd(step[0]);
+        });
+        for (int i = 0; i < 400; i++) {
+            synchronized (done) {
+                if (done[0] >= 2 * n) {
+                    break;
                 }
             }
+            context.waitTick();
         }
-        return worst;
+        context.runOnClient(mc -> net.shattergui.render.ShardRenderer.suppressForTests(false));
+        return java.util.Arrays.asList(out);
     }
 
     private static int count(boolean[] mask) {

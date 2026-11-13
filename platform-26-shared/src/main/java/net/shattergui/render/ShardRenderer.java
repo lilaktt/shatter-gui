@@ -77,6 +77,12 @@ public final class ShardRenderer {
         }
     }
 
+    private static boolean suppressedForTests;
+
+    public static void suppressForTests(boolean suppressed) {
+        suppressedForTests = suppressed;
+    }
+
     public static void submit(LevelRenderContext context) {
         boolean shaders = IrisCompat.shaderPackInUse();
         if (shaders && IrisCompat.renderingShadowPass()) {
@@ -84,7 +90,7 @@ public final class ShardRenderer {
         }
         boolean onTop = ShatterConfig.get().alwaysOnTop;
         OnTopPass.begin();
-        if (ShardManager.batches().isEmpty()) {
+        if (ShardManager.batches().isEmpty() || suppressedForTests) {
             return;
         }
         PoseStack poseStack = context.poseStack();
