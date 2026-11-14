@@ -83,6 +83,7 @@ final class ShaderScenarios {
         FlyScenario.run(context, singleplayer, check, this::shot, tag + "_fly");
         HandScenario.run(context, singleplayer, check, tag);
         ModelMaskScenario.run(context, singleplayer, check, tag);
+        WaterScenario.run(context, singleplayer, check, tag);
         EffectScenarios effects = new EffectScenarios(context, check, this::shot);
         effects.edgeFlights(tag + "_edge");
         effects.dissolve(tag + "_dissolve", furnace);

@@ -374,6 +374,7 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
         BobScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
         HandScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
         ModelMaskScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
+        WaterScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
         SpatialFlowScenario.run(context, singleplayer, this::check);
         EffectScenarios effects = new EffectScenarios(context, this::check, context::takeScreenshot);
         String prefix = spatial ? "spatial_" : "";
