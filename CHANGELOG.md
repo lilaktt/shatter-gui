@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Glass pieces in water stay visible: under water and on the bottom they show through the water, tinted by it, from above
+  and from inside the water, with and without a shader pack and with Spatial GUI. Before, a piece that came to rest under
+  water vanished long before the end of its life, because the water surface was drawn in front of it. A solid block
+  between the camera and a piece still hides it, in water too. In water the pieces sink slowly: gravity ×0.35 and more
+  drag (glide ×0.8).
 - Opening effects play in the creative inventory. The game replaces the survival inventory with the creative one while
   opening it, and the opening was skipped (with or without Spatial GUI, on 26.1.x, 26.2 and 26.3). With Spatial GUI the
   opening plays on its plane: Spatial GUI's own plane and opening animation appear only once our effect has put the

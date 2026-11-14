@@ -317,7 +317,7 @@ final class ModelMaskScenario {
         return x1 < 0 ? null : new int[]{x0 - grow, y0 - grow, x1 + grow, y1 + grow};
     }
 
-    private static List<FullFrame.Image[]> pairs(ClientGameTestContext context, int n) {
+    static List<FullFrame.Image[]> pairs(ClientGameTestContext context, int n) {
         FullFrame.Image[][] out = new FullFrame.Image[n][2];
         int[] done = {0};
         context.runOnClient(mc -> {

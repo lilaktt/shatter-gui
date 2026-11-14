@@ -81,7 +81,7 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
                     || irisOnly.contains("duplicates") || irisOnly.contains("thematic") || irisOnly.contains("esc") || irisOnly.contains("ontop")
                     || irisOnly.contains("backdrop") || irisOnly.contains("follow") || irisOnly.contains("settle")
                     || irisOnly.contains("bob") || irisOnly.contains("hand") || irisOnly.contains("roof")
-                    || irisOnly.contains("mask"))) {
+                    || irisOnly.contains("mask") || irisOnly.contains("water"))) {
                 context.waitTicks(100);
                 boolean withSpatial = FabricLoader.getInstance().isModLoaded("spatial-gui");
                 String tag = "shader_" + ShaderScenarios.packTag() + (withSpatial ? "_spatial" : "");
@@ -123,6 +123,9 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
                 }
                 if (irisOnly.contains("mask")) {
                     ModelMaskScenario.run(context, singleplayer, this::check, tag);
+                }
+                if (irisOnly.contains("water")) {
+                    WaterScenario.run(context, singleplayer, this::check, tag);
                 }
             } else if (FabricLoader.getInstance().isModLoaded("iris")) {
                 new ShaderScenarios(context, this::check).run(ShaderScenarios.packTag(), ShatterClientGameTest::furnace,
@@ -301,6 +304,9 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
                 }
                 if (chosen.contains("mask")) {
                     ModelMaskScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
+                }
+                if (chosen.contains("water")) {
+                    WaterScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
                 }
                 if (chosen.contains("spatialflow")) {
                     SpatialFlowScenario.run(context, singleplayer, this::check);

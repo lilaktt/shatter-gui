@@ -56,24 +56,29 @@ public final class ShardRenderer {
     }
 
     enum Part {
-        ALL, MOVING, SETTLED, SHOWN, HIDDEN;
+        ALL, MOVING, DRY, WET, SHOWN, HIDDEN;
 
         boolean takes(boolean settled) {
-            return takes(settled, false);
+            return takes(settled, false, false);
         }
 
         boolean takes(boolean settled, boolean hidden) {
+            return takes(settled, hidden, false);
+        }
+
+        boolean takes(boolean settled, boolean hidden, boolean submerged) {
             return switch (this) {
                 case ALL -> true;
-                case MOVING -> !settled && !hidden;
-                case SETTLED -> settled || hidden;
+                case MOVING -> !settled && !hidden && !submerged;
+                case DRY -> (settled || hidden) && !submerged;
+                case WET -> submerged;
                 case SHOWN -> !hidden;
                 case HIDDEN -> hidden;
             };
         }
 
         boolean overWorld() {
-            return this != SETTLED && this != HIDDEN;
+            return this == ALL || this == MOVING || this == SHOWN;
         }
     }
 
@@ -114,8 +119,12 @@ public final class ShardRenderer {
             if (overBackdrop && !batch.follows()) {
                 submitBatch(OnTopPass::add, batch, space, orientation, partialTick, false, true,
                         splitSettled ? Part.MOVING : Part.SHOWN);
-                submitBatch(OnTopPass::addSettled, batch, space, orientation, partialTick, false, true,
-                        splitSettled ? Part.SETTLED : Part.HIDDEN);
+                if (splitSettled) {
+                    submitBatch(OnTopPass::addSettled, batch, space, orientation, partialTick, false, true, Part.DRY);
+                    submitBatch(inWorld, batch, space, orientation, partialTick, shaders, !shaders, Part.WET);
+                } else {
+                    submitBatch(OnTopPass::addSettled, batch, space, orientation, partialTick, false, true, Part.HIDDEN);
+                }
             } else {
                 submitBatch(sink, batch, space, orientation, partialTick, shaders && !overBackdrop, overBackdrop, Part.ALL);
             }
@@ -251,7 +260,7 @@ public final class ShardRenderer {
 
             for (ShardInstance shard : batch.shards()) {
                 boolean settled = shard.settled();
-                if (!part.takes(settled, shard.hidden())) {
+                if (!part.takes(settled, shard.hidden(), shard.submerged())) {
                     continue;
                 }
                 float bias = settled ? Settle.BIAS : 0f;

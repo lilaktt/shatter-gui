@@ -14,6 +14,8 @@ public final class ShardInstance {
     private static final double GROUND_FRICTION = 0.4;
     private static final float TOPPLE = 0.35f;
     private static final double GAP = 1.0e-3;
+    private static final float WATER_GRAVITY = 0.35f;
+    private static final float WATER_DRAG = 0.8f;
     private static final Vector3f UP = new Vector3f(0f, 1f, 0f);
     private static final Vector3f DOWN = new Vector3f(0f, -1f, 0f);
     private final Vector3f scratch = new Vector3f();
@@ -43,6 +45,7 @@ public final class ShardInstance {
     private boolean settled;
     private boolean hidden;
     private boolean bornBehind;
+    private boolean submerged;
     private float extent = -1f;
 
     ShardInstance(Vector3d centroid, Vector3f[] corners, float[] uv, Vector3f normal, int lifetime, float fadeStartFraction,
@@ -120,6 +123,10 @@ public final class ShardInstance {
 
     public boolean hidden() {
         return hidden;
+    }
+
+    public boolean submerged() {
+        return submerged;
     }
 
     void bornBehind(ClientLevel level, Vec3 eye) {
@@ -241,9 +248,10 @@ public final class ShardInstance {
         prevRot.set(rot);
         age++;
 
-        vel.y -= gravity;
-        vel.mul(airDrag);
-        angVel.mul(airDrag);
+        float drag = submerged ? airDrag * WATER_DRAG : airDrag;
+        vel.y -= submerged ? gravity * WATER_GRAVITY : gravity;
+        vel.mul(drag);
+        angVel.mul(drag);
 
         boolean landed = false;
         if (!collide) {
@@ -265,7 +273,15 @@ public final class ShardInstance {
             topple(level);
         }
 
+        submerged = inWater(level, pos.x, pos.y, pos.z);
         light = fullbright ? FULL_BRIGHT : Mc26.lightCoords(level, BlockPos.containing(pos.x, pos.y, pos.z));
+    }
+
+    static boolean inWater(ClientLevel level, double x, double y, double z) {
+        BlockPos cell = BlockPos.containing(x, y, z);
+        net.minecraft.world.level.material.FluidState fluid = level.getFluidState(cell);
+        return !fluid.isEmpty() && fluid.is(net.minecraft.tags.FluidTags.WATER)
+                && y < cell.getY() + fluid.getHeight(level, cell);
     }
 
     private boolean moveWithCollisions(ClientLevel level, float bounce) {

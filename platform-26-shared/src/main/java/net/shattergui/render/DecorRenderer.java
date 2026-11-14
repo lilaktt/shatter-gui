@@ -57,7 +57,7 @@ final class DecorRenderer {
             boolean multiply = blend == WaveDecor.Blend.MULTIPLY && !shaders;
             Mesh mesh = new Mesh(batch.shards().size() * 4);
             for (ShardInstance shard : batch.shards()) {
-                if (!part.takes(shard.settled(), shard.hidden())) {
+                if (!part.takes(shard.settled(), shard.hidden(), shard.submerged())) {
                     continue;
                 }
                 int color = decor.overlayColor(shard, k, partialTick);
