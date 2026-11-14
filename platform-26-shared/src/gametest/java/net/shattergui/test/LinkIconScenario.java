@@ -36,6 +36,7 @@ final class LinkIconScenario {
                 boolean expected = brand == LinkButton.Brand.MODRINTH || brand == LinkButton.Brand.CURSEFORGE;
                 check.accept(pictured == expected, name + ": " + brand + " picture loaded=" + pictured + ", expected " + expected);
             }
+            context.runOnClient(mc -> net.shattergui.ui.MouseGuard.ignoreForTests(true));
             for (int scale = 1; scale <= 4; scale++) {
                 EditorScenario.setScale(context, scale);
                 open(context);
@@ -47,11 +48,13 @@ final class LinkIconScenario {
                     crisp(context, check, name, frame, brand, scale);
                 }
             }
+            context.runOnClient(mc -> net.shattergui.ui.MouseGuard.ignoreForTests(false));
             EditorScenario.setScale(context, 2);
             open(context);
             states(context, check, name);
             broken(context, check, name);
         } finally {
+            context.runOnClient(mc -> net.shattergui.ui.MouseGuard.ignoreForTests(false));
             context.runOnClient(mc -> LinkIcons.reloadForTests(null));
             context.getInput().setCursorPos(2, 2);
             EditorScenario.setScale(context, scaleBefore);

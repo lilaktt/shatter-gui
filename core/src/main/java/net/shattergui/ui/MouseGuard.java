@@ -3,6 +3,7 @@ package net.shattergui.ui;
 public final class MouseGuard {
     public static final int NONE = -1_000_000;
     private static final double LIMIT = 1e7;
+    private static boolean ignored;
 
     private MouseGuard() {
     }
@@ -16,7 +17,11 @@ public final class MouseGuard {
     }
 
     public static boolean valid(int x, int y) {
-        return Math.abs((long) x) < LIMIT && Math.abs((long) y) < LIMIT;
+        return !ignored && Math.abs((long) x) < LIMIT && Math.abs((long) y) < LIMIT;
+    }
+
+    public static void ignoreForTests(boolean ignore) {
+        ignored = ignore;
     }
 
     public static int sanitize(int v) {
