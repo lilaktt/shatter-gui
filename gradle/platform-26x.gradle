@@ -182,3 +182,4 @@ tasks.named('jar') {
 }
 
 apply from: rootProject.file('gradle/dist-verify-run.gradle')
+apply from: rootProject.file('gradle/reload-loop-run.gradle')

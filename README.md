@@ -85,6 +85,10 @@ the mod: General tab → About.
   the title screen, with or without the mod: on an NVIDIA RTX 3050 with driver 610.62, 3 of 20 starts with the mod and 2
   of 20 without it (Fabric API only), at the same moment. It is not caused by the mod; start the game again or use
   OpenGL.
+- Minecraft 26.3 on Windows sometimes crashes (`0xC0000005` or `0xC0000409`, no `hs_err` file) on a resource reload in
+  game (F3+T, changing resource packs), without the mod too: 20 reloads in a world on Intel RaptorLake-S (OpenGL, driver
+  32.0.101.7026) crashed 5 times with Fabric API only and 2 times with Fabric API + Shatter GUI, always at "Reloading
+  ResourceManager". It is not caused by the mod; start the game again.
 - Validation messages of the effect format (with JSON paths) are in English.
 - "Darken" overlays are drawn as normal blending with shader packs.
 
