@@ -16,6 +16,7 @@ public final class ReloadLoopGameTest implements FabricClientGameTest {
     @Override
     public void runTest(ClientGameTestContext context) {
         int count = Integer.getInteger("shatter.reload.count", 20);
+        context.runOnClient(mc -> mc.options.getSoundSourceOptionInstance(net.minecraft.sounds.SoundSource.MASTER).set(0.0));
         boolean mod = FabricLoader.getInstance().isModLoaded("shatter_gui");
         LOGGER.info("[ReloadLoop] start: {} reloads, Shatter GUI loaded {}, mods {}", count, mod,
                 FabricLoader.getInstance().getAllMods().size());

@@ -33,6 +33,7 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        context.runOnClient(mc -> mc.options.getSoundSourceOptionInstance(net.minecraft.sounds.SoundSource.MASTER).set(0.0));
         if (!Boolean.getBoolean("shatter.test.keepWindow")) {
             context.getInput().resizeWindow(1920, 1080);
         }
