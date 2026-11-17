@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Reopening from the pieces: close an interface and open the same one again while its glass pieces are still around, and
+  they fly back and put it together instead of the usual opening (same screen class and menu type, at least 50% of the
+  pieces alive, mean opacity at least 0.35 — about the first 3 s with default glass). Each piece moves from where it lies
+  and how it is turned to its place, with smooth acceleration and through blocks; pieces that are already gone fade in on
+  their places in the last third; then the pieces fade over the real screen in 4 ticks. Works with Spatial GUI (onto its
+  plane) in first and third person. Closing during the gathering breaks the pieces again from where they are; a resize
+  clears it. New effect setting `reassembleOnReopen`: on by default for glass (and schema 1 effects based on it), shown in
+  the effect editor; schema 2 field `reassembleOnReopen` (off by default). Translated into all 12 languages.
 - Glass pieces in water stay visible: under water and on the bottom they show through the water, tinted by it, from above
   and from inside the water, with and without a shader pack and with Spatial GUI. Before, a piece that came to rest under
   water vanished long before the end of its life, because the water surface was drawn in front of it. A solid block

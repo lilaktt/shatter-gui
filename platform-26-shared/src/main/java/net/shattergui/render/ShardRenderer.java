@@ -154,7 +154,12 @@ public final class ShardRenderer {
             if (c != null) {
                 net.shattergui.debug.FrameAudit.openPlane(space.point(c.x, c.y, c.z, new Vector3f()));
             }
-            List<OnTopPass.Entry> into = batch.onSpatialPlane() || !batch.follows() ? level : flat;
+            boolean gathering = net.shattergui.shatter.Reassembly.gathers(batch);
+            if (gathering) {
+                space = net.shattergui.shatter.Reassembly.place(batch, space, camera);
+            }
+            List<OnTopPass.Entry> into = batch.onSpatialPlane() || !batch.follows()
+                    || gathering && !net.shattergui.shatter.Reassembly.landed(batch) ? level : flat;
             submitBatch((type, geometry) -> into.add(new OnTopPass.Entry(type, geometry)), batch, space, orientation,
                     0f, false, true, Part.ALL);
         }

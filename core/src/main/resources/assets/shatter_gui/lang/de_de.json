@@ -293,6 +293,8 @@
   "param.shatter_gui.glass.fullbright.tooltip": "An: Splitter sind so hell wie die Oberfläche; aus: beleuchtet wie die Welt um sie herum.",
   "param.shatter_gui.glass.soundVolume": "Lautstärke",
   "param.shatter_gui.glass.soundVolume.tooltip": "Klang von zerbrechendem Glas.",
+  "param.shatter_gui.glass.reassembleOnReopen": "Beim erneuten Öffnen zusammensetzen",
+  "param.shatter_gui.glass.reassembleOnReopen.tooltip": "Öffnest du dieselbe Oberfläche erneut, solange die Scherben noch da sind, fliegen sie zurück und setzen sie zusammen, statt der üblichen Öffnung.",
 
   "param.shatter_gui.burn.duration": "Brenndauer",
   "param.shatter_gui.burn.duration.tooltip": "Wie lange das Feuer von unten nach oben braucht.",
@@ -555,6 +557,8 @@
   "ui.shatter_gui.fx.field.duration.desc": "Wie lange der ganze Effekt dauert (die Tempo-Einstellungen des Spielers gelten trotzdem).",
   "ui.shatter_gui.fx.field.follow_camera": "Kamera folgen",
   "ui.shatter_gui.fx.field.follow_camera.desc": "Ob der Effekt vor dem Spieler bleibt, während er sich bewegt, oder dort, wo er begann (die Einstellung des Spielers kann das ändern).",
+  "ui.shatter_gui.fx.field.reassemble": "Beim erneuten Öffnen zusammensetzen",
+  "ui.shatter_gui.fx.field.reassemble.desc": "Wird dieselbe Oberfläche erneut geöffnet, solange die Teile noch leben, fliegen sie zurück und setzen sie zusammen, statt der üblichen Öffnung. Bis dahin sollten die Teile ganze Stücke der Oberfläche bleiben.",
   "ui.shatter_gui.fx.follow.auto": "Auto",
   "ui.shatter_gui.fx.follow.auto.desc": "Öffnen folgt der Kamera, Schließen bleibt in der Welt.",
   "ui.shatter_gui.fx.follow.on": "Folgen",

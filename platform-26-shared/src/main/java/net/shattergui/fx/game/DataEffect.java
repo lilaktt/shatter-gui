@@ -54,6 +54,11 @@ public final class DataEffect implements ShatterEffect, EffectCatalog.Data, Effe
         return def.followCamera;
     }
 
+    @Override
+    public boolean reassemblesOnReopen(ParamValues params) {
+        return !reversed && def.reassembleOnReopen;
+    }
+
     public DataEffect reversed() {
         if (reversed) {
             return this;

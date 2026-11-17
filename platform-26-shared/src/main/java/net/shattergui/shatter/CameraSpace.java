@@ -45,6 +45,15 @@ public final class CameraSpace {
         return new CameraSpace(ox, oy, oz, linear, offset, Math.clamp(amount, 0f, 1f), camera);
     }
 
+    public org.joml.Quaternionf rotation(org.joml.Quaternionf out) {
+        out.identity();
+        if (linear != null) {
+            linear.getNormalizedRotation(out);
+            out.slerp(new org.joml.Quaternionf(), world);
+        }
+        return out;
+    }
+
     public boolean follows() {
         return linear != null;
     }

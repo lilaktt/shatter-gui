@@ -183,6 +183,19 @@ public final class SpatialGuiCompat {
         return plane == null ? null : plane.center();
     }
 
+    public static java.util.function.Supplier<net.shattergui.shatter.PlaneBasis> planeNow() {
+        if (!active()) {
+            return null;
+        }
+        return () -> {
+            try {
+                return SpatialGuiBridge.planeNow();
+            } catch (Throwable t) {
+                return null;
+            }
+        };
+    }
+
     public static void cancelPendingOpen() {
         if (usable()) {
             try {

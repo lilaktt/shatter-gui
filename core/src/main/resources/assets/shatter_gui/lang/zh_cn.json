@@ -293,6 +293,8 @@
   "param.shatter_gui.glass.fullbright.tooltip": "开：碎块与界面一样亮；关：受周围世界的光照影响。",
   "param.shatter_gui.glass.soundVolume": "音量",
   "param.shatter_gui.glass.soundVolume.tooltip": "玻璃破碎声。",
+  "param.shatter_gui.glass.reassembleOnReopen": "重新打开时重组",
+  "param.shatter_gui.glass.reassembleOnReopen.tooltip": "碎片还在时再次打开同一界面，碎片会飞回来拼成界面，代替平常的打开效果。",
 
   "param.shatter_gui.burn.duration": "燃烧时间",
   "param.shatter_gui.burn.duration.tooltip": "火焰从下往上烧完需要多久。",
@@ -555,6 +557,8 @@
   "ui.shatter_gui.fx.field.duration.desc": "整个效果持续多久（玩家的速度设置仍然生效）。",
   "ui.shatter_gui.fx.field.follow_camera": "跟随镜头",
   "ui.shatter_gui.fx.field.follow_camera.desc": "玩家移动时效果是留在其面前，还是留在开始的位置（玩家的设置可以覆盖）。",
+  "ui.shatter_gui.fx.field.reassemble": "重新打开时重组",
+  "ui.shatter_gui.fx.field.reassemble.desc": "碎片还存在时再次打开同一界面，碎片会飞回来拼成界面，代替平常的打开效果。在此之前碎片应保持为界面的完整碎块。",
   "ui.shatter_gui.fx.follow.auto": "自动",
   "ui.shatter_gui.fx.follow.auto.desc": "打开时跟随镜头，关闭时留在世界中。",
   "ui.shatter_gui.fx.follow.on": "跟随",

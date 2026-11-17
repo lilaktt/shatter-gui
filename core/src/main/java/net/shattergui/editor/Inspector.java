@@ -128,6 +128,7 @@ final class Inspector extends Container {
         field("field.description", "description", description, null, null);
         number("field.duration", "duration", "effect.duration");
         followCamera();
+        toggle("field.reassemble", "reassembleOnReopen", false);
 
         section("section.fracture", false);
         String mode = editor.doc.str("fracture.mode", "grid");

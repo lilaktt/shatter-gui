@@ -242,7 +242,8 @@ final class SpatialGuiBridge {
         ShatterProfiler.step("spatial.cancelCloseAnimation", step);
 
         ShardManager.spawn(slot, plane, job.bounds(), new Vector3f(camera.forwardVector()), job.effect(), job.target(),
-                job.params(), job.preview());
+                job.params(), job.preview(), new ShardManager.OpenAnchor(basis(basis, camera.position()),
+                        SpatialGuiBridge::planeNow, true), job.screen());
         spawned = ShardManager.lastSpawned();
         ShatterProfiler.step("spatial.complete total", start);
     }

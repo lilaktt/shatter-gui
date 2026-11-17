@@ -26,6 +26,7 @@ public final class ShardInstance {
     final Vector3f normal;
 
     final Vector3d pos = new Vector3d();
+    final Vector3d home = new Vector3d();
     final Vector3d prevPos = new Vector3d();
     final Vector3d vel = new Vector3d();
     final Quaternionf rot = new Quaternionf();
@@ -52,6 +53,7 @@ public final class ShardInstance {
                   float seed) {
         this.pos.set(centroid);
         this.prevPos.set(centroid);
+        this.home.set(centroid);
         this.corners = corners;
         this.uv = uv;
         this.normal = normal;
@@ -212,6 +214,22 @@ public final class ShardInstance {
     public void restart(int lifetime) {
         age = 0;
         setLifetime(lifetime);
+    }
+
+    public void restart(int lifetime, float fadeStartFraction) {
+        restart(lifetime);
+        fadeStart = Math.round(this.lifetime * fadeStartFraction);
+    }
+
+    public Vector3d home() {
+        return home;
+    }
+
+    public void unstick(ClientLevel level) {
+        noClip = collides(level, pos.x, pos.y, pos.z);
+        settled = false;
+        stillTicks = 0;
+        hidden = false;
     }
 
     public void setLight(int light) {

@@ -293,6 +293,8 @@
   "param.shatter_gui.glass.fullbright.tooltip": "Activado: los fragmentos brillan como la interfaz; desactivado: iluminados como el mundo que los rodea.",
   "param.shatter_gui.glass.soundVolume": "Volumen",
   "param.shatter_gui.glass.soundVolume.tooltip": "Sonido de cristal roto.",
+  "param.shatter_gui.glass.reassembleOnReopen": "Recomponer al reabrir",
+  "param.shatter_gui.glass.reassembleOnReopen.tooltip": "Si vuelves a abrir la misma interfaz mientras los fragmentos siguen ahí, vuelan de vuelta y la recomponen en lugar de la apertura habitual.",
 
   "param.shatter_gui.burn.duration": "Tiempo de combustión",
   "param.shatter_gui.burn.duration.tooltip": "Cuánto tarda el fuego de abajo arriba.",
@@ -555,6 +557,8 @@
   "ui.shatter_gui.fx.field.duration.desc": "Cuánto dura todo el efecto (los ajustes de velocidad del jugador siguen aplicándose).",
   "ui.shatter_gui.fx.field.follow_camera": "Seguir la cámara",
   "ui.shatter_gui.fx.field.follow_camera.desc": "Si el efecto se queda delante del jugador mientras se mueve, o donde empezó (el ajuste del jugador puede cambiarlo).",
+  "ui.shatter_gui.fx.field.reassemble": "Recomponer al reabrir",
+  "ui.shatter_gui.fx.field.reassemble.desc": "Si se vuelve a abrir la misma interfaz mientras las piezas siguen vivas, vuelven volando y la recomponen en lugar de la apertura habitual. Hasta entonces las piezas deben seguir siendo trozos enteros de la interfaz.",
   "ui.shatter_gui.fx.follow.auto": "Auto",
   "ui.shatter_gui.fx.follow.auto.desc": "Las aperturas siguen la cámara, los cierres se quedan en el mundo.",
   "ui.shatter_gui.fx.follow.on": "Seguir",

@@ -119,11 +119,13 @@ public final class FxDef {
     public final String json;
     public final boolean openable;
     public final Boolean followCamera;
+    public final boolean reassembleOnReopen;
     FxDef reduced;
 
     FxDef(String id, String name, String description, int duration, Fracture fracture, Trigger trigger,
           List<Layer> layers, Appearance appearance, List<Emitter> emitters, List<Sound> sounds, Edge edge,
-          Map<String, TextureRole> textures, String json, boolean openable, Boolean followCamera) {
+          Map<String, TextureRole> textures, String json, boolean openable, Boolean followCamera,
+          boolean reassembleOnReopen) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -139,6 +141,7 @@ public final class FxDef {
         this.json = json;
         this.openable = openable;
         this.followCamera = followCamera;
+        this.reassembleOnReopen = reassembleOnReopen;
     }
 
     public FxDef forReducedMotion(boolean reduceMotion) {

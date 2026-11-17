@@ -293,6 +293,8 @@
   "param.shatter_gui.glass.fullbright.tooltip": "Wł.: odłamki są tak jasne jak interfejs; wył.: oświetlone jak świat wokół nich.",
   "param.shatter_gui.glass.soundVolume": "Głośność",
   "param.shatter_gui.glass.soundVolume.tooltip": "Dźwięk tłuczonego szkła.",
+  "param.shatter_gui.glass.reassembleOnReopen": "Składaj przy ponownym otwarciu",
+  "param.shatter_gui.glass.reassembleOnReopen.tooltip": "Jeśli ponownie otworzysz ten sam interfejs, gdy odłamki jeszcze leżą, przylecą z powrotem i złożą go zamiast zwykłego otwarcia.",
 
   "param.shatter_gui.burn.duration": "Czas palenia",
   "param.shatter_gui.burn.duration.tooltip": "Ile ogień potrzebuje od dołu do góry.",
@@ -555,6 +557,8 @@
   "ui.shatter_gui.fx.field.duration.desc": "Ile trwa cały efekt (ustawienia szybkości gracza nadal obowiązują).",
   "ui.shatter_gui.fx.field.follow_camera": "Podążaj za kamerą",
   "ui.shatter_gui.fx.field.follow_camera.desc": "Czy efekt zostaje przed graczem, gdy ten się rusza, czy tam, gdzie się zaczął (ustawienie gracza może to zmienić).",
+  "ui.shatter_gui.fx.field.reassemble": "Składaj przy ponownym otwarciu",
+  "ui.shatter_gui.fx.field.reassemble.desc": "Ponowne otwarcie tego samego interfejsu, gdy kawałki jeszcze żyją, ściąga je z powrotem i składa go zamiast zwykłego otwarcia. Do tego czasu kawałki powinny pozostać całymi kawałkami interfejsu.",
   "ui.shatter_gui.fx.follow.auto": "Auto",
   "ui.shatter_gui.fx.follow.auto.desc": "Otwieranie podąża za kamerą, zamykanie zostaje w świecie.",
   "ui.shatter_gui.fx.follow.on": "Podążaj",

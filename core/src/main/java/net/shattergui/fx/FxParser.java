@@ -114,6 +114,7 @@ public final class FxParser {
         int duration = root.integer("duration", 40, FxLimits.MIN_DURATION, FxLimits.MAX_DURATION);
         boolean openable = root.bool("open", false);
         Boolean followCamera = root.has("followCamera") ? root.bool("followCamera", false) : null;
+        boolean reassemble = root.bool("reassembleOnReopen", false);
         root.get("reduced");
         Map<String, FxDef.TextureRole> textures = new LinkedHashMap<>();
 
@@ -159,7 +160,8 @@ public final class FxParser {
         }
         root.finish();
         return new FxDef(id, name.isEmpty() ? String.valueOf(id) : name, description, duration, fracture, trigger,
-                List.copyOf(layers), appearance, List.copyOf(emitters), List.copyOf(sounds), edge, textures, json, openable, followCamera);
+                List.copyOf(layers), appearance, List.copyOf(emitters), List.copyOf(sounds), edge, textures, json, openable, followCamera,
+                reassemble);
     }
 
     private static FxDef.Fracture readFracture(Node n) {

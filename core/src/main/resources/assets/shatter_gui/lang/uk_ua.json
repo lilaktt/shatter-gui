@@ -293,6 +293,8 @@
   "param.shatter_gui.glass.fullbright.tooltip": "Увімкнено — уламки яскраві, як інтерфейс; вимкнено — освітлені як світ навколо.",
   "param.shatter_gui.glass.soundVolume": "Гучність",
   "param.shatter_gui.glass.soundVolume.tooltip": "Звук розбитого скла.",
+  "param.shatter_gui.glass.reassembleOnReopen": "Збирати при повторному відкритті",
+  "param.shatter_gui.glass.reassembleOnReopen.tooltip": "Якщо знову відкрити той самий інтерфейс, поки уламки ще лежать, вони злітаються назад і складають його замість звичайного відкриття.",
 
   "param.shatter_gui.burn.duration": "Швидкість горіння",
   "param.shatter_gui.burn.duration.tooltip": "Скільки часу вогонь іде знизу догори.",
@@ -555,6 +557,8 @@
   "ui.shatter_gui.fx.field.duration.desc": "Скільки триває весь ефект (налаштування швидкості гравця діють і тут).",
   "ui.shatter_gui.fx.field.follow_camera": "Слідувати за камерою",
   "ui.shatter_gui.fx.field.follow_camera.desc": "Чи ефект лишається перед гравцем, коли той рухається, чи там, де почався (налаштування гравця може це змінити).",
+  "ui.shatter_gui.fx.field.reassemble": "Збирати при повторному відкритті",
+  "ui.shatter_gui.fx.field.reassemble.desc": "Якщо знову відкрити той самий інтерфейс, поки шматки ще живі, вони злітаються назад і складають його замість звичайного відкриття. До того шматки мають лишатися цілими шматками інтерфейсу.",
   "ui.shatter_gui.fx.follow.auto": "Авто",
   "ui.shatter_gui.fx.follow.auto.desc": "Відкриття слідують за камерою, закриття лишаються у світі.",
   "ui.shatter_gui.fx.follow.on": "Слідувати",

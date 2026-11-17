@@ -293,6 +293,8 @@
   "param.shatter_gui.glass.fullbright.tooltip": "On: shards are as bright as the interface; off: lit like the world around them.",
   "param.shatter_gui.glass.soundVolume": "Volume",
   "param.shatter_gui.glass.soundVolume.tooltip": "Breaking glass sound.",
+  "param.shatter_gui.glass.reassembleOnReopen": "Reassemble on reopen",
+  "param.shatter_gui.glass.reassembleOnReopen.tooltip": "Open the same screen again while its shards are still around, and they fly back and put it together instead of the usual opening.",
 
   "param.shatter_gui.burn.duration": "Burn time",
   "param.shatter_gui.burn.duration.tooltip": "How long the fire takes from the bottom to the top.",
@@ -555,6 +557,8 @@
   "ui.shatter_gui.fx.field.duration.desc": "How long the whole effect takes (the player's speed settings still apply).",
   "ui.shatter_gui.fx.field.follow_camera": "Follow the camera",
   "ui.shatter_gui.fx.field.follow_camera.desc": "Whether the effect stays in front of the player while they move, or where it started (the player's setting can override it).",
+  "ui.shatter_gui.fx.field.reassemble": "Reassemble on reopen",
+  "ui.shatter_gui.fx.field.reassemble.desc": "Opening the same screen again while the pieces are still alive gathers them back into it instead of the usual opening. The pieces should stay whole pieces of the screen until then.",
   "ui.shatter_gui.fx.follow.auto": "Auto",
   "ui.shatter_gui.fx.follow.auto.desc": "Openings follow the camera, closes stay in the world.",
   "ui.shatter_gui.fx.follow.on": "Follow",

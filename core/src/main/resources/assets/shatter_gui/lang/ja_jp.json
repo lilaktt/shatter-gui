@@ -293,6 +293,8 @@
   "param.shatter_gui.glass.fullbright.tooltip": "オン：破片はインターフェースと同じ明るさ。オフ：周りのワールドと同じ照明。",
   "param.shatter_gui.glass.soundVolume": "音量",
   "param.shatter_gui.glass.soundVolume.tooltip": "ガラスが割れる音。",
+  "param.shatter_gui.glass.reassembleOnReopen": "再度開くと組み立て直す",
+  "param.shatter_gui.glass.reassembleOnReopen.tooltip": "破片が残っているうちに同じ画面をもう一度開くと、通常の開く演出の代わりに破片が戻ってきて画面を組み立てます。",
 
   "param.shatter_gui.burn.duration": "燃える時間",
   "param.shatter_gui.burn.duration.tooltip": "火が下から上へ広がる時間。",
@@ -555,6 +557,8 @@
   "ui.shatter_gui.fx.field.duration.desc": "エフェクト全体の長さ（プレイヤーの速さの設定も効きます）。",
   "ui.shatter_gui.fx.field.follow_camera": "カメラに追従",
   "ui.shatter_gui.fx.field.follow_camera.desc": "プレイヤーの移動中にエフェクトが目の前に留まるか、始まった場所に残るか（プレイヤーの設定で変更できます）。",
+  "ui.shatter_gui.fx.field.reassemble": "再度開くと組み立て直す",
+  "ui.shatter_gui.fx.field.reassemble.desc": "ピースがまだ残っているうちに同じ画面をもう一度開くと、通常の開く演出の代わりにピースが戻って画面を組み立てます。それまでピースは画面の欠片のままである必要があります。",
   "ui.shatter_gui.fx.follow.auto": "自動",
   "ui.shatter_gui.fx.follow.auto.desc": "開くときはカメラに追従し、閉じるときはワールドに残ります。",
   "ui.shatter_gui.fx.follow.on": "追従する",

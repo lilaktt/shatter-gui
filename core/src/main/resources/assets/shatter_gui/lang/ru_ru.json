@@ -293,6 +293,8 @@
   "param.shatter_gui.glass.fullbright.tooltip": "Вкл.: осколки яркие, как интерфейс; выкл.: освещены как мир вокруг.",
   "param.shatter_gui.glass.soundVolume": "Громкость",
   "param.shatter_gui.glass.soundVolume.tooltip": "Звук бьющегося стекла.",
+  "param.shatter_gui.glass.reassembleOnReopen": "Собирать при повторном открытии",
+  "param.shatter_gui.glass.reassembleOnReopen.tooltip": "Если снова открыть тот же интерфейс, пока осколки ещё лежат, они слетаются обратно и собирают его вместо обычного открытия.",
 
   "param.shatter_gui.burn.duration": "Время горения",
   "param.shatter_gui.burn.duration.tooltip": "За сколько огонь проходит снизу вверх.",
@@ -555,6 +557,8 @@
   "ui.shatter_gui.fx.field.duration.desc": "Сколько длится весь эффект (настройки скорости игрока всё равно действуют).",
   "ui.shatter_gui.fx.field.follow_camera": "Следовать за камерой",
   "ui.shatter_gui.fx.field.follow_camera.desc": "Остаётся ли эффект перед игроком, когда тот двигается, или там, где начался (настройка игрока может это изменить).",
+  "ui.shatter_gui.fx.field.reassemble": "Собирать при повторном открытии",
+  "ui.shatter_gui.fx.field.reassemble.desc": "Если снова открыть тот же интерфейс, пока куски ещё живы, они слетаются обратно и собирают его вместо обычного открытия. До этого куски должны оставаться целыми кусками интерфейса.",
   "ui.shatter_gui.fx.follow.auto": "Авто",
   "ui.shatter_gui.fx.follow.auto.desc": "Открытия следуют за камерой, закрытия остаются в мире.",
   "ui.shatter_gui.fx.follow.on": "Следовать",

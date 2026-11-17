@@ -45,14 +45,17 @@ public final class ShardManager {
         final boolean follows;
         private PlaneBasis lastPlane;
         final Screen owner;
+        List<ShardInstance> all;
+        String screenKey;
+        OpenAnchor closeAnchor;
 
         Batch(CapturePool.Slot slot, List<ShardInstance> shards, ShatterEffect effect, ShatterWave wave,
               ParamValues params, boolean preview, OpenAnchor anchor, Screen owner) {
             this.anchor = anchor;
-            this.follows = anchor != null && (effect.opens()
+            this.follows = anchor != null && (effect instanceof Reassembly.Gather || (effect.opens()
                     ? FollowCamera.follows(params, effect.followCamera(), true)
                     : effect.base() instanceof net.shattergui.effect.FlyEffect
-                    && FollowCamera.follows(params, effect.followCamera(), false));
+                    && FollowCamera.follows(params, effect.followCamera(), false)));
             this.owner = owner;
             this.slot = slot;
             this.shards = shards;
@@ -355,6 +358,11 @@ public final class ShardManager {
         }
         hurryOldWaves(shards.size());
         lastSpawned = new Batch(slot, shards, effect, wave, params, preview, anchor, effect.opens() ? owner : null);
+        if (!effect.opens() && !preview && owner != null) {
+            lastSpawned.all = new ArrayList<>(shards);
+            lastSpawned.screenKey = Reassembly.key(owner);
+            lastSpawned.closeAnchor = anchor;
+        }
         if (lastSpawned.hidesBehindBlocks()) {
             net.minecraft.world.phys.Vec3 eye = Mc26.camera().position();
             lastSpawned.bornEye = eye;
@@ -416,8 +424,35 @@ public final class ShardManager {
         return boxes;
     }
 
+    private static Object lastLevel;
+
+    static Batch replace(Batch old, List<ShardInstance> shards, ShatterEffect effect, ShatterWave wave, OpenAnchor anchor,
+                         Screen owner) {
+        BATCHES.remove(old);
+        Batch batch = new Batch(old.slot, shards, effect, wave, old.params, false, anchor, owner);
+        batch.all = old.all;
+        batch.screenKey = old.screenKey;
+        batch.closeAnchor = old.closeAnchor != null ? old.closeAnchor : old.anchor;
+        BATCHES.add(batch);
+        return batch;
+    }
+
+    static void drop(Batch batch) {
+        if (BATCHES.remove(batch)) {
+            dispose(batch);
+            CapturePool.release(batch.slot);
+        }
+    }
+
     public static void tick() {
         Minecraft mc = Minecraft.getInstance();
+        if (mc.level != lastLevel) {
+            if (lastLevel != null && !BATCHES.isEmpty()) {
+                Reassembly.abort("the world or dimension changed");
+                clear();
+            }
+            lastLevel = mc.level;
+        }
         if (mc.level == null) {
             clear();
             return;

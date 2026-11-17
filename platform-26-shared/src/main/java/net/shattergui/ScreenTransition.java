@@ -29,6 +29,7 @@ public final class ScreenTransition {
     public static final class State {
         Screen closing;
         boolean opening;
+        boolean scattered;
         boolean spatial;
         long start;
     }
@@ -43,6 +44,8 @@ public final class ScreenTransition {
             CloseWatchdog.begin(current.getClass().getSimpleName());
         }
         if (current != null && newScreen != current) {
+            state.scattered = net.shattergui.shatter.Reassembly.rescatter(current,
+                    newScreen == null ? "closed while gathering" : "replaced while gathering");
             FlyController.endOpening(newScreen == null ? "closed" : "replaced by " + newScreen.getClass().getSimpleName());
             CloseWatchdog.step("end the opening of the screen", state.start);
         }
@@ -66,6 +69,10 @@ public final class ScreenTransition {
         }
         long stepStart = ShatterProfiler.now();
         FlySource flySource = FlyController.onScreenClosed();
+        if (state.scattered) {
+            CloseWatchdog.endCall(state.start);
+            return;
+        }
         stepStart = CloseWatchdog.step("stop the fly-in, find the source", stepStart);
         if (level == null || player == null || player.isDeadOrDying()) {
             return;

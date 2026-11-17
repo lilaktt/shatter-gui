@@ -293,6 +293,8 @@
   "param.shatter_gui.glass.fullbright.tooltip": "Sì: i pezzi sono luminosi come l'interfaccia; no: illuminati come il mondo intorno.",
   "param.shatter_gui.glass.soundVolume": "Volume",
   "param.shatter_gui.glass.soundVolume.tooltip": "Suono del vetro che si rompe.",
+  "param.shatter_gui.glass.reassembleOnReopen": "Ricomponi alla riapertura",
+  "param.shatter_gui.glass.reassembleOnReopen.tooltip": "Se riapri la stessa interfaccia mentre le schegge sono ancora lì, tornano indietro e la ricompongono al posto della solita apertura.",
 
   "param.shatter_gui.burn.duration": "Durata del fuoco",
   "param.shatter_gui.burn.duration.tooltip": "Quanto impiega il fuoco dal basso all'alto.",
@@ -555,6 +557,8 @@
   "ui.shatter_gui.fx.field.duration.desc": "Quanto dura tutto l'effetto (le impostazioni di velocità del giocatore valgono comunque).",
   "ui.shatter_gui.fx.field.follow_camera": "Segui la telecamera",
   "ui.shatter_gui.fx.field.follow_camera.desc": "Se l'effetto resta davanti al giocatore mentre si muove, o dove è iniziato (l'impostazione del giocatore può cambiarlo).",
+  "ui.shatter_gui.fx.field.reassemble": "Ricomponi alla riapertura",
+  "ui.shatter_gui.fx.field.reassemble.desc": "Riaprire la stessa interfaccia mentre i pezzi sono ancora vivi li fa tornare a ricomporla al posto della solita apertura. Fino ad allora i pezzi devono restare pezzi interi dell'interfaccia.",
   "ui.shatter_gui.fx.follow.auto": "Auto",
   "ui.shatter_gui.fx.follow.auto.desc": "Le aperture seguono la telecamera, le chiusure restano nel mondo.",
   "ui.shatter_gui.fx.follow.on": "Segui",

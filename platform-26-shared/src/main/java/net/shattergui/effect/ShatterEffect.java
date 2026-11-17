@@ -42,4 +42,9 @@ public interface ShatterEffect {
     default Boolean followCamera() {
         return null;
     }
+
+    default boolean reassemblesOnReopen(ParamValues params) {
+        ShatterEffect inner = base();
+        return inner != this && inner.reassemblesOnReopen(params);
+    }
 }

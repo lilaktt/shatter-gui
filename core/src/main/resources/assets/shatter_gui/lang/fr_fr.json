@@ -293,6 +293,8 @@
   "param.shatter_gui.glass.fullbright.tooltip": "Activé : les éclats sont aussi lumineux que l'interface ; désactivé : éclairés comme le monde autour d'eux.",
   "param.shatter_gui.glass.soundVolume": "Volume",
   "param.shatter_gui.glass.soundVolume.tooltip": "Son de verre brisé.",
+  "param.shatter_gui.glass.reassembleOnReopen": "Reconstituer à la réouverture",
+  "param.shatter_gui.glass.reassembleOnReopen.tooltip": "Si tu rouvres la même interface pendant que les éclats sont encore là, ils reviennent et la reconstituent au lieu de l'ouverture habituelle.",
 
   "param.shatter_gui.burn.duration": "Durée de combustion",
   "param.shatter_gui.burn.duration.tooltip": "Le temps que met le feu à monter du bas vers le haut.",
@@ -555,6 +557,8 @@
   "ui.shatter_gui.fx.field.duration.desc": "Durée totale de l'effet (les réglages de vitesse du joueur s'appliquent toujours).",
   "ui.shatter_gui.fx.field.follow_camera": "Suivre la caméra",
   "ui.shatter_gui.fx.field.follow_camera.desc": "L'effet reste devant le joueur quand il bouge, ou là où il a commencé (le réglage du joueur peut le changer).",
+  "ui.shatter_gui.fx.field.reassemble": "Reconstituer à la réouverture",
+  "ui.shatter_gui.fx.field.reassemble.desc": "Rouvrir la même interface pendant que les morceaux sont encore vivants les fait revenir pour la reconstituer au lieu de l'ouverture habituelle. D'ici là, les morceaux doivent rester des morceaux entiers de l'interface.",
   "ui.shatter_gui.fx.follow.auto": "Auto",
   "ui.shatter_gui.fx.follow.auto.desc": "Les ouvertures suivent la caméra, les fermetures restent dans le monde.",
   "ui.shatter_gui.fx.follow.on": "Suivre",

@@ -89,6 +89,10 @@ public final class FlyController {
 
         List<String> keys = ScreenRules.keys(screen);
         ScreenRules.remember(screen, keys);
+        if (ScreenRules.shouldShatter(screen, keys, config) && net.shattergui.shatter.Reassembly.tryStart(screen)) {
+            openSource = null;
+            return;
+        }
         String effect = ScreenRules.shouldShatter(screen, keys, config) ? ScreenRules.openEffectFor(keys, config)
                 : ShatterConfig.OPEN_NONE;
         if (ShatterConfig.OPEN_NONE.equals(effect)) {

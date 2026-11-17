@@ -32,6 +32,7 @@ public final class Params {
     public static final Param.Float GLASS_BOUNCE = add(new Param.Float("glass", "bounce", 0f, 1f, 0.35f));
     public static final Param.Bool GLASS_FULLBRIGHT = add(new Param.Bool("glass", "fullbright", true));
     public static final Param.Float GLASS_SOUND = add(new Param.Float("glass", "soundVolume", 0f, 1f, 0.6f));
+    public static final Param.Bool GLASS_REASSEMBLE = add(new Param.Bool("glass", "reassembleOnReopen", true));
 
     public static final Param.Int BURN_DURATION = add(new Param.Int("burn", "duration", 5, 600, 30));
     public static final Param.Int BURN_SMOKE_DURATION = add(new Param.Int("burn", "smokeDuration", 0, 1200, 60));

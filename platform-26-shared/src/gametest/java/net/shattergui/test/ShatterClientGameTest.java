@@ -308,6 +308,9 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
                 if (chosen.contains("water")) {
                     WaterScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
                 }
+                if (chosen.contains("reassemble")) {
+                    ReassembleScenario.run(context, singleplayer, this::check);
+                }
                 if (chosen.contains("spatialflow")) {
                     SpatialFlowScenario.run(context, singleplayer, this::check);
                 }
@@ -376,6 +379,7 @@ public final class ShatterClientGameTest implements FabricClientGameTest {
         ModelMaskScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
         WaterScenario.run(context, singleplayer, this::check, spatial ? "spatial" : "flat");
         SpatialFlowScenario.run(context, singleplayer, this::check);
+        ReassembleScenario.run(context, singleplayer, this::check);
         EffectScenarios effects = new EffectScenarios(context, this::check, context::takeScreenshot);
         String prefix = spatial ? "spatial_" : "";
         effects.edgeFlights(prefix + "edge");

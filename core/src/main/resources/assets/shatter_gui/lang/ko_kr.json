@@ -293,6 +293,8 @@
   "param.shatter_gui.glass.fullbright.tooltip": "켜기: 조각이 인터페이스만큼 밝음. 끄기: 주변 월드처럼 조명됨.",
   "param.shatter_gui.glass.soundVolume": "소리 크기",
   "param.shatter_gui.glass.soundVolume.tooltip": "유리 깨지는 소리.",
+  "param.shatter_gui.glass.reassembleOnReopen": "다시 열 때 재조립",
+  "param.shatter_gui.glass.reassembleOnReopen.tooltip": "조각이 아직 남아 있을 때 같은 화면을 다시 열면 평소의 열기 효과 대신 조각이 날아와 화면을 다시 맞춥니다.",
 
   "param.shatter_gui.burn.duration": "타는 시간",
   "param.shatter_gui.burn.duration.tooltip": "불이 아래에서 위까지 번지는 시간.",
@@ -555,6 +557,8 @@
   "ui.shatter_gui.fx.field.duration.desc": "효과 전체의 길이(플레이어의 속도 설정도 적용됨).",
   "ui.shatter_gui.fx.field.follow_camera": "카메라 따라가기",
   "ui.shatter_gui.fx.field.follow_camera.desc": "플레이어가 움직이는 동안 효과가 눈앞에 머무를지, 시작한 자리에 남을지(플레이어 설정이 우선할 수 있음).",
+  "ui.shatter_gui.fx.field.reassemble": "다시 열 때 재조립",
+  "ui.shatter_gui.fx.field.reassemble.desc": "조각이 아직 살아 있을 때 같은 화면을 다시 열면 평소의 열기 효과 대신 조각이 돌아와 화면을 다시 맞춥니다. 그때까지 조각은 화면의 온전한 조각이어야 합니다.",
   "ui.shatter_gui.fx.follow.auto": "자동",
   "ui.shatter_gui.fx.follow.auto.desc": "열기는 카메라를 따라가고, 닫기는 월드에 남습니다.",
   "ui.shatter_gui.fx.follow.on": "따라가기",

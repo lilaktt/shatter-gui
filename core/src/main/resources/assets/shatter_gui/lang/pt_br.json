@@ -293,6 +293,8 @@
   "param.shatter_gui.glass.fullbright.tooltip": "Ligado: os cacos são tão claros quanto a interface; desligado: iluminados como o mundo ao redor.",
   "param.shatter_gui.glass.soundVolume": "Volume",
   "param.shatter_gui.glass.soundVolume.tooltip": "Som de vidro quebrando.",
+  "param.shatter_gui.glass.reassembleOnReopen": "Remontar ao reabrir",
+  "param.shatter_gui.glass.reassembleOnReopen.tooltip": "Se você abrir a mesma interface de novo enquanto os cacos ainda estão por aí, eles voltam voando e a remontam em vez da abertura normal.",
 
   "param.shatter_gui.burn.duration": "Tempo de queima",
   "param.shatter_gui.burn.duration.tooltip": "Quanto tempo o fogo leva de baixo até em cima.",
@@ -555,6 +557,8 @@
   "ui.shatter_gui.fx.field.duration.desc": "Quanto tempo o efeito inteiro leva (as configurações de velocidade do jogador ainda se aplicam).",
   "ui.shatter_gui.fx.field.follow_camera": "Seguir a câmera",
   "ui.shatter_gui.fx.field.follow_camera.desc": "Se o efeito fica à frente do jogador enquanto ele se move, ou onde começou (a configuração do jogador pode mudar isso).",
+  "ui.shatter_gui.fx.field.reassemble": "Remontar ao reabrir",
+  "ui.shatter_gui.fx.field.reassemble.desc": "Abrir a mesma interface de novo enquanto as peças ainda estão vivas faz com que voltem e a remontem em vez da abertura normal. Até lá as peças devem continuar sendo pedaços inteiros da interface.",
   "ui.shatter_gui.fx.follow.auto": "Auto",
   "ui.shatter_gui.fx.follow.auto.desc": "Aberturas seguem a câmera, fechamentos ficam no mundo.",
   "ui.shatter_gui.fx.follow.on": "Seguir",

@@ -56,6 +56,18 @@ for 3 seconds at most, with the User-Agent `lilaktt/shatter-gui/<version>` and n
 API without a key and is not checked. It never blocks the game and does nothing without a network. Turn it off with
 "Check the mod's pages" (`"linkStatusCheck": false`).
 
+## Reopening from the pieces
+
+Close an interface and open the same one again while its glass pieces are still in the world, and instead of the usual
+opening those pieces fly back and put it together: same screen class and menu type, the closing effect allows it
+(`glass/reassembleOnReopen`, on by default; schema 2 field `reassembleOnReopen`, off by default), at least 50% of the
+pieces alive and their mean opacity at least 0.35. With the default glass both limits are reached about 3 s after the
+close (measured: 48% alive / 0.45 opacity at tick 60, 36% / 0.29 at tick 64), after that a usual opening plays. Each
+piece moves from where it lies to its place with smooth acceleration, through blocks; pieces that are gone fade in on
+their places in the last third; then the pieces fade over the real screen in 4 ticks. With Spatial GUI they gather on
+its plane. Closing during the gathering breaks the pieces again from where they are. It reuses the closing wave, so the
+limit of effects at once does not apply. Details: `README.uk.md`.
+
 ## Custom effects
 
 Effects are JSON files (schema 2) in `config/shatter_gui/effects/`, packages (`.shatterfx`, a ZIP with
