@@ -1,4 +1,4 @@
-# Shatter GUI
+# Shatter GUI (beta 0.2)
 
 A client-side Fabric mod for Minecraft 26.1.x, 26.2 and 26.3. When you close an interface (chest, furnace, inventory, pause menu…)
 its last frame breaks into pieces that live in the world: glass shards, fire, ice, sand, confetti, a portal vortex…
