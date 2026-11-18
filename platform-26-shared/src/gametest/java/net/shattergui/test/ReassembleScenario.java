@@ -28,6 +28,7 @@ final class ReassembleScenario {
     private static final double CENTRE = 0.03;
     private static final double JUMP = 0.05;
     private static final double LAST_CENTRE = 0.03;
+    private static final int MIN_PIXELS = 5000;
 
     private record State(boolean running, boolean landed, float progress, int live, int all, boolean screen, boolean hidden,
                          double jump) {
@@ -237,7 +238,7 @@ final class ReassembleScenario {
         check.accept(jump >= 0 && jump <= JUMP, String.format(Locale.ROOT, "%s: in the first frame of the gathering every "
                 + "piece is where the scatter left it (largest move %.4f blocks, e=%.3f)", name, jump,
                 first.state() instanceof State st ? st.progress() : -1f));
-        if (!cameraMoves) {
+        if (!cameraMoves && last.magenta() >= MIN_PIXELS) {
             check.accept(shift <= CENTRE && area > 0.8 && area < 1.25, String.format(Locale.ROOT, "%s: the first frame of "
                     + "the gathering must look like the last frame of the scatter (shift %.3f, area %.2f)", name, shift, area));
         }

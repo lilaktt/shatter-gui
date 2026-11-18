@@ -6,6 +6,7 @@ import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.shattergui.ShatterGuiClient;
 import net.shattergui.config.ShatterConfig;
 import net.shattergui.debug.ShatterProfiler;
+import net.shattergui.params.Params;
 import net.shattergui.platform.impl.Mc26;
 import net.shattergui.shatter.ShardManager;
 
@@ -23,7 +24,9 @@ final class BudgetScenario {
         String open = config.openEffect;
         Integer max = config.maxConcurrentEffects;
         String policy = config.concurrentPolicy;
+        boolean reassemble = config.get(Params.GLASS_REASSEMBLE);
         try {
+            config.set(Params.GLASS_REASSEMBLE, false);
             config.openEffect = ShatterConfig.OPEN_DATA_PREFIX + "pop";
             for (String close : new String[]{"glass", "burn"}) {
                 for (String p : new String[]{ShatterConfig.POLICY_FINISH_OLDEST, ShatterConfig.POLICY_SKIP_NEW}) {
@@ -41,6 +44,7 @@ final class BudgetScenario {
             config.openEffect = open;
             config.maxConcurrentEffects = max;
             config.concurrentPolicy = policy;
+            config.set(Params.GLASS_REASSEMBLE, reassemble);
         }
     }
 

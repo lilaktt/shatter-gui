@@ -11,6 +11,7 @@ import net.shattergui.fly.OpenAssemble;
 import net.shattergui.fx.FxSimulation;
 import net.shattergui.fx.game.FxEffects;
 import net.shattergui.params.BundledParams;
+import net.shattergui.params.Params;
 import net.shattergui.platform.impl.Mc26;
 import net.shattergui.shatter.ShardManager;
 
@@ -32,7 +33,9 @@ final class BundledEffectsScenario {
         String effect = config.effect;
         String openEffect = config.openEffect;
         boolean reduce = config.reduceMotion;
+        boolean reassemble = config.get(Params.GLASS_REASSEMBLE);
         try {
+            config.set(Params.GLASS_REASSEMBLE, false);
             List<String> ids = context.computeOnClient(mc -> ShatterEffects.dataIds());
             List<String> messages = context.computeOnClient(mc -> FxEffects.messages());
             check.accept(ids.containsAll(BundledParams.ids()), name + ": all shipped effects load, got " + ids);
@@ -82,6 +85,7 @@ final class BundledEffectsScenario {
             config.effect = effect;
             config.openEffect = openEffect;
             config.reduceMotion = reduce;
+            config.set(Params.GLASS_REASSEMBLE, reassemble);
         }
     }
 
