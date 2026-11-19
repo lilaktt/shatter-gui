@@ -70,7 +70,7 @@ close (measured: 48% alive / 0.45 opacity at tick 60, 36% / 0.29 at tick 64), af
 piece moves from where it lies to its place with smooth acceleration, through blocks; pieces that are gone fade in on
 their places in the last third; then the pieces fade over the real screen in 4 ticks. With Spatial GUI they gather on
 its plane. Closing during the gathering breaks the pieces again from where they are. It reuses the closing wave, so the
-limit of effects at once does not apply. Details: `README.uk.md`.
+limit of effects at once does not apply.
 
 ## Custom effects
 
