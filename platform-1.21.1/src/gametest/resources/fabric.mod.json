@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "shatter_gui_test",
+  "version": "1",
+  "name": "Shatter GUI tests (1.21.1)",
+  "description": "The test harness of the 1.21.1 port; loaded only by runClientTest.",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["net.shattergui.test.ShatterTestHarness"]
+  },
+  "depends": {
+    "shatter_gui": "*",
+    "fabric-api": "*"
+  }
+}

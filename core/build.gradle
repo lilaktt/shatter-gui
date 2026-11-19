@@ -1,0 +1,89 @@
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    mavenCentral()
+}
+
+def coreJava = 21
+
+sourceSets {
+    main {
+        java.srcDir 'src/contract/java'
+    }
+    commentCheck
+}
+
+dependencies {
+    compileOnly 'com.google.code.gson:gson:2.10.1'
+    compileOnly 'org.slf4j:slf4j-api:2.0.9'
+
+    testImplementation 'com.google.code.gson:gson:2.13.2'
+    testImplementation 'org.slf4j:slf4j-api:2.0.17'
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    commentCheckImplementation 'org.apache.groovy:groovy:4.0.28'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = coreJava
+    it.options.encoding = 'UTF-8'
+}
+
+jar {
+    enabled = false
+}
+
+test {
+    useJUnitPlatform()
+    workingDir = rootProject.projectDir
+}
+
+tasks.register('checkNoMinecraft') {
+    def sources = fileTree('src/main/java') { include '**/*.java' }
+    inputs.files(sources)
+    doLast {
+        def banned = ~/\b(net\.minecraft|com\.mojang|net\.fabricmc|net\.neoforged|net\.irisshaders|org\.spongepowered|org\.lwjgl)\./
+        def offenders = sources.files.findAll { f -> f.text.readLines().any { line -> line =~ banned } }
+        if (!offenders.isEmpty()) {
+            throw new GradleException("core must not use Minecraft or a loader:\n  " + offenders.join('\n  '))
+        }
+    }
+}
+check.dependsOn checkNoMinecraft
+
+def javacInternals = ['--add-exports', 'jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED',
+                      '--add-exports', 'jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED']
+
+tasks.named('compileCommentCheckJava') {
+    options.release.set((Integer) null)
+    options.compilerArgs.addAll(javacInternals)
+}
+
+tasks.register('checkNoComments', JavaExec) {
+    group = 'verification'
+    description = 'Fails if a comment appears in the Java, Gradle or .properties files of the project.'
+    def sources = rootProject.fileTree(rootProject.projectDir) {
+        include '**/*.java', '**/*.gradle', '**/*.properties'
+        exclude '**/build/**', '**/run/**', '**/.gradle/**', 'libs/**', 'dist/**'
+    }
+    def list = layout.buildDirectory.file('commentCheck/files.txt')
+    def done = layout.buildDirectory.file('commentCheck/ok')
+    inputs.files(sources)
+    outputs.file(done)
+    classpath = sourceSets.commentCheck.runtimeClasspath
+    mainClass = 'net.shattergui.tools.CommentCheck'
+    jvmArgs javacInternals
+    args list.get().asFile.path
+    doFirst {
+        list.get().asFile.parentFile.mkdirs()
+        list.get().asFile.setText(sources.files*.path.sort().join('\n'), 'UTF-8')
+    }
+    doLast {
+        done.get().asFile.text = 'ok'
+    }
+}
+check.dependsOn checkNoComments

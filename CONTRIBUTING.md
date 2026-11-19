@@ -4,6 +4,11 @@
 
 Open an issue at https://github.com/lilaktt/shatter-gui/issues (the "Bug report" form asks for all of this):
 
+- The diagnostics: in game, Shatter GUI settings → General → About → **Copy diagnostics**, and paste them into the form.
+  They hold the versions of Shatter GUI, Minecraft, Fabric Loader, Fabric API, Iris, Sodium and Spatial GUI, the GPU
+  and driver (OpenGL renderer and version strings), the active shader pack, the chosen open and close effects, the
+  thematic mode and the mod's last warnings of the session. Your user name, file paths and e-mail addresses are taken
+  out. If the settings do not open, write these by hand.
 - Minecraft version and Shatter GUI version (Mod Menu shows it, or the jar name).
 - Your mod list (the `mods` folder or Mod Menu), with versions of Spatial GUI, Iris, Sodium and the shader pack if you
   use them.
@@ -18,18 +23,18 @@ For a stutter or a delay, set `"profiling": true` in `config/shatter_gui.json`, 
 
 ## Sending a translation
 
-Language files are in `src/main/resources/assets/shatter_gui/lang/<code>.json`; `en_us.json` is the source of truth.
+Language files are in `core/src/main/resources/assets/shatter_gui/lang/<code>.json`; `en_us.json` is the source of truth.
 English and Ukrainian are written by hand, the other languages are machine-assisted and corrections are welcome.
 
 1. Change the texts in your language file. Keep every key, every `%s` / `%d` / `%1$s`, and the terms in
    `docs/i18n/GLOSSARY.md` (if a term itself is wrong, change it there too).
 2. Run `./gradlew test`: it fails if a key is missing or extra, or if placeholders differ from English.
 3. Optionally check long labels in game: `./gradlew runClientGameTest -PtestOnly=lang -Plang=<code>` fails if a label
-   is cut at GUI scales 1–4 (screenshots in `build/run/clientGameTest/screenshots`).
+   is cut at GUI scales 1–4 (screenshots in `platform-26/build/run/clientGameTest/screenshots`; `docs/VERSIONS.md` lists the versions, `./gradlew runVersionMatrix --no-daemon` tests them all).
 4. Open a pull request. Without git, an issue with the key, the current text and your text works too.
 
 ## Building
 
-JDK 25, then `./gradlew build` (the jar is in `build/libs`, unit tests run with it). Game tests run a real client:
+JDK 25, then `./gradlew build` (unit tests run with it; release jars come only from `./gradlew dist`, in `dist/`; the code layout for other Minecraft versions is in `docs/PORTING.md`). Game tests run a real client:
 `./gradlew runClientGameTest`, see the README for the options. Development-only mods (Spatial GUI, Iris, Sodium, Mod
 Menu, YACL) are downloaded from the Modrinth Maven and never bundled.

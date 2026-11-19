@@ -1,0 +1,53 @@
+if (project.hasProperty("reloadLoop")) {
+    def withJar = project.findProperty('reloadJar')?.toString()
+    def jarFile = withJar ? rootProject.file(withJar) : null
+    def loopResources = rootProject.file('platform-26-shared/src/reloadloop/resources')
+    configurations {
+        reloadMods {
+            transitive = false
+            canBeConsumed = false
+        }
+    }
+    dependencies {
+        reloadMods "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+        runtimeOnly "net.fabricmc:fabric-loader:${project.runtime_loader}"
+        runtimeOnly "io.github.llamalad7:mixinextras-fabric:${project.runtime_mixinextras}"
+    }
+    afterEvaluate {
+        loom.runs.create('reloadLoop') {
+            inherit loom.runs.getByName('clientGameTest')
+            configName = 'Resource reload loop'
+            runDir 'build/run/reloadLoop'
+            ideConfigGenerated false
+            property 'fabric.client.gametest'
+            property 'fabric.client.gametest.testModResourcesPath', loopResources.absolutePath
+            vmArg "-Dshatter.reload.count=${project.findProperty('reloadCount') ?: 20}"
+        }
+        tasks.named('runReloadLoop') {
+            def runDir = file('build/run/reloadLoop')
+            def ownOutput = sourceSets.main.output.files.collect { it.absoluteFile }
+            def testResources = sourceSets.gametest.output.resourcesDir.absoluteFile
+            def mods = configurations.reloadMods
+            def sources = new ArrayList(classpath.from)
+            classpath = files(sources).filter { f ->
+                def path = f.path.replace('\\', '/')
+                !(ownOutput.contains(f.absoluteFile) || f.absoluteFile == testResources
+                        || path.contains('/net.fabricmc.fabric-api/') && !path.contains('/fabric-client-gametest-api-v1/'))
+            } + files(loopResources)
+            doFirst {
+                if (jarFile != null && !jarFile.isFile()) {
+                    throw new GradleException("reloadLoop: ${jarFile} does not exist")
+                }
+                def modsDir = new File(runDir, 'mods')
+                modsDir.deleteDir()
+                new File(runDir, 'saves').deleteDir()
+                modsDir.mkdirs()
+                if (jarFile != null) {
+                    new File(modsDir, jarFile.name).bytes = jarFile.bytes
+                }
+                mods.files.each { new File(modsDir, it.name).bytes = it.bytes }
+                logger.lifecycle("reloadLoop: mods = ${modsDir.list().sort().join(', ')}")
+            }
+        }
+    }
+}

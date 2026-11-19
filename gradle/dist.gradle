@@ -1,0 +1,49 @@
+import java.security.MessageDigest
+
+apply from: rootProject.file('gradle/build-info.gradle')
+
+def READY = [[mc: '26.1', module: 'platform-26'], [mc: '26.2', module: 'platform-26.2'], [mc: '26.3', module: 'platform-26.3']]
+
+tasks.register('dist') {
+    group = 'build'
+    description = 'Builds every ready version from scratch into dist/ with SHA256SUMS.txt.'
+    outputs.upToDateWhen { false }
+    def commit = project.buildCommit
+    def time = project.buildTime
+    doLast {
+        def root = rootProject.projectDir
+        def out = new File(root, 'dist')
+        out.deleteDir()
+        out.mkdirs()
+        def gradlew = new File(root, System.getProperty('os.name').toLowerCase().contains('win') ? 'gradlew.bat' : 'gradlew').path
+        def run = { List<String> args ->
+            def command = [gradlew] + args + ['--no-daemon', '--console=plain', "-PbuildCommit=${commit}".toString(),
+                                              "-PbuildTime=${time}".toString()]
+            println "dist: ${args.join(' ')}"
+            def process = new ProcessBuilder(command).directory(root).inheritIO().start()
+            if (process.waitFor() != 0) {
+                throw new GradleException("dist: ${args.join(' ')} failed")
+            }
+        }
+        def sums = []
+        READY.eachWithIndex { v, i ->
+            def props = new Properties()
+            new File(root, "${v.module}/gradle.properties").withInputStream { props.load(it) }
+            def tasks = [":${v.module}:clean".toString(), ":${v.module}:jar".toString()]
+            run((i == 0 ? [':core:clean', ':core:check'] : []) + tasks + ["-Pmc=${v.mc}".toString()])
+            def name = "${project.archives_base_name}-${project.mod_version}+mc${props.minecraft_label}-${props.mod_loader}.jar"
+            def built = new File(root, "${v.module}/build/tmp/distInput/${name}")
+            if (!built.isFile()) {
+                throw new GradleException("dist: ${built} was not built")
+            }
+            def target = new File(out, name)
+            target.bytes = built.bytes
+            built.delete()
+            def digest = MessageDigest.getInstance('SHA-256').digest(target.bytes).encodeHex().toString()
+            sums << "${digest}  ${name}"
+            println "dist: ${name} ${digest}"
+        }
+        new File(out, 'SHA256SUMS.txt').setText(sums.join('\n') + '\n', 'UTF-8')
+        println "dist: ${commit}, ${time} -> ${out}"
+    }
+}

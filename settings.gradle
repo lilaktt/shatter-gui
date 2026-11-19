@@ -6,6 +6,35 @@ pluginManagement {
         }
         gradlePluginPortal()
     }
+    plugins {
+        id 'net.fabricmc.fabric-loom' version "${loom_version}"
+        id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+    }
 }
 
 rootProject.name = 'shatter-gui'
+
+include 'core'
+
+def platforms = [
+        '26.1': 'platform-26',
+        '26.1.1': 'platform-26',
+        '26.1.2': 'platform-26',
+        '26.2': 'platform-26.2',
+        '26.3': 'platform-26.3',
+        '1.21.1': 'platform-1.21.1',
+]
+def active = '26.1'
+def chosen = providers.gradleProperty('mc').getOrElse(active)
+def selected = chosen == 'all' ? platforms.values().unique() : chosen.split(',').collect { v ->
+    def module = platforms[v.trim()]
+    if (module == null) {
+        throw new GradleException("Unknown -Pmc=${v}; known: ${platforms.keySet().join(', ')} or all")
+    }
+    module
+}
+def tasksAsked = gradle.startParameter.taskNames
+def distOnly = !tasksAsked.isEmpty() && tasksAsked.every { it in ['dist', ':dist', 'verifyDist', ':verifyDist'] }
+if (!distOnly) {
+    selected.unique().each { include it }
+}

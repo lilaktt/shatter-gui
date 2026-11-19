@@ -1,0 +1,29 @@
+package net.shattergui.shatter;
+
+import net.minecraft.client.Minecraft;
+
+public final class EffectClock {
+    private static final float NANOS_PER_TICK = 50_000_000f;
+    private static long lastTickNanos = System.nanoTime();
+    private static long ticks;
+
+    private EffectClock() {
+    }
+
+    public static void tick() {
+        lastTickNanos = System.nanoTime();
+        ticks++;
+    }
+
+    public static double now() {
+        return ticks + partialTick();
+    }
+
+    public static float partialTick() {
+        Minecraft mc = Minecraft.getInstance();
+        if (!mc.isPaused()) {
+            return mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        }
+        return Math.clamp((System.nanoTime() - lastTickNanos) / NANOS_PER_TICK, 0f, 1f);
+    }
+}

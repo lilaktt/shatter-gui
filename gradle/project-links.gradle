@@ -1,0 +1,14 @@
+ext.projectLinksFile = rootProject.file('core/src/main/java/net/shattergui/links/ProjectLinks.java')
+
+ext.projectLinks = {
+    def links = [:]
+    (projectLinksFile.getText('UTF-8') =~ /public static final String (\w+) = "([^"]+)";/).each { match ->
+        links[match[1].toLowerCase(Locale.ROOT)] = match[2]
+    }
+    ['modrinth', 'curseforge', 'sources', 'issues'].each { key ->
+        if (!links.containsKey(key)) {
+            throw new GradleException("ProjectLinks.java has no constant for " + key)
+        }
+    }
+    links
+}

@@ -1,5 +1,106 @@
 # Changelog
 
+## 0.2.0-beta — 2026-11-18
+
+### New Minecraft versions: 26.2 and 26.3
+
+- Minecraft 26.2 and 26.3: separate jars from the same code (`shatter-gui-<version>+mc26.2-fabric.jar`, `+mc26.3`), with
+  Spatial GUI 1.10.1 and Iris + Sodium on each. On 26.3 both OpenGL and Vulkan work. Known: 26.3 on Vulkan sometimes
+  crashes while loading resources at start, with or without the mod (3 of 20 starts with it, 2 of 20 without).
+- One jar for every Minecraft 26.1.x: 26.1, 26.1.1 and 26.1.2 (`shatter-gui-<version>+mc26.1-fabric.jar`).
+- Known: 26.3 on Windows sometimes crashes on a resource reload in game (F3+T, resource packs), with or without the mod
+  (20 reloads: 5 crashes with Fabric API only, 2 with the mod).
+
+### Spatial GUI
+
+- Spatial GUI 1.11.0 and 1.11.1 work again: they renamed the class that draws the 3D plane, so the bridge failed at the
+  first close and Spatial GUI played its own closing animation next to our effect (on 26.1.x, 26.2 and 26.3). The bridge
+  no longer checks version numbers: at start it looks for the classes, methods and fields it uses and turns itself on only
+  when they are all there. One line in the game log says which Spatial GUI was found and whether the bridge is on and why;
+  the same line is in About (small print) and in "Copy diagnostics".
+- Spatial GUI, third person: closing a screen no longer leaves the screen empty for about 0.3 s before the pieces appear
+  (on 26.1.x and 26.2; 26.3 was fine). The first frame of the pieces now matches the last frame of Spatial GUI's plane:
+  same place, angle and size, in first and third person.
+- Opening effects play in the creative inventory. The game replaces the survival inventory with the creative one while
+  opening it, and the opening was skipped (with or without Spatial GUI, on 26.1.x, 26.2 and 26.3). With Spatial GUI the
+  opening plays on its plane: Spatial GUI's own plane and opening animation appear only once our effect has put the
+  screen together.
+- `./gradlew verifyDist` starts the game with each `dist/` jar in a clean `mods/` folder with Spatial GUI and checks the
+  bridge on the jar itself.
+
+### Glass pieces in water
+
+- Glass pieces in water stay visible: under water and on the bottom they show through the water, tinted by it, from above
+  and from inside the water, with and without a shader pack and with Spatial GUI. Before, a piece that came to rest under
+  water vanished long before the end of its life, because the water surface was drawn in front of it. A solid block
+  between the camera and a piece still hides it, in water too. In water the pieces sink slowly: gravity ×0.35 and more
+  drag (glide ×0.8).
+
+### Reopening from the pieces
+
+- Reopening from the pieces: close an interface and open the same one again while its glass pieces are still around, and
+  they fly back and put it together instead of the usual opening (same screen class and menu type, at least 50% of the
+  pieces alive, mean opacity at least 0.35 — about the first 3 s with default glass). Each piece moves from where it lies
+  and how it is turned to its place, with smooth acceleration and through blocks; pieces that are already gone fade in on
+  their places in the last third; then the pieces fade over the real screen in 4 ticks. Works with Spatial GUI (onto its
+  plane) in first and third person. Closing during the gathering breaks the pieces again from where they are; a resize
+  clears it. New effect setting `reassembleOnReopen`: on by default for glass (and schema 1 effects based on it), shown in
+  the effect editor; schema 2 field `reassembleOnReopen` (off by default). Translated into all 12 languages.
+
+### Glass fixes with shader packs and in third person
+
+- Pieces never cover the player's hand, with or without a shader pack, on 26.1.x, 26.2 and 26.3. Before, pieces close to
+  the camera (the first moments of a close, pieces lying a block or two away) showed over the hand, and with a shader
+  pack every piece in flight did.
+- Pieces in flight no longer cover the player's model or other mobs standing in front of them: a piece behind a model is
+  hidden by it, a piece in front still shows over it. This is the same with and without Spatial GUI and with a shader
+  pack.
+- Pieces behind a wall: the exception for pieces that start behind a block (you stand right at a wall) ends once the
+  camera has moved more than a block. With Spatial GUI in third person the camera stands away from the player, and
+  pieces kept showing through walls for their whole flight. Pieces in flight in the open still show over blocks.
+- Pieces in flight behind a wall or roof are hidden by it once a solid block is between them and the camera, with or
+  without a shader pack (before, they showed through the blocks until they settled, about 1–2 seconds). Pieces that start
+  behind a wall in front of you, and "Fly" pieces flying into their container, still show over blocks.
+- "Draw over blocks" now applies to pieces in motion only: a piece that has settled on the ground (or is older than 5
+  seconds) is hidden by walls and the block above it like the rest of the world, and the switch shows nothing on screen.
+  The same for the overlays and particles of data effects. Off: unchanged.
+- Settled pieces no longer flicker at their edges: a piece at rest was turned by a slightly different amount every frame.
+- Glass shards land on their lowest corner and fall over onto a face, so they lie flat on the ground instead of half in it.
+- With a shader pack, pieces on the ground now bob with the world while walking, sprinting and when hurt (they stood
+  still while the world moved).
+
+### Icons in About
+
+- About: the Modrinth and CurseForge buttons show 8×8 icons drawn by the mod's author, on the text row, 8 GUI pixels wide
+  and sharp at every GUI scale; coloured icons keep their colours and lighten a little on hover, light ones would be
+  tinted. A picture of the wrong size or a damaged file falls back to the built-in icon with one line in the log. The
+  loader needs one `<name>.png` (the 16×16 and `_32` pictures are gone). GitHub and "Report a bug" keep the built-in icons.
+- About: the Modrinth, CurseForge, GitHub and "Report a bug" buttons fill with their platform's colour on hover and keyboard
+  focus (the text stays readable), have small icons (the mod's own; platform logos can be put into
+  `assets/shatter_gui/textures/gui/links/`) and a dot saying whether the page is up: green, yellow (not published yet or in
+  moderation; the button explains before opening it), grey (could not check). It asks Modrinth and GitHub once per session,
+  only while About is open; "Check the mod's pages" (`linkStatusCheck`) turns it off.
+- The CurseForge link (About, Mod Menu, `fabric.mod.json`, README) now points to
+  https://www.curseforge.com/minecraft/mc-mods/shatter-gui. The project's addresses come from one place in the code, so
+  `fabric.mod.json` and About can no longer disagree.
+
+### Other
+
+- Release jars come from `./gradlew dist` only (`dist/`, with `SHA256SUMS.txt`); each jar names its commit and build time
+  in the game log at start, in Settings → About and in "Copy diagnostics".
+- The darkened world behind a chest, furnace, crafting table or inventory now fades in with the opening effect and
+  out with the close effect instead of appearing at the end of the opening and vanishing at the start of the close
+  (menus with a blurred background fade their blur too). The same with Spatial GUI and shader packs.
+- The first frame of a close no longer shows the world without the interface for a moment: the pieces are there from
+  the very first frame.
+- Openings follow the camera: walking, sprinting or turning while an interface opens no longer leaves its pieces behind;
+  they land exactly where the interface appears. New setting "Follow the camera" (General → Playback: auto / always /
+  never) and `"followCamera"` for effect files; with it on, the fly close leaves from where the interface is now.
+- Opening pieces are drawn over the HUD and the darkened background like the interface they become, and are no longer
+  coloured by a shader pack (the colour jump at the end of an opening with shaders is gone).
+- "Copy diagnostics" in Settings → About: versions, graphics card and driver, shader pack, chosen effects and the
+  mod's last warnings for bug reports, without user names, file paths or e-mail addresses.
+
 ## 0.1.0-beta — 2026-10-31
 
 First public release, for Minecraft 26.1.2 (Fabric).

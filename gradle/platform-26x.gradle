@@ -1,0 +1,185 @@
+base {
+    archivesName = project.archives_base_name
+    group = project.maven_group
+}
+version = project.mod_version
+def jarVersion = "${project.mod_version}+mc${project.minecraft_label}-${project.mod_loader}"
+
+evaluationDependsOn(':core')
+def core = project(':core')
+def shared = rootProject.file('platform-26-shared/src')
+
+def renamesFile = file('source-renames.txt')
+def renames = renamesFile.exists() ? renamesFile.readLines('UTF-8').findAll { it.trim() && !it.startsWith('#') }.collectMany { line ->
+    def parts = line.split('->')*.trim()
+    def rules = [[~('(?<![\\w.])' + java.util.regex.Pattern.quote(parts[0]) + '(?![\\w])'), parts[1]]]
+    if (parts[0].contains('.')) {
+        rules << [~(java.util.regex.Pattern.quote(parts[0].replace('.', '/')) + '(?![\\w])'), parts[1].replace('.', '/')]
+    }
+    rules
+} : []
+def sharedSource = { String part ->
+    if (renames.isEmpty()) {
+        return new File(shared, "${part}/java")
+    }
+    return tasks.register("renameShared${part.capitalize()}", Sync) {
+        from new File(shared, "${part}/java")
+        into layout.buildDirectory.dir("generated/shared/${part}")
+        filteringCharset = 'UTF-8'
+        inputs.property 'renameRules', renames.collect { "${it[0]} -> ${it[1]}".toString() }
+        filter { String line ->
+            renames.inject(line) { text, rule -> text.replaceAll(rule[0], java.util.regex.Matcher.quoteReplacement(rule[1])) }
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java.srcDir core.file('src/main/java')
+        java.srcDir sharedSource('main')
+        resources.srcDir core.file('src/main/resources')
+        resources.srcDir new File(shared, 'main/resources')
+    }
+}
+sourceSets.matching { it.name == 'gametest' }.configureEach {
+    java.srcDir sharedSource('gametest')
+    resources.srcDir new File(shared, 'gametest/resources')
+}
+
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
+        }
+    }
+}
+
+def spatialGuiVersion = { String v -> "maven.modrinth:spatial-gui:${v}-${project.spatial_suffix}" }
+def irisVersion = "maven.modrinth:iris:${project.iris_version}"
+def sodiumVersion = "maven.modrinth:sodium:${project.sodium_version}"
+def modMenuVersion = "maven.modrinth:modmenu:${project.modmenu_version}"
+def yaclVersion = "maven.modrinth:yacl:${project.yacl_version}"
+
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "shatter_gui_test"
+        enableGameTests = false
+        eula = true
+    }
+}
+
+loom {
+    runs.configureEach {
+        if (name == "clientGameTest" && project.hasProperty("shaderPack")) {
+            vmArg "-Dshatter.test.shaderPack=${project.property('shaderPack')}"
+        }
+        if (name == "clientGameTest" && project.hasProperty("shaderOptions")) {
+            vmArg "-Dshatter.test.shaderOptions=${project.property('shaderOptions')}"
+        }
+        if (name == "clientGameTest" && project.hasProperty("testOnly")) {
+            vmArg "-Dshatter.test.only=${project.property('testOnly')}"
+        }
+        if (name == "clientGameTest" && project.hasProperty("shotsLabel")) {
+            vmArg "-Dshatter.test.shotsLabel=${project.property('shotsLabel')}"
+        }
+        if (name == "clientGameTest" && project.hasProperty("dupOnly")) {
+            vmArg "-Dshatter.test.dupOnly=${project.property('dupOnly')}"
+        }
+        if (name == "clientGameTest" && project.hasProperty("spatialMode")) {
+            vmArg "-Dshatter.test.spatialMode=${project.property('spatialMode')}"
+        }
+        if (name == "clientGameTest" && project.hasProperty("repeat")) {
+            vmArg "-Dshatter.test.repeat=${project.property('repeat')}"
+        }
+        if (name == "clientGameTest" && project.hasProperty("gameHeap")) {
+            vmArg "-Xmx${project.property('gameHeap')}"
+        }
+        if (name == "clientGameTest" && project.hasProperty("graphicsBackend")) {
+            programArgs "--graphicsBackend", project.property('graphicsBackend').toString()
+            vmArg "-Dshatter.test.keepWindow=true"
+        }
+        if (name == "clientGameTest" && project.hasProperty("lang")) {
+            vmArg "-Dshatter.test.lang=${project.property('lang')}"
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    compileOnly(modMenuVersion) { transitive = false }
+    gametestCompileOnly(modMenuVersion) { transitive = false }
+    compileOnly(irisVersion) { transitive = false }
+    gametestCompileOnly(irisVersion) { transitive = false }
+
+    if (project.hasProperty("shaders")) {
+        runtimeOnly(irisVersion) { transitive = false }
+        runtimeOnly(sodiumVersion) { transitive = false }
+        runtimeOnly "net.fabricmc:fabric-loader:${project.runtime_loader}"
+        runtimeOnly "io.github.llamalad7:mixinextras-fabric:${project.runtime_mixinextras}"
+    }
+
+    if (project.hasProperty("modMenu")) {
+        runtimeOnly(modMenuVersion) { transitive = false }
+    }
+
+    if (project.hasProperty("spatialGui")) {
+        runtimeOnly(spatialGuiVersion(project.property('spatialGui').toString())) { transitive = false }
+        runtimeOnly(yaclVersion) { transitive = false }
+        runtimeOnly "net.fabricmc:fabric-loader:${project.runtime_loader}"
+        runtimeOnly "io.github.llamalad7:mixinextras-fabric:${project.runtime_mixinextras}"
+    }
+}
+
+processResources {
+    def props = rootProject.projectLinks() + [version: project.version,
+                 author: project.mod_author, license: project.mod_license,
+                 minecraft_range: project.minecraft_range]
+    inputs.properties props
+    inputs.file rootProject.projectLinksFile
+    filteringCharset "UTF-8"
+
+    filesMatching("fabric.mod.json") {
+        expand props
+    }
+}
+
+check.dependsOn core.tasks.named('check')
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = project.java_version as int
+    it.options.encoding = "UTF-8"
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion(project.java_version)
+    targetCompatibility = JavaVersion.toVersion(project.java_version)
+}
+
+jar {
+    archiveVersion = jarVersion
+    ["LICENSE", "NOTICE", "THIRD_PARTY.md"].each { name ->
+        from(rootProject.layout.projectDirectory.file(name)) {
+            rename { "${it}_${project.base.archivesName.get()}" }
+        }
+    }
+}
+
+apply from: rootProject.file('gradle/build-info.gradle')
+
+tasks.named('jar') {
+    destinationDirectory = layout.buildDirectory.dir('tmp/distInput')
+}
+
+apply from: rootProject.file('gradle/dist-verify-run.gradle')
+apply from: rootProject.file('gradle/reload-loop-run.gradle')

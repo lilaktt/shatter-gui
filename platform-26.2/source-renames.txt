@@ -1,0 +1,7 @@
+# Classes that only changed their name since 26.1 (old -> new, whole words). See gradle/platform-26x.gradle.
+com.mojang.blaze3d.textures.TextureFormat -> com.mojang.blaze3d.GpuFormat
+TextureFormat -> GpuFormat
+com.mojang.blaze3d.platform.SourceFactor -> com.mojang.blaze3d.platform.BlendFactor
+com.mojang.blaze3d.platform.DestFactor -> com.mojang.blaze3d.platform.BlendFactor
+SourceFactor -> BlendFactor
+DestFactor -> BlendFactor

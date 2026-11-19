@@ -1,6 +1,6 @@
-# Shatter GUI
+# Shatter GUI (beta 0.2)
 
-A client-side Fabric mod for Minecraft 26.1.2. When you close an interface (chest, furnace, inventory, pause menu…)
+A client-side Fabric mod for Minecraft 26.1.x, 26.2 and 26.3. When you close an interface (chest, furnace, inventory, pause menu…)
 its last frame breaks into pieces that live in the world: glass shards, fire, ice, sand, confetti, a portal vortex…
 Effects can also play backwards when you open an interface, so it gathers from its pieces.
 
@@ -34,7 +34,7 @@ effect editor.
 
 ## Requirements
 
-Minecraft 26.1.2, Fabric Loader ≥ 0.19.3, Fabric API, Java 25. Optional: Mod Menu, Spatial GUI, Iris + Sodium.
+Minecraft 26.1, 26.1.1 or 26.1.2 (one jar, `+mc26.1`), 26.2 (`+mc26.2`) or 26.3 (`+mc26.3`), on OpenGL or Vulkan. Fabric Loader ≥ 0.19.3, Fabric API, Java 25. Optional: Mod Menu, Spatial GUI, Iris + Sodium (Spatial GUI 1.10.1, 1.11.0 and 1.11.1 are tested; they, and Iris on 26.3, need a Fabric Loader newer than 0.19.3; 0.20.1 works).
 
 ## Configuration
 
@@ -42,8 +42,31 @@ In game: Mod Menu → Shatter GUI, or the "Shatter GUI settings" key. Tabs: Gene
 style, playback, performance — effect quality and how many effects play at once —, reduce motion), Effects (settings per effect; under the selected card "For opening / For closing /
 For both / Remove", a double click uses a card for both, ★ marks favourites), Screens (per-screen effects, thematic
 table), Custom (effect editor). The "Next favourite close effect" key (unbound by default) switches between the
-favourites. Effects are drawn over the world by default ("Draw over blocks"): blocks in front never cut into them,
-the player's hand, the HUD and screens stay on top. The config is `config/shatter_gui.json`.
+favourites. Pieces in flight are drawn over the world by default ("Draw over blocks"): blocks in front never cut into
+them; a piece that has settled on the ground is hidden by blocks like the rest of the world, and so is a piece in flight
+once a solid block stands between it and the camera (you walk under a roof or behind a wall). Pieces that start behind a
+wall right in front of you stay over it until they come into view, and pieces flying into their container ("Fly") always
+stay over blocks. The player's hand, the HUD
+and screens stay on top, with or without a shader pack. The config is `config/shatter_gui.json`.
+
+**Page status in About.** By each page button a dot says whether the page is up: green (yes), yellow (not published yet
+or in moderation; the button explains before opening the link), grey (could not check). To know this the mod asks
+`api.modrinth.com` and `api.github.com` once per session, only while the About section is open, off the game's thread,
+for 3 seconds at most, with the User-Agent `lilaktt/shatter-gui/<version>` and nothing else. CurseForge has no public
+API without a key and is not checked. It never blocks the game and does nothing without a network. Turn it off with
+"Check the mod's pages" (`"linkStatusCheck": false`).
+
+## Reopening from the pieces
+
+Close an interface and open the same one again while its glass pieces are still in the world, and instead of the usual
+opening those pieces fly back and put it together: same screen class and menu type, the closing effect allows it
+(`glass/reassembleOnReopen`, on by default; schema 2 field `reassembleOnReopen`, off by default), at least 50% of the
+pieces alive and their mean opacity at least 0.35. With the default glass both limits are reached about 3 s after the
+close (measured: 48% alive / 0.45 opacity at tick 60, 36% / 0.29 at tick 64), after that a usual opening plays. Each
+piece moves from where it lies to its place with smooth acceleration, through blocks; pieces that are gone fade in on
+their places in the last third; then the pieces fade over the real screen in 4 ticks. With Spatial GUI they gather on
+its plane. Closing during the gathering breaks the pieces again from where they are. It reuses the closing wave, so the
+limit of effects at once does not apply. Details: `README.uk.md`.
 
 ## Custom effects
 
@@ -58,41 +81,86 @@ English (source of truth) and Ukrainian are written by hand. German, Spanish, Fr
 Simplified Chinese, Russian, Japanese, Korean and Italian are **machine translations** and need review by native
 speakers. Missing keys fall back to English.
 
-To send a correction: change `src/main/resources/assets/shatter_gui/lang/<code>.json` and open a pull request on the
+To send a correction: change `core/src/main/resources/assets/shatter_gui/lang/<code>.json` and open a pull request on the
 mod's source page, or open an issue with the key, the current text and your text. Keep the terms of
 `docs/i18n/GLOSSARY.md` and every `%s`/`%d`; `./gradlew test` checks keys and placeholders. The same note is in
 the mod: General tab → About.
 
 ## Known limitations
 
-- When an interface opens by gathering, the darkened/blurred world behind it appears together with the interface
-  at the end (as it disappears at once on closing).
-- With "Draw over blocks" switched off and a shader pack, the pieces are lit and coloured by the pack (they are in the
-  world), the interface that replaces them is not: its colour changes when it appears.
+- While the darkened world behind a closed interface fades out, the hotbar is not darkened (it stays over the close
+  effect, as before), so it brightens at once when the close starts. The menu blur fades in steps of one pixel.
+- With "Draw over blocks" switched off and a shader pack, a close is drawn over the world while the darkened background
+  fades (about 0.5 s) and in the world after that, where the pack lights and colours it: its colour changes at that
+  moment. Openings are always drawn over the world, unlit, like the interface they become.
+- Minecraft 26.3 on Vulkan sometimes crashes (`0xC0000005`, no `hs_err` file) while it loads resources at start, before
+  the title screen, with or without the mod: on an NVIDIA RTX 3050 with driver 610.62, 3 of 20 starts with the mod and 2
+  of 20 without it (Fabric API only), at the same moment. It is not caused by the mod; start the game again or use
+  OpenGL.
+- Minecraft 26.3 on Windows sometimes crashes (`0xC0000005` or `0xC0000409`, no `hs_err` file) on a resource reload in
+  game (F3+T, changing resource packs), without the mod too: 20 reloads in a world on Intel RaptorLake-S (OpenGL, driver
+  32.0.101.7026) crashed 5 times with Fabric API only and 2 times with Fabric API + Shatter GUI, always at "Reloading
+  ResourceManager". It is not caused by the mod; start the game again.
 - Validation messages of the effect format (with JSON paths) are in English.
 - "Darken" overlays are drawn as normal blending with shader packs.
-- With a shader pack, the pieces drawn over blocks are also drawn over the player's hand (the pack draws the hand
-  inside its own pass).
 
 ## Building
 
 ```
-./gradlew build                 # build/libs/shatter-gui-<version>.jar, runs unit tests
-./gradlew runClientGameTest     # automated tests in a real client (screenshots in build/run/clientGameTest)
-./gradlew runClientGameTest -PspatialGui=1.8 -PmodMenu
+./gradlew dist                  # every ready version from scratch: dist/shatter-gui-<version>+mc<minecraft>-fabric.jar + dist/SHA256SUMS.txt
+./gradlew build                 # compiles 26.1.x and runs the unit tests (-Pmc=26.2 or 26.3 for the others)
+./gradlew runClientGameTest     # automated tests in a real client (screenshots in platform-26/build/run/clientGameTest)
+./gradlew runClientGameTest -PspatialGui=1.10.1 -PmodMenu
 ./gradlew runClientGameTest -Pshaders -PshaderPack=C:/path/to/Pack.zip
 ./gradlew runClientGameTest -PtestOnly=lang -Plang=ja_jp   # one language at GUI scales 1–4, screenshots lang_ja_…
+./gradlew build -Pmc=1.21.1     # the 1.21.1 port (a stub so far)
+./gradlew runVersionMatrix --no-daemon -PshaderPack=C:/path/to/Pack.zip   # a short test set on every version, for the night
+./gradlew verifyDist --no-daemon   # the dist/ jars themselves with Spatial GUI, see below (long)
 ```
 
-Author and links are in `gradle.properties` (`mod_author`, `mod_sources`, `mod_issues`, `mod_modrinth`,
-`mod_curseforge`).
+Take jars only from `dist/`, made by `./gradlew dist`: it runs the unit tests, builds 26.1.x, 26.2 and 26.3 one after another
+from a clean state and writes their SHA-256 sums. Game tests run from the compiled classes, not from a jar, so any jar left
+somewhere under `build/` is not what was tested. Each jar carries the commit and build time (`-dirty` when the tree had
+uncommitted changes): in its manifest, in the game log at start (`Shatter GUI for Minecraft …, build …`), in Settings →
+About and in "Copy diagnostics".
+
+`./gradlew verifyDist` tests the jars, not the classes: for every jar in `dist/` and every Spatial GUI version in
+`-PverifySpatial` (default `1.11.0,1.10.1,1.11.1`) it starts the game with a clean `mods/` folder that holds only that jar,
+Fabric API, Spatial GUI and YACL (the mod's own classes and the Fabric API modules are taken off the classpath), checks
+that the Spatial GUI bridge is on, that closing a furnace and the inventory plays our effect and that Spatial GUI does not
+play its own closing plane next to it. Results, game logs and screenshots go to `build/verify-dist/` (`summary.md`).
+A run takes about two minutes per jar and Spatial GUI version, so it is not part of `dist`; run it after `dist`.
+`-PverifyOnly=26.2` limits it to some versions.
+
+The Spatial GUI bridge does not check version numbers: at start the mod reads Spatial GUI's classes and enables the
+bridge only if the methods and fields it uses are there (the 3D plane, its texture, its close animation). The game log has
+one line about it, e.g. `Spatial GUI: 1.11.0, bridge enabled, plane WorldScreenRenderer via getWorldScreenRenderer(), …`
+or `Spatial GUI: 1.12.0, bridge disabled, this version lacks: …`; the same is shown in small print in About and in
+"Copy diagnostics". When the bridge is off, closing a screen shown by Spatial GUI plays the normal flat effect.
+
+The shared code (`core`, no Minecraft; `platform-26-shared`, all of 26.x) and one module per Minecraft version
+(`platform-*`) are described in `docs/PORTING.md`, the versions in `docs/VERSIONS.md`, the last results in
+`docs/TEST_MATRIX.md`.
+
+The author is in `gradle.properties` (`mod_author`). The project's addresses (Modrinth, CurseForge, GitHub, bug
+reports) live in one place, `core/src/main/java/net/shattergui/links/ProjectLinks.java`: the build fills
+`fabric.mod.json` (`contact`, `custom.modmenu.links`) from it and About reads it, and `ProjectLinksTest` checks that
+the two match and that each address has its platform's form.
 
 ## Links
 
 - Modrinth: https://modrinth.com/mod/shattergui
-- CurseForge: https://www.curseforge.com/minecraft/mc-mods/shattergui
+- CurseForge: https://www.curseforge.com/minecraft/mc-mods/shatter-gui
 - GitHub: https://github.com/lilaktt/shatter-gui
 - Bug reports: https://github.com/lilaktt/shatter-gui/issues
+
+The icons on the Modrinth and CurseForge buttons in About were drawn by the mod's author (8×8 pixels,
+`assets/shatter_gui/gui/links/`); the names and logos of Modrinth, CurseForge and GitHub belong to their owners. GitHub
+and "Report a bug" show the mod's own simple icons until pictures are added. One file per button, `<name>.png`, 8×8,
+in `assets/shatter_gui/textures/gui/links/` or `assets/shatter_gui/gui/links/` (`modrinth.png`, `curseforge.png`,
+`github.png`, `bug.png`); each is drawn 8 GUI pixels wide without smoothing at every GUI scale. A white or light picture is
+tinted with the platform's colour, a coloured one is drawn as it is and only lightens a little on hover. A file of another
+size, or one that cannot be read, gives one line in the log and the built-in icon.
 
 ## Author
 

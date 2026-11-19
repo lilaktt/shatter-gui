@@ -2,11 +2,44 @@ name: Bug report
 description: Something does not work or looks wrong.
 labels: ["bug"]
 body:
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: |
+        In game: Shatter GUI settings → General → About → "Copy diagnostics", then paste here. It lists the versions of
+        Shatter GUI, Minecraft, Fabric Loader, Fabric API, Iris, Sodium and Spatial GUI, the GPU and driver (OpenGL
+        renderer and version), the active shader pack, the chosen open and close effects, the thematic mode and the
+        mod's last warnings, without your user name, file paths or e-mail. If you cannot open the settings, fill these
+        in by hand.
+      render: text
+      placeholder: |
+        Shatter GUI diagnostics
+        Shatter GUI: 0.1.0-beta
+        Minecraft: 26.1.2
+        Fabric Loader: 0.19.3
+        Fabric API: 0.155.3+26.1.2
+        Iris: not installed
+        Sodium: not installed
+        Spatial GUI: 1.8-fabric+26.1.x
+        GPU: ...
+        Driver: ...
+        GPU vendor: ...
+        Graphics backend: ...
+        Shader pack: Iris not installed
+        Language: en_us
+        Open effect: fly_from_block
+        Close effect: glass
+        Thematic mode: off
+        Recent warnings: none
+    validations:
+      required: true
   - type: input
     id: minecraft
     attributes:
       label: Minecraft version
       placeholder: "26.1.2"
+      description: Also in the diagnostics above.
     validations:
       required: true
   - type: input

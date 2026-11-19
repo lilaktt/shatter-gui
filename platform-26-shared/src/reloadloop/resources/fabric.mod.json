@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "shatter_gui_reload_loop",
+  "version": "1.0.0",
+  "name": "Resource reload loop",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": ["net.shattergui.test.ReloadLoopGameTest"]
+  }
+}
